@@ -1,0 +1,14 @@
+# generated files
+bin/
+
+*.pyc
+/pyenv
+*.log
+/.project
+/.pydevproject
+/data/*
+!/data/example
+org.eclipse.core.resources.prefs
+
+docs/Notes.docx
+docs/Notes.txt
