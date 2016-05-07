@@ -7,7 +7,7 @@ class Post(object):
         self.body = body
         self.tags = tags
         self.body_tokens = None
-        self._tag_names = [tag.name for tag in tags]
+        self._tag_names = (tag.name for tag in tags)
 
     @classmethod
     def parse_posts(cls, file_path, tag_dict):

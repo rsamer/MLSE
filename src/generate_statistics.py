@@ -12,7 +12,7 @@
     * bs4 (BeautifulSoup)
 
     usage:
-    python generate_statistics.py ../data/example/
+    python -m generate_statistics ../data/example/
 
     -----------------------------------------------------------------------------
     NOTE: the data set located in ../data/example/ is NOT a representative subset
@@ -21,15 +21,38 @@
 '''
 
 import sys, os
-import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib import rcParams
-import pandas as pd
-import seaborn as sns
 import re
-from bs4 import BeautifulSoup
+
+from main import usage
 from entities.tag import Tag
 from entities.post import Post
+
+try:
+    import numpy as np
+except ImportError:
+    raise RuntimeError('Please install numpy library!')
+
+try:
+    import matplotlib.pyplot as plt
+    from matplotlib import rcParams
+except ImportError:
+    raise RuntimeError('Please install matplotlib library!')
+
+try:
+    import pandas as pd
+except ImportError:
+    raise RuntimeError('Please install pandas library!')
+
+try:
+    import seaborn as sns
+except ImportError:
+    raise RuntimeError('Please install seaborn library!')
+
+try:
+    from bs4 import BeautifulSoup
+except ImportError:
+    raise RuntimeError('Please install beautifulsoup library!')
+
 
 def plot_bar_chart(data_labels, data_points, ylabel, title, bar_width, filename=None):
     ind = np.arange(len(data_points))  # the x locations for the groups
@@ -127,8 +150,7 @@ def plot_correlation_chart(matrix, tag_names, size, filename=None):
         plt.show()
 
 def main():
-    if len(sys.argv) != 2:
-        raise RuntimeError("Invalid arguments given")
+    usage()
     path = sys.argv[1]
 
     tags_path = os.path.join(path, 'Tags.xml')

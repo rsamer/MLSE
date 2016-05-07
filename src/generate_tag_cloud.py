@@ -9,7 +9,7 @@
     * matplotlib
 
     usage:
-    python generate_tag_cloud.py ../data/example/
+    python -m generate_tag_cloud ../data/example/
 
     -----------------------------------------------------------------------------
     NOTE: the data set located in ../data/example/ is NOT a representative subset
@@ -17,14 +17,24 @@
     -----------------------------------------------------------------------------
 '''
 
-from wordcloud import WordCloud
-import matplotlib.pyplot as plt
+import sys
+import os
+
+from main import usage
 from entities.tag import Tag
-import sys, os
+
+try:
+    from wordcloud import WordCloud
+except ImportError:
+    raise RuntimeError('Please install wordcloud library!')
+
+try:
+    import matplotlib.pyplot as plt
+except ImportError:
+    raise RuntimeError('Please install matplotlib library!')
 
 def main():
-    if len(sys.argv) != 2:
-        raise RuntimeError("Invalid arguments given")
+    usage()
     path = sys.argv[1]
 
     # create directories for datasets if not exists
