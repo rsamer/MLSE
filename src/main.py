@@ -62,12 +62,11 @@ def main(argv=None):
     print "Total number of tags: %d" % number_of_tags
     print "Number of remaining tags: %d" % len(sorted_filtered_tags)
     print "{}%".format(round(float(number_of_tags-len(sorted_filtered_tags))/number_of_tags*100.0, 2))
-    print sorted_filtered_tags[-10:]
 
     posts = Post.parse_posts(posts_path, tag_dict)
     filtered_posts = prepr.preprocess_posts(posts, sorted_filtered_tags)
-    print "-"*80
-    print "\n".join([post.body for post in filtered_posts[3:6]])
+    # TODO: continue here...
+
     return ErrorCode.SUCCESS
 
 if __name__ == "__main__":
