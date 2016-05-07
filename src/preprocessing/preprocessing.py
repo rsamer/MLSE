@@ -13,6 +13,10 @@ single_character_tokens_re = re.compile(r"^\W$")
 def preprocess_tags_and_sort_by_frequency(tags, frequency_threshold):
     assert isinstance(tags, list)
     sorted_tags = sorted(tags, key=lambda x: x[1].count, reverse=True)
+    # TODO: look for similar tag names and merge them together, e.g. "java", "java programming"??
+    #       for this we should simply download the synonym list from StackExchange as mentioned in the paper!
+    #
+    # TODO: also remove all removed tags from posts in order to avoid data-inconsistency issues!!!
     return [tag for (_, tag) in sorted_tags if tag.count >= frequency_threshold]
 
 def preprocess_posts(posts, tags):
@@ -45,8 +49,7 @@ def preprocess_posts(posts, tags):
             #r'(?:\d+\%)', # percentage
             r'(?:(?:\d+,?)+(?:\.?\d+)?)', # numbers
             r"(?:[a-z][a-z'\-_]+[a-z])", # words with - and '
-        # avoid splitting adjacent words that are known tag names
-        ] + map(lambda tag_name: re.escape(tag_name) + '\W', tag_names) + [
+        ] + map(lambda tag_name: re.escape(tag_name) + '\W', tag_names) + [ # consider known tag names
             r'(?:[\w_]+)', # other words
             r'(?:\S)' # anything else
         ]
@@ -113,7 +116,11 @@ def preprocess_posts(posts, tags):
 
     _strip_html_tags(posts)
     _tokenize_posts(posts, tag_names)
-    _filter_tokens(posts, tag_names) # TODO: remove emoticons and URLs in _filter_tokens (right AFTER tokenization and NOT before!!)
+    _filter_tokens(posts, tag_names)
+    # TODO: remove emoticons and URLs in _filter_tokens (right AFTER tokenization and NOT before!!)
+    # TODO: remove numbers starting with "#" (e.g. #329410) in _filter_tokens
+    # TODO: remove hex-numbers in _filter_tokens
+    # TODO: remove very unique words that only occur once in the whole dataset _filter_tokens ??!!
 
     # DEBUG BEGIN
     print "\n" + ("-"*80)
@@ -123,13 +130,15 @@ def preprocess_posts(posts, tags):
     print "-"*80
     # DEBUG END
 
-
-    # TODO: remove numbers starting with "#" (e.g. #329410)
-    # TODO: remove hex-numbers
-    # TODO: remove very unique words that only occur once in the whole dataset??!!
-
+    #--------------------------------------------------------------------------------
+    # TODO: replace "-" by " " in all tag names e.g. "object-oriented" -> "object oriented"
+    #       and then look for two (or more) adjacent words that represent a known tag name
+    #
+    #       e.g. current token list ["I", "love", "object", "oriented", "code"]
+    #     -> should be converted to ["I", "love", "object-oriented", "code"]
+    #        since "object-oriented" is a tag name in our tag list
+    #--------------------------------------------------------------------------------
     return posts
-
 
 
 
