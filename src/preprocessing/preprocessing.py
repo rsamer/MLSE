@@ -4,6 +4,10 @@ import re
 import logging
 from entities.post import Post
 from entities.tag import Tag
+import nltk
+import os
+
+nltk.data.path = [os.path.dirname(os.path.realpath(__file__)) + "/../../nltk_data"]
 
 log = logging.getLogger("preprocessing.preprocessing")
 
@@ -104,6 +108,49 @@ def preprocess_posts(posts, tags):
             post.body_tokens = tokens
 
 
+    def _remove_stopwords(posts):
+        try:
+            from nltk.corpus import stopwords
+        except ImportError:
+            raise RuntimeError('Please install nltk library!')
+
+        stop_words = stopwords.words('english')
+
+        for post in posts:
+            post.body_tokens = [word for word in post.body_tokens if word not in stop_words]
+
+    def _stemming(posts):
+        try:
+            from nltk.stem.porter import PorterStemmer
+        except ImportError:
+            raise RuntimeError('Please install nltk library!')
+
+        porter = PorterStemmer()
+
+        for post in posts:
+            post.body_tokens = [porter.stem(word) for word in post.body_tokens]
+
+
+    def _lemmatization(posts):
+        try:
+            from nltk.stem.wordnet import WordNetLemmatizer
+        except ImportError:
+            raise RuntimeError('Please install nltk library!')
+
+        lemmatizer = WordNetLemmatizer()
+
+        for post in posts:
+            post.body_tokens = [lemmatizer.lemmatize(word) for word in post.body_tokens]
+
+    def _pos_tagging(posts):
+        try:
+            import nltk
+        except ImportError:
+            raise RuntimeError('Please install nltk library!')
+
+        for post in posts:
+            post.body_tokens = nltk.pos_tag(post.body_tokens)
+
     assert isinstance(posts, list)
     tag_names = [tag.name.lower() for tag in tags]
 
@@ -117,6 +164,10 @@ def preprocess_posts(posts, tags):
     _strip_html_tags(posts)
     _tokenize_posts(posts, tag_names)
     _filter_tokens(posts, tag_names)
+    _remove_stopwords(posts)
+    #_lemmatization(posts) # not sure if it makes sense to use both lemmatization and stemming
+    _stemming(posts)
+    _pos_tagging(posts)
     # TODO: remove emoticons and URLs in _filter_tokens (right AFTER tokenization and NOT before!!)
     # TODO: remove numbers starting with "#" (e.g. #329410) in _filter_tokens
     # TODO: remove hex-numbers in _filter_tokens
