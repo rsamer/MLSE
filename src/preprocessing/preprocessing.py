@@ -108,6 +108,20 @@ def preprocess_posts(posts, tags):
             post.body_tokens = tokens
 
 
+    def _remove_urls(posts):
+        import re
+
+        regex_url = re.compile(
+            r'^(?:http|ftp)s?://'  # http:// or https://
+            r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|'  # domain...
+            r'localhost|'  # localhost...
+            r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})'  # ...or ip
+            r'(?::\d+)?'  # optional port
+            r'(?:/?|[/?]\S+)$', re.IGNORECASE)
+
+        for post in posts:
+            post.body_tokens = [word for word in post.body_tokens if regex_url.match(word) is None]
+
     def _remove_stopwords(posts):
         try:
             from nltk.corpus import stopwords
@@ -164,6 +178,7 @@ def preprocess_posts(posts, tags):
     _strip_html_tags(posts)
     _tokenize_posts(posts, tag_names)
     _filter_tokens(posts, tag_names)
+    _remove_urls(posts)
     _remove_stopwords(posts)
     #_lemmatization(posts) # not sure if it makes sense to use both lemmatization and stemming
     _stemming(posts)
