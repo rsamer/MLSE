@@ -83,6 +83,16 @@ def preprocess_posts(posts, tags):
             post.body_tokens = _tokenize_text(post.body, tag_names)
 
     def _filter_tokens(posts, tag_names):
+        regex_url = re.compile(
+            r'^(?:http|ftp)s?://'  # http:// or https://
+            r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|'  # domain...
+            r'localhost|'  # localhost...
+            r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})'  # ...or ip
+            r'(?::\d+)?'  # optional port
+            r'(?:/?|[/?]\S+)$', re.IGNORECASE)
+
+        regex_number = re.compile(r'^#\d+$', re.IGNORECASE)
+
         for post in posts:
             tokens = post.body_tokens
             # remove empty tokens, numbers and those single-character words that are no letters
@@ -105,22 +115,14 @@ def preprocess_posts(posts, tags):
             # remove "'ve" at the end (e.g. we've got...)
             tokens = map(lambda t: t[:-2] if t.endswith("'ve") else t, tokens)
 
+            # remove urls
+            tokens = [word for word in tokens if regex_url.match(word) is None]
+
+            # remove numbers starting with #
+            tokens = [word for word in tokens if regex_number.match(word) is None]
+
             post.body_tokens = tokens
 
-
-    def _remove_urls(posts):
-        import re
-
-        regex_url = re.compile(
-            r'^(?:http|ftp)s?://'  # http:// or https://
-            r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|'  # domain...
-            r'localhost|'  # localhost...
-            r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})'  # ...or ip
-            r'(?::\d+)?'  # optional port
-            r'(?:/?|[/?]\S+)$', re.IGNORECASE)
-
-        for post in posts:
-            post.body_tokens = [word for word in post.body_tokens if regex_url.match(word) is None]
 
     def _remove_stopwords(posts):
         try:
@@ -171,20 +173,19 @@ def preprocess_posts(posts, tags):
     # DEBUG BEGIN
     test_post1 = Post(1, "", u"RT @marcobonzanini: just, an example! :D http://example.com/what?q=test #NLP", [])
     test_post2 = Post(2, "", u"C++ is a test hehe wt iop complicated programming-language object oriented object-oriented-design compared to C#. AT&T Asp.Net C++!!", [])
-    test_post3 = Post(3, "", u"C++~$§%) is a :=; := :D test ~ hehe wt~iop complicated programming-language compared to C#. AT&T Asp.Net C++!!", [])
+    test_post3 = Post(3, "", u"C++~$§%) is a :=; := :D test ~ hehe wt~iop complicated programming-language compared to C#. AT&T Asp.Net C++ #1234 1234 !!", [])
     posts += [test_post1, test_post2, test_post3]
     # DEBUG END
 
     _strip_html_tags(posts)
     _tokenize_posts(posts, tag_names)
     _filter_tokens(posts, tag_names)
-    _remove_urls(posts)
     _remove_stopwords(posts)
     #_lemmatization(posts) # not sure if it makes sense to use both lemmatization and stemming
     _stemming(posts)
     _pos_tagging(posts)
-    # TODO: remove emoticons and URLs in _filter_tokens (right AFTER tokenization and NOT before!!)
-    # TODO: remove numbers starting with "#" (e.g. #329410) in _filter_tokens
+    # TODO: remove emoticons in _filter_tokens (right AFTER tokenization and NOT before!!)
+    # DONE: remove numbers starting with "#" (e.g. #329410) in _filter_tokens
     # TODO: remove hex-numbers in _filter_tokens
     # TODO: remove very unique words that only occur once in the whole dataset _filter_tokens ??!!
 
