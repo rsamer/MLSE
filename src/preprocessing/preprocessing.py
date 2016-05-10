@@ -3,25 +3,29 @@
 import re
 import logging
 from entities.post import Post
-from entities.tag import Tag
+from entities.tag import sort_tags_by_frequency
 import nltk
 import os
 
-nltk.data.path = [os.path.dirname(os.path.realpath(__file__)) + "/../../nltk_data"]
+main_dir = os.path.dirname(os.path.realpath(__file__)) + "/../../"
+nltk.data.path = [main_dir + "corpora/nltk_data"]
+emoticons_data_file = main_dir + "corpora/emoticons/emoticons"
 
 log = logging.getLogger("preprocessing.preprocessing")
 
 tokens_punctuation_re = re.compile(r"(\.|!|\?|\(|\)|~)$")
 single_character_tokens_re = re.compile(r"^\W$")
 
+
 def preprocess_tags_and_sort_by_frequency(tags, frequency_threshold):
     assert isinstance(tags, list)
-    sorted_tags = sorted(tags, key=lambda x: x[1].count, reverse=True)
+    sorted_tags = sort_tags_by_frequency(tags)
     # TODO: look for similar tag names and merge them together, e.g. "java", "java programming"??
     #       for this we should simply download the synonym list from StackExchange as mentioned in the paper!
     #
     # TODO: also remove all removed tags from posts in order to avoid data-inconsistency issues!!!
-    return [tag for (_, tag) in sorted_tags if tag.count >= frequency_threshold]
+    return [tag for tag in sorted_tags if tag.count >= frequency_threshold]
+
 
 def preprocess_posts(posts, tags):
 
@@ -44,7 +48,7 @@ def preprocess_posts(posts, tags):
         ''' Customized tokenizer for our special needs! (e.g. C#, C++, ...) '''
         # based on: http://stackoverflow.com/a/36463112
         regex_str = [
-            r'(?:[:;=\^\-oO][\-_\.]?[\)\(\]\[\-DPOp_\^\\\/])', # emoticons (Note: they are removed after tokenization!)
+            #r'(?:[:;=\^\-oO][\-_\.]?[\)\(\]\[\-DPOp_\^\\\/])', # emoticons (Note: they are removed after tokenization!) # TODO why not here?
             r'\w+\.\w+',
             r'\w+\&\w+',    # e.g. AT&T
             r'(?:@[\w_]+)', # @-mentions
@@ -84,12 +88,30 @@ def preprocess_posts(posts, tags):
 
     def _filter_tokens(posts, tag_names):
         regex_url = re.compile(
-            r'^(?:http|ftp)s?://'  # http:// or https://
+            r'^(?:http|ftp)s?://'  # http:// https:// ftp:// ftps://
             r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|'  # domain...
             r'localhost|'  # localhost...
             r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})'  # ...or ip
             r'(?::\d+)?'  # optional port
             r'(?:/?|[/?]\S+)$', re.IGNORECASE)
+
+        # from nltk.tokenize.casual
+        regex_emoticons = re.compile(r"""
+            (?:
+              [<>]?
+              [:;=8]                     # eyes
+              [\-o\*\']?                 # optional nose
+              [\)\]\(\[dDpP/\:\}\{@\|\\] # mouth
+              |
+              [\)\]\(\[dDpP/\:\}\{@\|\\] # mouth
+              [\-o\*\']?                 # optional nose
+              [:;=8]                     # eyes
+              [<>]?
+              |
+              <3                         # heart
+            )""", re.IGNORECASE)
+
+        with open(emoticons_data_file) as emoticons_file: emoticons_list = emoticons_file.readlines()
 
         regex_number = re.compile(r'^#\d+$', re.IGNORECASE)
 
@@ -121,6 +143,12 @@ def preprocess_posts(posts, tags):
             # remove numbers starting with #
             tokens = [word for word in tokens if regex_number.match(word) is None]
 
+            # remove emoticons (list from https://en.wikipedia.org/wiki/List_of_emoticons)
+            #tokens = [word for word in tokens if word not in emoticons_list]
+
+            # remove emoticons (regex)
+            #tokens = [word for word in tokens if regex_emoticons.match(word) is None]
+
             post.body_tokens = tokens
 
 
@@ -134,6 +162,7 @@ def preprocess_posts(posts, tags):
 
         for post in posts:
             post.body_tokens = [word for word in post.body_tokens if word not in stop_words]
+
 
     def _stemming(posts):
         try:
@@ -173,7 +202,7 @@ def preprocess_posts(posts, tags):
     # DEBUG BEGIN
     test_post1 = Post(1, "", u"RT @marcobonzanini: just, an example! :D http://example.com/what?q=test #NLP", [])
     test_post2 = Post(2, "", u"C++ is a test hehe wt iop complicated programming-language object oriented object-oriented-design compared to C#. AT&T Asp.Net C++!!", [])
-    test_post3 = Post(3, "", u"C++~$§%) is a :=; := :D test ~ hehe wt~iop complicated programming-language compared to C#. AT&T Asp.Net C++ #1234 1234 !!", [])
+    test_post3 = Post(3, "", u"C++~$§%) is a :=; := :D :-)) ;-)))) test ~ hehe wt~iop complicated programming-language compared to C#. AT&T Asp.Net C++ #1234 1234 !!", [])
     posts += [test_post1, test_post2, test_post3]
     # DEBUG END
 
@@ -183,7 +212,7 @@ def preprocess_posts(posts, tags):
     _remove_stopwords(posts)
     #_lemmatization(posts) # not sure if it makes sense to use both lemmatization and stemming
     _stemming(posts)
-    _pos_tagging(posts)
+    #_pos_tagging(posts)
     # TODO: remove emoticons in _filter_tokens (right AFTER tokenization and NOT before!!)
     # DONE: remove numbers starting with "#" (e.g. #329410) in _filter_tokens
     # TODO: remove hex-numbers in _filter_tokens
