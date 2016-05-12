@@ -29,6 +29,11 @@ def preprocess_tags_and_sort_by_frequency(tags, frequency_threshold):
 
 def preprocess_posts(posts, tags):
 
+    def _strip_code_segments(posts):
+        for post in posts:
+            assert (isinstance(post, Post))
+            post.body = re.sub('<code>.*?</code>', '', post.body)
+
     def _strip_html_tags(posts):
         try:
             from bs4 import BeautifulSoup #@UnresolvedImport
@@ -37,12 +42,8 @@ def preprocess_posts(posts, tags):
     
         for post in posts:
             assert(isinstance(post, Post))
-            #-------------------
-            # TODO:  Problem: source-code inside the body is interpreted as normal text...
-            #        => Remove source-code from body before!!!
-            #        => Figure out how this is best realized with BeautifulSoup...
-            #-------------------
             post.body = BeautifulSoup(post.body, "html.parser").text.strip()
+
 
     def _tokenize_posts(posts, tag_names):
         ''' Customized tokenizer for our special needs! (e.g. C#, C++, ...) '''
@@ -204,9 +205,10 @@ def preprocess_posts(posts, tags):
     test_post1 = Post(1, "", u"RT @marcobonzanini: just, an example! :D http://example.com/what?q=test #NLP", [])
     test_post2 = Post(2, "", u"C++ is a test hehe wt iop complicated programming-language object oriented object-oriented-design compared to C#. AT&T Asp.Net C++!!", [])
     test_post3 = Post(3, "", u"C++~$§%) is a :=; := :D :-)) ;-)))) test ~ hehe wt~iop complicated programming-language compared to C#. AT&T Asp.Net C++ #1234 1234 !!", [])
-    posts += [test_post1, test_post2, test_post3]
+    #posts += [test_post1, test_post2, test_post3]
     # DEBUG END
 
+    _strip_code_segments(posts)
     _strip_html_tags(posts)
     _tokenize_posts(posts, tag_names)
     _filter_tokens(posts, tag_names)
