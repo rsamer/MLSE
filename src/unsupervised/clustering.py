@@ -20,7 +20,7 @@ def kmeans(number_of_clusters, posts, new_post):
     vectorizer = TfidfVectorizer(stop_words=None)
     X = vectorizer.fit_transform(documents)
 
-    model = KMeans(n_clusters=number_of_clusters, init='k-means++', max_iter=1000, n_init=1, tol=0.00004)
+    model = KMeans(n_clusters=number_of_clusters, init='k-means++', max_iter=1000, n_init=10, tol=0.00004)
     model.fit(X)
 
     print("Top terms per cluster:")
