@@ -13,14 +13,14 @@ def _posts_for_cluster(model, cluster_number, posts):
     return cluster_posts
 
 
-def kmeans(number_of_clusters, tags, posts, new_post):
+def kmeans(number_of_clusters, posts, new_post):
 
     documents = [" ".join(post.tokens) for post in posts + [new_post]]
 
     vectorizer = TfidfVectorizer(stop_words=None)
     X = vectorizer.fit_transform(documents)
 
-    model = KMeans(n_clusters=number_of_clusters, init='k-means++', max_iter=100, n_init=1)
+    model = KMeans(n_clusters=number_of_clusters, init='k-means++', max_iter=1000, n_init=1, tol=0.00004)
     model.fit(X)
 
     print("Top terms per cluster:")
@@ -49,6 +49,9 @@ def kmeans(number_of_clusters, tags, posts, new_post):
 
     tags_of_cluster_sorted = sort_tags_by_frequency(reduce(lambda x, y: x+y, [list(post.tags) for post in posts_of_cluster]))
 
-    print "Tags for new post ="
+    tag_recommendations = []
     for tag in tags_of_cluster_sorted:
-        print tag
+        if tag not in tag_recommendations:
+            tag_recommendations.append(tag)
+
+    print "Tags for new post = " + str(tag_recommendations[0:10])
