@@ -84,7 +84,8 @@ def preprocess_posts(posts, tags):
             return tokens
 
         for post in posts:
-            post.body_tokens = _tokenize_text(post.body, tag_names)
+            text = (post.title * 10) + post.body
+            post.tokens = _tokenize_text(text, tag_names)
 
     def _filter_tokens(posts, tag_names):
         regex_url = re.compile(
@@ -116,7 +117,7 @@ def preprocess_posts(posts, tags):
         regex_number = re.compile(r'^#\d+$', re.IGNORECASE)
 
         for post in posts:
-            tokens = post.body_tokens
+            tokens = post.tokens
             # remove empty tokens, numbers and those single-character words that are no letters
             tokens = filter(lambda t: len(t) > 0 and not t.isdigit() and len(single_character_tokens_re.findall(t)) == 0, tokens)
     
@@ -149,7 +150,7 @@ def preprocess_posts(posts, tags):
             # remove emoticons (regex)
             #tokens = [word for word in tokens if regex_emoticons.match(word) is None]
 
-            post.body_tokens = tokens
+            post.tokens = tokens
 
 
     def _remove_stopwords(posts):
@@ -161,7 +162,7 @@ def preprocess_posts(posts, tags):
         stop_words = stopwords.words('english')
 
         for post in posts:
-            post.body_tokens = [word for word in post.body_tokens if word not in stop_words]
+            post.tokens = [word for word in post.tokens if word not in stop_words]
 
 
     def _stemming(posts):
@@ -173,7 +174,7 @@ def preprocess_posts(posts, tags):
         porter = PorterStemmer()
 
         for post in posts:
-            post.body_tokens = [porter.stem(word) for word in post.body_tokens]
+            post.tokens = [porter.stem(word) for word in post.tokens]
 
 
     def _lemmatization(posts):
@@ -185,7 +186,7 @@ def preprocess_posts(posts, tags):
         lemmatizer = WordNetLemmatizer()
 
         for post in posts:
-            post.body_tokens = [lemmatizer.lemmatize(word) for word in post.body_tokens]
+            post.tokens = [lemmatizer.lemmatize(word) for word in post.tokens]
 
     def _pos_tagging(posts):
         try:
@@ -194,7 +195,7 @@ def preprocess_posts(posts, tags):
             raise RuntimeError('Please install nltk library!')
 
         for post in posts:
-            post.body_tokens = nltk.pos_tag(post.body_tokens)
+            post.tokens = nltk.pos_tag(post.tokens)
 
     assert isinstance(posts, list)
     tag_names = [tag.name.lower() for tag in tags]
@@ -220,9 +221,9 @@ def preprocess_posts(posts, tags):
 
     # DEBUG BEGIN
     print "\n" + ("-"*80)
-    print test_post1.body_tokens
-    print test_post2.body_tokens
-    print test_post3.body_tokens
+    print test_post1.tokens
+    print test_post2.tokens
+    print test_post3.tokens
     print "-"*80
     # DEBUG END
 

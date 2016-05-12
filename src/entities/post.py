@@ -8,7 +8,7 @@ class Post(object):
         self.title = title
         self.body = body
         self.tags = tags
-        self.body_tokens = None
+        self.tokens = None
         self._tag_names = (tag.name for tag in tags)
 
     @classmethod
