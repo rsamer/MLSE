@@ -4,6 +4,7 @@ bin/
 *.pyc
 /pyenv
 *.log
+*.pickle
 /.project
 /.pydevproject
 /data/*
