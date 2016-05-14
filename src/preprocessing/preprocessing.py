@@ -55,13 +55,13 @@ def preprocess_posts(posts, tags, filter_untagged_posts=True):
 
     def _filter_posts_with_low_score(posts, score_threshold):
         logging.info("Filtering posts having low score value")
-        print(len(posts))
-        temp = filter(lambda p: p.score <= -2, posts)
-        print(len(temp))
-        for p in temp:
-            print(str(p) + " ---> " + p.body.replace("\n", " "))
-            print "-"*80 + "\n\n"
-        import sys;sys.exit()
+#         print(len(posts))
+#         temp = filter(lambda p: p.score <= -2, posts)
+#         print(len(temp))
+#         for p in temp:
+#             print(str(p) + " ---> " + p.body.replace("\n", " "))
+#             print "-"*80 + "\n\n"
+#         import sys;sys.exit()
         return filter(lambda p: p.score >= score_threshold, posts)
 
 
