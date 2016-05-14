@@ -2,10 +2,11 @@
 
 import re
 import logging
+from entities.tag import Tag
 from entities.post import Post
-from entities.tag import sort_tags_by_frequency
 import nltk
 import os
+import itertools
 
 main_dir = os.path.dirname(os.path.realpath(__file__)) + "/../../"
 nltk.data.path = [main_dir + "corpora/nltk_data"]
@@ -17,24 +18,68 @@ tokens_punctuation_re = re.compile(r"(\.|!|\?|\(|\)|~)$")
 single_character_tokens_re = re.compile(r"^\W$")
 
 
-def preprocess_tags_and_sort_by_frequency(tags, frequency_threshold):
+def filter_tags_and_sort_by_frequency(tags, frequency_threshold):
+    ''' Sorts tags by frequency and removes less frequent tags according to given threshold.
+        Finally, unassigns removed tags from given post-list.
+    '''
+    logging.info("-"*80)
+    logging.info("Filter tags and sort by frequency")
+    logging.info("-"*80)
     assert isinstance(tags, list)
-    sorted_tags = sort_tags_by_frequency(tags)
+    reverse_sorted_tags = Tag.sort_tags_by_frequency(tags, reverse=True) # descendent order
+
+    if frequency_threshold <= 1:
+        return reverse_sorted_tags
+
     # TODO: look for similar tag names and merge them together, e.g. "java", "java programming"??
     #       for this we should simply download the synonym list from StackExchange as mentioned in the paper!
-    #
-    # TODO: also remove all removed tags from posts in order to avoid data-inconsistency issues!!!
-    return [tag for tag in sorted_tags if tag.count >= frequency_threshold]
+    return list(itertools.takewhile(lambda tag: tag.count >= frequency_threshold, iter(reverse_sorted_tags)))
 
 
-def preprocess_posts(posts, tags):
+def preprocess_posts(posts, tags, filter_untagged_posts=True):
+
+    logging.info("-"*80)
+    logging.info("Preprocessing posts")
+    logging.info("-"*80)
+
+    def _strip_invalid_tags_from_posts_and_remove_untagged_posts(posts, tags):
+        ''' unassigns all removed tags from posts to avoid data-inconsistency issues '''
+        logging.info("Stripping invalid tags from posts and removing untagged posts")
+        new_post_list = []
+        for post in posts:
+            post.tag_set = post.tag_set.intersection(tags)
+            if len(post.tag_set):
+                new_post_list.append(post)
+        return new_post_list
+
+
+    def _filter_posts_with_low_score(posts, score_threshold):
+        logging.info("Filtering posts having low score value")
+        print(len(posts))
+        temp = filter(lambda p: p.score <= -2, posts)
+        print(len(temp))
+        for p in temp:
+            print(str(p) + " ---> " + p.body.replace("\n", " "))
+            print "-"*80 + "\n\n"
+        import sys;sys.exit()
+        return filter(lambda p: p.score >= score_threshold, posts)
+
+
+    def _to_lower_case(posts):
+        logging.info("Lower case post body")
+        for post in posts:
+            post.body = post.body.lower()
+
 
     def _strip_code_segments(posts):
+        logging.info("Stripping code snippet from posts")
         for post in posts:
             assert (isinstance(post, Post))
             post.body = re.sub('<code>.*?</code>', '', post.body)
 
+
     def _strip_html_tags(posts):
+        logging.info("Stripping HTML-tags from posts")
         try:
             from bs4 import BeautifulSoup #@UnresolvedImport
         except ImportError:
@@ -45,8 +90,24 @@ def preprocess_posts(posts, tags):
             post.body = BeautifulSoup(post.body, "html.parser").text.strip()
 
 
+    def _replace_adjacent_tag_occurences(posts, tag_names):
+        ''' replaces "-" by " " in all tag names e.g. "object-oriented" -> "object oriented"
+            and then looks for two (or more) adjacent words that represent a known tag name
+            e.g. current token list ["I", "love", "object", "oriented", "code"]
+            -> should be converted to ["I", "love", "object-oriented", "code"]
+            since "object-oriented" is a tag name in our tag list
+        '''
+        for tag_name in tag_names:
+            splitted_tag_name = tag_name.replace("-", " ")
+            if splitted_tag_name == tag_name:
+                continue
+            for post in posts:
+                post.body = post.body.replace(splitted_tag_name, tag_name)
+                
+
     def _tokenize_posts(posts, tag_names):
         ''' Customized tokenizer for our special needs! (e.g. C#, C++, ...) '''
+        logging.info("Tokenizing posts")
         # based on: http://stackoverflow.com/a/36463112
         regex_str = [
             #r'(?:[:;=\^\-oO][\-_\.]?[\)\(\]\[\-DPOp_\^\\\/])', # emoticons (Note: they are removed after tokenization!) # TODO why not here?
@@ -64,7 +125,7 @@ def preprocess_posts(posts, tags):
         ]
         tokens_ignore_re = re.compile(r'('+'|'.join(regex_str)+')', re.VERBOSE | re.IGNORECASE)
 
-        def _tokenize_text(s, tag_names, lowercase=True):
+        def _tokenize_text(s, tag_names):
             def tokenize(s):
                 return tokens_ignore_re.findall(s)
     
@@ -78,8 +139,6 @@ def preprocess_posts(posts, tags):
             # prepending and appending a single whitespace to the text
             # makes the regular expressions less complicated
             tokens = tokenize(" " + s + " ")
-            if lowercase:
-                tokens = [token.lower() for token in tokens]
             tokens = [token.strip() for token in tokens] # remove whitespaces before and after
             tokens = map(filter_all_tailing_punctuation_characters, tokens)
             return tokens
@@ -88,7 +147,9 @@ def preprocess_posts(posts, tags):
             text = (post.title * 10) + post.body
             post.tokens = _tokenize_text(text, tag_names)
 
+
     def _filter_tokens(posts, tag_names):
+        logging.info("Filter posts' tokens")
         regex_url = re.compile(
             r'^(?:http|ftp)s?://'  # http:// https:// ftp:// ftps://
             r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|'  # domain...
@@ -117,20 +178,25 @@ def preprocess_posts(posts, tags):
 
         regex_number = re.compile(r'^#\d+$', re.IGNORECASE)
 
+        total_number_of_filtered_tokens = 0
+        total_number_of_tokens = 0
         for post in posts:
             tokens = post.tokens
+            num_of_unfiltered_tokens = len(tokens)
+            total_number_of_tokens += num_of_unfiltered_tokens
+
             # remove empty tokens, numbers and those single-character words that are no letters
             tokens = filter(lambda t: len(t) > 0 and not t.isdigit() and len(single_character_tokens_re.findall(t)) == 0, tokens)
     
             # remove single-character words that are not part of our tag list
             tokens = filter(lambda t: len(t) > 1 or t in tag_names, tokens)
-    
+
             # remove "'s" at the end
             # "'s" is not useful for us because it may only indicate the verb "be", "have"
             # (e.g. "He's got ..." or "It's ...")
             # or may indicate a possessive nouns (e.g. His wife's shoes...)
             tokens = map(lambda t: t[:-2] if t.endswith("'s") else t, tokens)
-    
+
             # remove "s'" at the end
             # "s'" is also not useful for us since it indicates the plural version
             # of possessive nouns (e.g. the planets' orbits)
@@ -140,6 +206,7 @@ def preprocess_posts(posts, tags):
             tokens = map(lambda t: t[:-2] if t.endswith("'ve") else t, tokens)
 
             # remove urls
+            # XXX: not sure if this is removes important words! => word.startswith("https://")
             tokens = [word for word in tokens if regex_url.match(word) is None]
 
             # remove numbers starting with #
@@ -152,9 +219,16 @@ def preprocess_posts(posts, tags):
             #tokens = [word for word in tokens if regex_emoticons.match(word) is None]
 
             post.tokens = tokens
+            total_number_of_filtered_tokens += (num_of_unfiltered_tokens - len(post.tokens))
+
+        if total_number_of_tokens != 0:
+            logging.info("Removed {} ({}%) of {} tokens (altogether)".format(total_number_of_filtered_tokens,
+                         round(float(total_number_of_filtered_tokens)/total_number_of_tokens*100.0, 2),
+                         total_number_of_tokens))
 
 
     def _remove_stopwords(posts):
+        logging.info("Removing stop-words from posts' tokens")
         try:
             from nltk.corpus import stopwords
         except ImportError:
@@ -167,6 +241,7 @@ def preprocess_posts(posts, tags):
 
 
     def _stemming(posts):
+        logging.info("Stemming for posts' tokens")
         try:
             from nltk.stem.porter import PorterStemmer
         except ImportError:
@@ -179,6 +254,7 @@ def preprocess_posts(posts, tags):
 
 
     def _lemmatization(posts):
+        logging.info("Lemmatization for posts' tokens")
         try:
             from nltk.stem.wordnet import WordNetLemmatizer
         except ImportError:
@@ -190,90 +266,40 @@ def preprocess_posts(posts, tags):
             post.tokens = [lemmatizer.lemmatize(word) for word in post.tokens]
 
     def _pos_tagging(posts):
+        logging.info("Pos-tagging for posts' tokens")
         try:
             import nltk
         except ImportError:
             raise RuntimeError('Please install nltk library!')
 
+        existing_pos_tags = set()
         for post in posts:
-            post.tokens = nltk.pos_tag(post.tokens)
+            pos_tagged_tokens = nltk.pos_tag(post.tokens)
+            existing_pos_tags |= set(map(lambda t: t[1], pos_tagged_tokens))
+        print existing_pos_tags
+        import sys; sys.exit()
 
     assert isinstance(posts, list)
     tag_names = [tag.name.lower() for tag in tags]
 
-    # DEBUG BEGIN
-    test_post1 = Post(1, "", u"RT @marcobonzanini: just, an example! :D http://example.com/what?q=test #NLP", [])
-    test_post2 = Post(2, "", u"C++ is a test hehe wt iop complicated programming-language object oriented object-oriented-design compared to C#. AT&T Asp.Net C++!!", [])
-    test_post3 = Post(3, "", u"C++~$§%) is a :=; := :D :-)) ;-)))) test ~ hehe wt~iop complicated programming-language compared to C#. AT&T Asp.Net C++ #1234 1234 !!", [])
-    #posts += [test_post1, test_post2, test_post3]
-    # DEBUG END
-
+    posts = _filter_posts_with_low_score(posts, 0)
+    if filter_untagged_posts:
+        posts = _strip_invalid_tags_from_posts_and_remove_untagged_posts(posts, tags)
+    _to_lower_case(posts)
     _strip_code_segments(posts)
     _strip_html_tags(posts)
+    _replace_adjacent_tag_occurences(posts, tag_names)
     _tokenize_posts(posts, tag_names)
     _filter_tokens(posts, tag_names)
-    _remove_stopwords(posts)
-    #_lemmatization(posts) # not sure if it makes sense to use both lemmatization and stemming
-    _stemming(posts)
-    #_pos_tagging(posts)
+
+
     # TODO: remove emoticons in _filter_tokens (right AFTER tokenization and NOT before!!)
-    # DONE: remove numbers starting with "#" (e.g. #329410) in _filter_tokens
     # TODO: remove hex-numbers in _filter_tokens
     # TODO: remove very unique words that only occur once in the whole dataset _filter_tokens ??!!
 
-    # DEBUG BEGIN
-    print "\n" + ("-"*80)
-    print test_post1.tokens
-    print test_post2.tokens
-    print test_post3.tokens
-    print "-"*80
-    # DEBUG END
-
-    #--------------------------------------------------------------------------------
-    # TODO: replace "-" by " " in all tag names e.g. "object-oriented" -> "object oriented"
-    #       and then look for two (or more) adjacent words that represent a known tag name
-    #
-    #       e.g. current token list ["I", "love", "object", "oriented", "code"]
-    #     -> should be converted to ["I", "love", "object-oriented", "code"]
-    #        since "object-oriented" is a tag name in our tag list
-    #--------------------------------------------------------------------------------
+    _remove_stopwords(posts)
+    #_pos_tagging(posts)
+    #_lemmatization(posts) # not sure if it makes sense to use both lemmatization and stemming
+    _stemming(posts)
     return posts
 
-
-
-
-#---------------------------------------------------------------------------------------
-#
-# TODO: use python's multiprocess modules,
-#       since this multithreaded solution is not efficient... (see: https://wiki.python.org/moin/GlobalInterpreterLock CPython's GIL)
-#
-#---------------------------------------------------------------------------------------
-#
-#     # multithreaded
-#     from threading import Thread
-#     class _PreprocessingThread(Thread):
-#         def run(self):
-#             kwargs = self._Thread__kwargs
-#             my_posts = kwargs["posts"]
-#             tag_names = kwargs["tag_names"]
-#             _strip_html_tags(my_posts)
-#             _tokenize_posts(my_posts, tag_names)
-#             _filter_tokens(my_posts, tag_names)
-#
-#     NUMBER_OF_THREADS = 10
-#     number_of_posts_per_thread = len(posts) / NUMBER_OF_THREADS
-#     total_number_of_posts = len(posts)
-#     all_threads = []
-#     new_start_index = 0
-#     for _ in range(NUMBER_OF_THREADS):
-#         start_index = new_start_index
-#         end_index = min(start_index + number_of_posts_per_thread, (total_number_of_posts - 1))
-#         posts_for_thread = posts[start_index:(end_index+1)]
-#         thread = _PreprocessingThread(kwargs={ "posts": posts_for_thread, "tag_names": tag_names })
-#         all_threads.append(thread)
-#         new_start_index = end_index + 1
-#
-#     for thread in all_threads:
-#         thread.start()
-#     for thread in all_threads:
-#         thread.join()

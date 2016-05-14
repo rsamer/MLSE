@@ -21,5 +21,6 @@ class Tag(object):
     def __repr__(self):
         return "{}#{}".format(self.name, self.count)
 
-def sort_tags_by_frequency(tags):
-    return sorted(tags, key=lambda x: x.count, reverse=True)
+    @staticmethod
+    def sort_tags_by_frequency(tags, reverse=True):
+        return sorted(tags, key=lambda x: x.count, reverse=True)

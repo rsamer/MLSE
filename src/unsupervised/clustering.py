@@ -1,6 +1,9 @@
+# -*- coding: utf-8 -*-
+
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.cluster import KMeans
-from entities.tag import sort_tags_by_frequency
+from entities.tag import Tag
+from entities.post import Post
 
 
 def _posts_for_cluster(model, cluster_number, posts):
@@ -20,7 +23,11 @@ def kmeans(number_of_clusters, posts, new_post):
     vectorizer = TfidfVectorizer(stop_words=None)
     X = vectorizer.fit_transform(documents)
 
-    model = KMeans(n_clusters=number_of_clusters, init='k-means++', max_iter=1000, n_init=10, tol=0.00004)
+    #     n_jobs = number of jobs to use for computation. This works by computing each of the n_init runs in parallel.
+    #     -1 = all CPUs are used
+    #      1 = no parallel computing (debugging)
+    #      < -1 (n_cpus + 1 + n_jobs) are used. Thus for n_jobs = -2, all CPUs but one are used.
+    model = KMeans(n_clusters=number_of_clusters, init='k-means++', max_iter=1000, n_init=10, tol=0.00004, n_jobs=-1)
     model.fit(X)
 
     print("Top terms per cluster:")
@@ -36,18 +43,9 @@ def kmeans(number_of_clusters, posts, new_post):
     new_post_cluster = model.labels_[-1]
     posts_of_cluster = _posts_for_cluster(model, new_post_cluster, posts)
 
-    for post in posts_of_cluster:
-        for tag in post.tags:
-            tag.count = 0
+    Post.update_tag_counts_according_to_given_post_list(posts_of_cluster)
 
-    for post1 in posts_of_cluster:
-        for tag1 in post1.tags:
-            for post2 in posts_of_cluster:
-                for tag2 in post2.tags:
-                    if tag1.name == tag2.name:
-                        tag1.count += 1
-
-    tags_of_cluster_sorted = sort_tags_by_frequency(reduce(lambda x, y: x+y, [list(post.tags) for post in posts_of_cluster]))
+    tags_of_cluster_sorted = Tag.sort_tags_by_frequency(reduce(lambda x, y: x+y, [list(post.tag_set) for post in posts_of_cluster]))
 
     tag_recommendations = []
     for tag in tags_of_cluster_sorted:
@@ -55,3 +53,4 @@ def kmeans(number_of_clusters, posts, new_post):
             tag_recommendations.append(tag)
 
     print "Tags for new post = " + str(tag_recommendations[0:10])
+    return tag_recommendations
