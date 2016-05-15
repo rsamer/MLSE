@@ -48,20 +48,13 @@ def preprocess_posts(posts, tags, filter_untagged_posts=True):
         new_post_list = []
         for post in posts:
             post.tag_set = post.tag_set.intersection(tags)
-            if len(post.tag_set):
+            if len(post.tag_set) > 0:
                 new_post_list.append(post)
         return new_post_list
 
 
     def _filter_posts_with_low_score(posts, score_threshold):
         logging.info("Filtering posts having low score value")
-#         print(len(posts))
-#         temp = filter(lambda p: p.score <= -2, posts)
-#         print(len(temp))
-#         for p in temp:
-#             print(str(p) + " ---> " + p.body.replace("\n", " "))
-#             print "-"*80 + "\n\n"
-#         import sys;sys.exit()
         return filter(lambda p: p.score >= score_threshold, posts)
 
 
@@ -281,7 +274,6 @@ def preprocess_posts(posts, tags, filter_untagged_posts=True):
 
     assert isinstance(posts, list)
     tag_names = [tag.name.lower() for tag in tags]
-
     posts = _filter_posts_with_low_score(posts, 0)
     if filter_untagged_posts:
         posts = _strip_invalid_tags_from_posts_and_remove_untagged_posts(posts, tags)

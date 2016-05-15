@@ -23,12 +23,17 @@ def kmeans(number_of_clusters, posts, new_posts):
     vectorizer = TfidfVectorizer(stop_words=None)
     X = vectorizer.fit_transform(documents)
 
+    print(X.shape)
     #     n_jobs = number of jobs to use for computation. This works by computing each of the n_init runs in parallel.
     #     -1 = all CPUs are used
     #      1 = no parallel computing (debugging)
     #      < -1 (n_cpus + 1 + n_jobs) are used. Thus for n_jobs = -2, all CPUs but one are used.
-    model = KMeans(n_clusters=number_of_clusters, init='k-means++', max_iter=1000, n_init=10, tol=0.00004, n_jobs=-1)
+    model = KMeans(n_clusters=number_of_clusters, init='k-means++', max_iter=1000, n_init=10, verbose=True, tol=0.00004, n_jobs=-1)
     model.fit(X)
+
+#     from sklearn.cluster import MiniBatchKMeans
+#     model = MiniBatchKMeans(n_clusters=number_of_clusters, init='k-means++', max_iter=1000, n_init=3, verbose=True)  # Take a good look at the docstring and set options here
+#     model.fit(X)
 
     print("Top terms per cluster:")
     order_centroids = model.cluster_centers_.argsort()[:, ::-1]
@@ -41,18 +46,11 @@ def kmeans(number_of_clusters, posts, new_posts):
         print
 
     posts_tag_recommendations = []
-    for i in range(len(new_posts)):
+    for i in range(len(new_posts))[::-1]: # reverse order
         new_post_cluster = model.labels_[-(i+1)]
         posts_of_cluster = _posts_for_cluster(model, new_post_cluster, posts)
-        Post.update_tag_counts_according_to_given_post_list(posts_of_cluster)
-        tags_of_cluster_sorted = Tag.sort_tags_by_frequency(reduce(lambda x, y: x+y, [list(post.tag_set) for post in posts_of_cluster]))
-
-        tag_recommendations = []
-        for tag in tags_of_cluster_sorted:
-            if tag not in tag_recommendations:
-                tag_recommendations.append(tag)
-
-        print "Tags for new post = " + str(tag_recommendations[0:10])
-        posts_tag_recommendations += [tag_recommendations[0:10]]
-
-    return tag_recommendations
+        tags_of_cluster = Post.copied_new_counted_tags_for_posts(posts_of_cluster)
+        tags_of_cluster_sorted = Tag.sort_tags_by_frequency(tags_of_cluster)
+        print "Tags for new post = " + str(tags_of_cluster_sorted[0:10])
+        posts_tag_recommendations += [tags_of_cluster_sorted[0:10]]
+    return posts_tag_recommendations

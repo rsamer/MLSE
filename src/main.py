@@ -34,47 +34,14 @@ from entities.tag import Tag
 from entities.post import Post
 from preprocessing import preprocessing as prepr
 from unsupervised import clustering
+from util.helper import ExitCode, error, compute_hash_of_file
+from util import helper
 import logging
-import hashlib
-
-SRC_PATH = os.path.realpath(os.path.dirname(__file__))
-APP_PATH = os.path.join(SRC_PATH, "..")
-
-class ErrorCode(object):
-    SUCCESS = 0
-    FAILED = 1
-
-
-def is_complete_data_set(path):
-    required_files = ["Posts.xml", "Tags.xml"]
-    available_files = filter(lambda f: os.path.isfile(os.path.join(path, f)), required_files)
-    return set(available_files) == set(required_files)
 
 
 def usage():
-    if len(sys.argv) != 2 or not is_complete_data_set(sys.argv[1]):
-        print "No or invalid path given!"
-        print "Usage: python -m main ../data/example/"
-        sys.exit(ErrorCode.FAILED)
-
-
-def print_tags_summary(total_num_of_tags, num_filtered_tags):
-    print "-"*80
-    print "Total number of tags: %d" % total_num_of_tags
-    print "Number of remaining tags: %d" % num_filtered_tags
-    print "Removed {}% of all tags".format(round(float(total_num_of_tags-num_filtered_tags)/total_num_of_tags*100.0, 2))
-    print "-"*80
-
-
-def print_posts_summary(all_posts, num_of_all_post_assignments, filtered_posts):
-    print "-"*80
-    print "Total number of posts: %d" % len(all_posts)
-    print "Number of remaining posts: %d" % len(filtered_posts)
-    print "Removed {}% of all posts".format(round(float(len(all_posts)-len(filtered_posts))/len(all_posts)*100.0, 2))
-
-    new_posts_assignments = reduce(lambda x,y: x + y, map(lambda p: len(p.tag_set), filtered_posts))
-    print "Removed {}% of all tag assignments".format(round(float(num_of_all_post_assignments-new_posts_assignments)/num_of_all_post_assignments*100.0, 2))
-    print "-"*80
+    if len(sys.argv) != 2 or not helper.is_complete_data_set(sys.argv[1]):
+        error("No or invalid path given!\nUsage: python -m main ../data/example/")
 
 
 def setup_logging(log_level):
@@ -84,14 +51,6 @@ def setup_logging(log_level):
         format='%(asctime)s: %(levelname)7s: [%(name)s]: %(message)s',
         datefmt='%Y-%m-%d %H:%M:%S',
     )
-
-
-def compute_hash_of_file(file_path):
-    hash_md5 = hashlib.md5()
-    with open(file_path, "rb") as f:
-        for chunk in iter(lambda: f.read(4096), b""):
-            hash_md5.update(chunk)
-    return hash_md5.hexdigest()
 
 
 def main(argv=None):
@@ -109,15 +68,18 @@ def main(argv=None):
     name_to_tag_map = Tag.parse_tags(tags_path)
     all_tags = name_to_tag_map.values()
     all_posts = Post.parse_posts(posts_path, name_to_tag_map)
+    Tag.update_tag_counts_according_to_posts(all_tags, all_posts)
     all_posts_assignments = reduce(lambda x,y: x + y, map(lambda p: len(p.tag_set), all_posts))
 
-    cache_dir = os.path.join(APP_PATH, "temp", "cache")
+    cache_dir = os.path.join(helper.APP_PATH, "temp", "cache")
+    helper.make_dir_if_not_exists(cache_dir)
     cached_tags_file = os.path.join(cache_dir, full_hash + "_tags.pickle")
     cached_posts_file = os.path.join(cache_dir, full_hash + "_posts.pickle")
     if not os.path.exists(cached_tags_file) or not os.path.exists(cached_posts_file):
-        TAG_FREQUENCY_THRESHOLD = 30#8
+        TAG_FREQUENCY_THRESHOLD = 8
         tags = prepr.filter_tags_and_sort_by_frequency(all_tags, TAG_FREQUENCY_THRESHOLD)
         posts = prepr.preprocess_posts(all_posts, tags, filter_untagged_posts=True)
+        Tag.update_tag_counts_according_to_posts(tags, posts)
         with open(cached_tags_file, 'wb') as fp:
             pickle.dump(tags, fp)
         with open(cached_posts_file, 'wb') as fp:
@@ -130,8 +92,8 @@ def main(argv=None):
         with open(cached_posts_file, 'r') as fp:
             posts = pickle.load(fp)
 
-    print_tags_summary(len(all_tags), len(tags))
-    print_posts_summary(all_posts, all_posts_assignments, posts)
+    helper.print_tags_summary(len(all_tags), len(tags))
+    helper.print_posts_summary(all_posts, all_posts_assignments, posts)
 
     # DEBUG BEGIN
     test_post1 = Post(1, "", u"RT @marcobonzanini: just, an example! :D http://example.com/what?q=test #NLP", set(), 100)
@@ -153,7 +115,7 @@ def main(argv=None):
 
     # TODO: continue here...
 
-    return ErrorCode.SUCCESS
+    return ExitCode.SUCCESS
 
 if __name__ == "__main__":
     sys.exit(main())
