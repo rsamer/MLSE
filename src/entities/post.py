@@ -14,6 +14,7 @@ class Post(object):
         self.score = score
         self.answers = None
         self.tokens = None
+        self.tokens_pos_tags = None
 
 
     @classmethod

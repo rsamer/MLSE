@@ -31,7 +31,7 @@ def filter_tags_and_sort_by_frequency(tags, frequency_threshold):
     if frequency_threshold <= 1:
         return reverse_sorted_tags
 
-    # TODO: look for similar tag names and merge them together, e.g. "java", "java programming"??
+    # TODO: (end-term) look for similar tag names and merge them together, e.g. "java", "java programming"??
     #       for this we should simply download the synonym list from StackExchange as mentioned in the paper!
     return list(itertools.takewhile(lambda tag: tag.count >= frequency_threshold, iter(reverse_sorted_tags)))
 
@@ -59,8 +59,9 @@ def preprocess_posts(posts, tags, filter_untagged_posts=True):
 
 
     def _to_lower_case(posts):
-        logging.info("Lower case post body")
+        logging.info("Lower case post title and body")
         for post in posts:
+            post.title = post.title.lower()
             post.body = post.body.lower()
 
 
@@ -80,6 +81,7 @@ def preprocess_posts(posts, tags, filter_untagged_posts=True):
     
         for post in posts:
             assert(isinstance(post, Post))
+            post.title = BeautifulSoup(post.title, "html.parser").text.strip()
             post.body = BeautifulSoup(post.body, "html.parser").text.strip()
 
 
@@ -137,7 +139,7 @@ def preprocess_posts(posts, tags, filter_untagged_posts=True):
             return tokens
 
         for post in posts:
-            text = (post.title * 10) + post.body
+            text = ((post.title + " ") * 10) + post.body
             post.tokens = _tokenize_text(text, tag_names)
 
 
@@ -265,11 +267,36 @@ def preprocess_posts(posts, tags, filter_untagged_posts=True):
         except ImportError:
             raise RuntimeError('Please install nltk library!')
 
+        '''
+        Tag    Meaning    English Examples
+        ADJ    adjective    new, good, high, special, big, local
+        ADP    adposition    on, of, at, with, by, into, under
+        ADV    adverb    really, already, still, early, now
+        CONJ    conjunction    and, or, but, if, while, although
+        DET    determiner, article    the, a, some, most, every, no, which
+        NOUN    noun    year, home, costs, time, Africa
+        NUM    numeral    twenty-four, fourth, 1991, 14:24
+        PRT    particle    at, on, out, over per, that, up, with
+        PRON    pronoun    he, their, her, its, my, I, us
+        VERB    verb    is, say, told, given, playing, would
+        .    punctuation marks    . , ; !
+        X    other    ersatz, esprit, dunno, gr8, univeristy
+        '''
+        pos_tags_black_list = ['CONJ', 'DET', 'PRT', 'PRON', '.']
         existing_pos_tags = set()
+        removed_tokens = set()
         for post in posts:
-            pos_tagged_tokens = nltk.pos_tag(post.tokens)
+            pos_tagged_tokens = nltk.pos_tag(post.tokens, tagset='universal')
+            tagged_tokens = filter(lambda t: t[1] not in pos_tags_black_list, pos_tagged_tokens)
+            post.tokens = map(lambda t: t[0], tagged_tokens)
+            post.tokens_pos_tags = map(lambda t: t[1], tagged_tokens)
+            removed_tokens |= set(filter(lambda t: t[1] in pos_tags_black_list, pos_tagged_tokens))
+            #print "-"*80
+            #print post.tokens
             existing_pos_tags |= set(map(lambda t: t[1], pos_tagged_tokens))
+        print "="*80 + "\n\n"
         print existing_pos_tags
+        print removed_tokens
         import sys; sys.exit()
 
     assert isinstance(posts, list)
@@ -290,7 +317,7 @@ def preprocess_posts(posts, tags, filter_untagged_posts=True):
     # TODO: remove very unique words that only occur once in the whole dataset _filter_tokens ??!!
 
     _remove_stopwords(posts)
-    #_pos_tagging(posts)
+    _pos_tagging(posts)
     #_lemmatization(posts) # not sure if it makes sense to use both lemmatization and stemming
     _stemming(posts)
     return posts
