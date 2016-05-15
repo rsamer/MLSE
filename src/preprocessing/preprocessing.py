@@ -297,7 +297,6 @@ def preprocess_posts(posts, tags, filter_untagged_posts=True):
         print "="*80 + "\n\n"
         print existing_pos_tags
         print removed_tokens
-        import sys; sys.exit()
 
     assert isinstance(posts, list)
     tag_names = [tag.name.lower() for tag in tags]
