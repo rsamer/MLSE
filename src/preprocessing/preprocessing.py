@@ -186,6 +186,8 @@ def preprocess_posts(posts, tags, filter_untagged_posts=True, filter_less_releva
               <3                         # heart
             )""", re.IGNORECASE)
 
+        regex_hex_numbers = re.compile(r'x[0-9a-fA-F]+', re.IGNORECASE)
+
         with open(emoticons_data_file) as emoticons_file: emoticons_list = emoticons_file.readlines()
 
         regex_number = re.compile(r'^#\d+$', re.IGNORECASE)
@@ -223,6 +225,9 @@ def preprocess_posts(posts, tags, filter_untagged_posts=True, filter_less_releva
 
             # remove numbers starting with #
             tokens = [word for word in tokens if regex_number.match(word) is None]
+
+            # remove hexadecimal numbers
+            tokens = [word for word in tokens if regex_hex_numbers.match(word) is None]
 
             # remove emoticons (list from https://en.wikipedia.org/wiki/List_of_emoticons)
             #tokens = [word for word in tokens if word not in emoticons_list]

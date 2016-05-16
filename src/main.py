@@ -33,7 +33,7 @@ from entities import post
 from entities.tag import Tag
 from entities.post import Post
 from preprocessing import preprocessing as prepr
-from unsupervised import clustering
+from unsupervised import clustering, evaluation
 from util.helper import ExitCode, error, compute_hash_of_file
 from util import helper
 import logging
@@ -97,7 +97,7 @@ def main(argv=None):
 
     # DEBUG BEGIN
     test_post1 = Post(1, "", u"RT @marcobonzanini: just, an example! :D http://example.com/what?q=test #NLP", set(), 100)
-    test_post2 = Post(2, "", u"A b C d e f g h i j k f# u# and C++ is a test hehe wt iop complicated programming-languages object oriented object-oriented-design compared to C#. AT&T Asp.Net C++!!", set(), 100)
+    test_post2 = Post(2, "", u"0x2AF3 #143152 A b C d e f g h i j k f# u# and C++ is a test hehe wt iop complicated programming-languages object oriented object-oriented-design compared to C#. AT&T Asp.Net C++!!", set(), 100)
     test_post3 = Post(3, "", u"C++~$§%) is a :=; := :D :-)) ;-)))) testing is important! Blue houses are... ~ hehe wt~iop complicated programming-language compared to C#. AT&T Asp.Net C++ #1234 1234 !!", set(), 100)
     prepr.preprocess_posts([test_post1, test_post2, test_post3], tags, filter_untagged_posts=False, filter_less_relevant_posts=False)
     print "\n" + ("-"*80) + "\n" + str(test_post1.tokens) + "\n" + str(test_post2.tokens) + "\n" + str(test_post3.tokens) + "\n" + "-"*80
@@ -113,6 +113,14 @@ def main(argv=None):
     print new_post2.tokens
     result = clustering.kmeans(len(tags)/3, posts, new_posts)
     print result
+
+    # evaluation of clustering
+    evaluation_posts = posts[0:int(len(posts)*0.2)]
+    test_posts = posts[int(len(posts)*0.2):]
+    clustering.kmeans(len(tags), test_posts, evaluation_posts)
+    precision = evaluation.precision(evaluation_posts)
+
+    print "Overall precision = " + str(precision)
 
     # TODO: continue here...
 

@@ -21,6 +21,7 @@ class Post(object):
         self.title = title
         self.body = body
         self.tag_set = tag_set
+        self.tag_set_prediction = None
         self.score = score
         self.accepted_answer_id = accepted_answer_id
         self.answers = answers
