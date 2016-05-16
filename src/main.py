@@ -33,7 +33,7 @@ from entities import post
 from entities.tag import Tag
 from entities.post import Post
 from preprocessing import preprocessing as prepr
-from unsupervised import clustering, evaluation
+from unsupervised import clustering, evaluation, hac
 from util.helper import ExitCode, error, compute_hash_of_file
 from util import helper
 import logging
@@ -110,13 +110,30 @@ def main(argv=None):
     new_post1 = Post(1, u"Java.util.List thread-safe?", u"Is a java.util.List thread-safe? From C++ I know that std::vectors are not thread-safe. Concurrency issues are very hard to debug and very important to find because nowadays most devices have a multicore cpu.", set(), 100)
     new_post2 = Post(2, u"Choosing a Java Web Framework now?", u'we are in the planning stage of migrating a large website which is built on a custom developed mvc framework to a java based web framework which provides built-in support for ajax, rich media content, mashup, templates based layout, validation, maximum html/java code separation. Grails looked like a good choice, however, we do not want to use a scripting language. We want to continue using java. Template based layout is a primary concern as we intend to use this web application with multiple web sites with similar functionality but radically different look and feel. Is portal based solution a good fit to this problem? Any insights on using "Spring Roo" or "Play" will be very helpful. I did find similar posts like this, but it is more than a year old. Things have surely changed in the mean time! EDIT 1: Thanks for the great answers! This site is turning to be the best single source for in-the-trenches programmer info. However, I was expecting more info on using a portal-cms duo. Jahia looks goods. Anything similar?', set(), 100)
     new_posts = prepr.preprocess_posts([new_post1, new_post2], tags, filter_untagged_posts=False)
-    print new_post2.tokens
-    clustering.kmeans(len(tags)*2/3, posts, new_posts)
+
+    #clustering.kmeans(len(tags)*2/3, posts, new_posts)
+    #helper.clear_tag_predictions_for_posts(new_posts)
+    #hac.hac(len(tags)*2/3, posts, new_posts)
 
     # evaluation of clustering
     evaluation_posts = posts[0:int(len(posts)*0.2)]
     test_posts = posts[int(len(posts)*0.2):]
+
+    print "-" * 80
+    print "k-Means clustering"
+    print "-" * 80
+
     clustering.kmeans(len(tags), test_posts, evaluation_posts)
+    precision = evaluation.precision(evaluation_posts)
+
+    print "Overall precision = " + str(precision)
+
+    print "-" * 80
+    print "HAC clustering"
+    print "-" * 80
+
+    helper.clear_tag_predictions_for_posts(new_posts)
+    hac.hac(len(tags), test_posts, evaluation_posts)
     precision = evaluation.precision(evaluation_posts)
 
     print "Overall precision = " + str(precision)

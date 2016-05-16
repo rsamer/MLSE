@@ -63,3 +63,7 @@ def compute_hash_of_file(file_path):
             hash_md5.update(chunk)
     return hash_md5.hexdigest()
 
+
+def clear_tag_predictions_for_posts(posts):
+    for post in posts:
+        post.tag_set_prediction = None
