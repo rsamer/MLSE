@@ -33,7 +33,8 @@ from entities import post
 from entities.tag import Tag
 from entities.post import Post
 from preprocessing import preprocessing as prepr
-from unsupervised import clustering, evaluation, hac
+from unsupervised import evaluation, hac
+from unsupervised import kmeans
 from util.helper import ExitCode, error, compute_hash_of_file
 from util import helper
 import logging
@@ -82,10 +83,10 @@ def main(argv=None):
         tags = prepr.filter_tags_and_sort_by_frequency(all_tags, TAG_FREQUENCY_THRESHOLD)
         posts = prepr.preprocess_posts(all_posts, tags, filter_untagged_posts=True)
         Tag.update_tag_counts_according_to_posts(tags, posts)
-        #with open(cached_tags_file, 'wb') as fp:
-        #    pickle.dump(tags, fp)
-        #with open(cached_posts_file, 'wb') as fp:
-        #    pickle.dump(posts, fp)
+        with open(cached_tags_file, 'wb') as fp:
+            pickle.dump(tags, fp)
+        with open(cached_posts_file, 'wb') as fp:
+            pickle.dump(posts, fp)
     else:
         # loaded from cache
         logging.info("Cache hit!")
@@ -113,30 +114,41 @@ def main(argv=None):
 #     new_post2 = Post(2, u"Choosing a Java Web Framework now?", u'we are in the planning stage of migrating a large website which is built on a custom developed mvc framework to a java based web framework which provides built-in support for ajax, rich media content, mashup, templates based layout, validation, maximum html/java code separation. Grails looked like a good choice, however, we do not want to use a scripting language. We want to continue using java. Template based layout is a primary concern as we intend to use this web application with multiple web sites with similar functionality but radically different look and feel. Is portal based solution a good fit to this problem? Any insights on using "Spring Roo" or "Play" will be very helpful. I did find similar posts like this, but it is more than a year old. Things have surely changed in the mean time! EDIT 1: Thanks for the great answers! This site is turning to be the best single source for in-the-trenches programmer info. However, I was expecting more info on using a portal-cms duo. Jahia looks goods. Anything similar?', set(), 100)
 #     new_posts = prepr.preprocess_posts([new_post1, new_post2], tags, filter_untagged_posts=False, filter_less_relevant_posts=False)
 #     print new_post2.tokens
-#     result = clustering.kmeans(len(tags)/3, posts, new_posts)
+#     result = kmeans.kmeans(len(tags)/3, posts, new_posts)
 #     print result
 
 
-    # evaluation of clustering
-    posts_train, posts_test, _, _ = train_test_split(posts, np.zeros(len(posts)), test_size=0.2, random_state=42)
+    # split data set
+    train_posts, test_posts, _, _ = train_test_split(posts, np.zeros(len(posts)), test_size=0.2, random_state=42)
 
-    print "-" * 80
-    print "k-Means clustering"
-    print "-" * 80
-
-    clustering.kmeans(len(tags), posts_train, posts_test)
-    precision = evaluation.precision(posts_test)
+    from supervised import naive_bayes
+    naive_bayes.naive_bayes(train_posts, test_posts, tags)
+    precision = evaluation.precision(test_posts)
+    recall = evaluation.recall(test_posts)
     print "Overall precision = " + str(precision)
+    print "Overall recall = " + str(recall)
+    sys.exit(0)
 
     print "-" * 80
-    print "HAC clustering"
+    print "k-Means kmeans"
     print "-" * 80
-
-    helper.clear_tag_predictions_for_posts(posts_test)
-    hac.hac(len(tags), posts_train, posts_test)
-    precision = evaluation.precision(posts_test)
-
+    kmeans.kmeans(len(tags), train_posts, test_posts)
+    # evaluation of kmeans
+    precision = evaluation.precision(test_posts)
+    recall = evaluation.recall(test_posts)
     print "Overall precision = " + str(precision)
+    print "Overall recall = " + str(recall)
+
+#     print "-" * 80
+#     print "HAC kmeans"
+#     print "-" * 80
+#     helper.clear_tag_predictions_for_posts(posts_test)
+#     hac.hac(len(tags), posts_train, posts_test)
+#     # evaluation of hac
+#     precision = evaluation.precision(posts_test)
+#     recall = evaluation.recall(posts_test)
+#     print "Overall precision = " + str(precision)
+#     print "Overall recall = " + str(recall)
 
     return ExitCode.SUCCESS
 

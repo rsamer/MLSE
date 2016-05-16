@@ -3,17 +3,16 @@
 import logging
 from xml.dom import minidom
 
+class Answer(object):
+    def __init__(self, pid, body, score):
+        self.pid = pid
+        self.body = body
+        self.score = score
+
+    def __repr__(self):
+        return "Answer({},score={},'{}'".format(self.pid, self.score, self.body[:20].encode("utf8"))
+
 class Post(object):
-
-    class Answer(object):
-        def __init__(self, pid, body, score):
-            self.pid = pid
-            self.body = body
-            self.score = score
-
-        def __repr__(self):
-            return "Answer({},score={},'{}'".format(self.pid, self.score, self.body[:20].encode("utf8"))
-
 
     def __init__(self, pid, title, body, tag_set, score, accepted_answer_id=None, answers=[]):
         assert isinstance(tag_set, set)
@@ -57,7 +56,7 @@ class Post(object):
                 question_id = int(s.attributes["ParentId"].value)
                 if question_id not in grouped_answers:
                     grouped_answers[question_id] = []
-                grouped_answers[question_id] += [cls.Answer(pid, body, score)]
+                grouped_answers[question_id] += [Answer(pid, body, score)]
                 continue
             elif post_type_id >= 3:
                 continue # omit

@@ -22,8 +22,8 @@ def kmeans(number_of_clusters, train_posts, test_posts):
 
     vectorizer = TfidfVectorizer(stop_words=None)
     X = vectorizer.fit_transform(documents)
+    print("n_samples: %d, n_features: %d" % X.shape)
 
-    print(X.shape)
     #     n_jobs = number of jobs to use for computation. This works by computing each of the n_init runs in parallel.
     #     -1 = all CPUs are used
     #      1 = no parallel computing (debugging)
@@ -47,6 +47,7 @@ def kmeans(number_of_clusters, train_posts, test_posts):
 
     test_posts_tag_recommendations = []
     print "="*80
+    # TODO: REVIEW THIS!!!
     for i in range(len(test_posts))[::-1]: # reverse order
         test_post_cluster = model.labels_[-(i+1)]
         posts_of_cluster = _posts_for_cluster(model, test_post_cluster, train_posts)
@@ -54,6 +55,6 @@ def kmeans(number_of_clusters, train_posts, test_posts):
         tags_of_cluster_sorted = Tag.sort_tags_by_frequency(tags_of_cluster)
         print "Tags for new post = " + str(tags_of_cluster_sorted[0:10])
         post = test_posts[i]
-        post.tag_set_prediction = tags_of_cluster_sorted[:3]
+        post.tag_set_prediction = tags_of_cluster_sorted#[:100]
         test_posts_tag_recommendations += [tags_of_cluster_sorted[0:10]]
     return test_posts_tag_recommendations

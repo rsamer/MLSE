@@ -29,6 +29,7 @@ def hac(number_of_clusters, posts, new_posts):
     model.fit(X.toarray())
 
     posts_tag_recommendations = []
+    # TODO: REVIEW THIS!!!
     for i in range(len(new_posts))[::-1]:  # reverse order
         new_post_cluster = model.labels_[-(i + 1)]
         posts_of_cluster = _posts_for_cluster(model, new_post_cluster, posts)
