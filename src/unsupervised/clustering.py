@@ -16,9 +16,9 @@ def _posts_for_cluster(model, cluster_number, posts):
     return cluster_posts
 
 
-def kmeans(number_of_clusters, posts, new_posts):
+def kmeans(number_of_clusters, train_posts, test_posts):
 
-    documents = [" ".join(post.tokens) for post in posts + new_posts]
+    documents = [" ".join(post.tokens) for post in train_posts + test_posts]
 
     vectorizer = TfidfVectorizer(stop_words=None)
     X = vectorizer.fit_transform(documents)
@@ -45,15 +45,15 @@ def kmeans(number_of_clusters, posts, new_posts):
             print ' %s' % terms[ind],
         print
 
-    posts_tag_recommendations = []
-    for i in range(len(new_posts))[::-1]: # reverse order
-        new_post_cluster = model.labels_[-(i+1)]
-        posts_of_cluster = _posts_for_cluster(model, new_post_cluster, posts)
+    test_posts_tag_recommendations = []
+    print "="*80
+    for i in range(len(test_posts))[::-1]: # reverse order
+        test_post_cluster = model.labels_[-(i+1)]
+        posts_of_cluster = _posts_for_cluster(model, test_post_cluster, train_posts)
         tags_of_cluster = Post.copied_new_counted_tags_for_posts(posts_of_cluster)
         tags_of_cluster_sorted = Tag.sort_tags_by_frequency(tags_of_cluster)
         print "Tags for new post = " + str(tags_of_cluster_sorted[0:10])
-        posts_tag_recommendations += [tags_of_cluster_sorted[0:10]]
-
-        post = new_posts[i]
-        post.tag_set_prediction = tags_of_cluster_sorted[0:2]
-    return posts_tag_recommendations
+        post = test_posts[i]
+        post.tag_set_prediction = tags_of_cluster_sorted[:1]#:3]
+        test_posts_tag_recommendations += [tags_of_cluster_sorted[0:10]]
+    return test_posts_tag_recommendations
