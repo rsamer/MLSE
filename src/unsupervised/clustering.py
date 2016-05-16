@@ -54,6 +54,6 @@ def kmeans(number_of_clusters, train_posts, test_posts):
         tags_of_cluster_sorted = Tag.sort_tags_by_frequency(tags_of_cluster)
         print "Tags for new post = " + str(tags_of_cluster_sorted[0:10])
         post = test_posts[i]
-        post.tag_set_prediction = tags_of_cluster_sorted[:1]#:3]
+        post.tag_set_prediction = tags_of_cluster_sorted[:3]
         test_posts_tag_recommendations += [tags_of_cluster_sorted[0:10]]
     return test_posts_tag_recommendations

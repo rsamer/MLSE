@@ -88,7 +88,7 @@ class Post(object):
 
     def contains_tag_with_name(self, tag_name):
         for tag in self.tag_set:
-            if tag.name == tag_name:
+            if tag.name in tag_name or tag_name in tag.name:
                 return True
         return False
 
