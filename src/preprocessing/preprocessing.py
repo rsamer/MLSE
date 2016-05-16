@@ -36,11 +36,24 @@ def filter_tags_and_sort_by_frequency(tags, frequency_threshold):
     return list(itertools.takewhile(lambda tag: tag.count >= frequency_threshold, iter(reverse_sorted_tags)))
 
 
-def preprocess_posts(posts, tags, filter_untagged_posts=True):
+def preprocess_posts(posts, tags, filter_untagged_posts=True, filter_less_relevant_posts=True):
 
     logging.info("-"*80)
     logging.info("Preprocessing posts")
     logging.info("-"*80)
+
+    def _add_accepted_answer_text_to_body(posts):
+        for post in posts:
+            if post.accepted_answer_id is None:
+                continue
+            accepted_answer = post.accepted_answer()
+            if accepted_answer is None:
+                continue
+            #assert accepted_answer is not None
+            if accepted_answer.score >= 0:
+                post.body += (" " + accepted_answer.body)*10
+                print post.body
+                print "-"*80
 
     def _strip_invalid_tags_from_posts_and_remove_untagged_posts(posts, tags):
         ''' unassigns all removed tags from posts to avoid data-inconsistency issues '''
@@ -53,9 +66,13 @@ def preprocess_posts(posts, tags, filter_untagged_posts=True):
         return new_post_list
 
 
-    def _filter_posts_with_low_score(posts, score_threshold):
-        logging.info("Filtering posts having low score value")
-        return filter(lambda p: p.score >= score_threshold, posts)
+    def _filter_less_relevant_posts(posts, score_threshold):
+        logging.info("Filtering less relevant posts according to #answers and score value")
+        # filter posts having low score according to given threshold
+        posts = filter(lambda p: p.score >= score_threshold, posts)
+        posts = filter(lambda p: p.accepted_answer_id is not None, posts)
+        posts = filter(lambda p: len(p.answers) > 0 or p.score > 0, posts)
+        return posts
 
 
     def _to_lower_case(posts):
@@ -300,7 +317,9 @@ def preprocess_posts(posts, tags, filter_untagged_posts=True):
 
     assert isinstance(posts, list)
     tag_names = [tag.name.lower() for tag in tags]
-    posts = _filter_posts_with_low_score(posts, 0)
+    _add_accepted_answer_text_to_body(posts)
+    if filter_less_relevant_posts:
+        posts = _filter_less_relevant_posts(posts, 0)
     if filter_untagged_posts:
         posts = _strip_invalid_tags_from_posts_and_remove_untagged_posts(posts, tags)
     _to_lower_case(posts)
@@ -316,7 +335,7 @@ def preprocess_posts(posts, tags, filter_untagged_posts=True):
     # TODO: remove very unique words that only occur once in the whole dataset _filter_tokens ??!!
 
     _remove_stopwords(posts)
-    _pos_tagging(posts)
+    #_pos_tagging(posts)
     #_lemmatization(posts) # not sure if it makes sense to use both lemmatization and stemming
     _stemming(posts)
     return posts

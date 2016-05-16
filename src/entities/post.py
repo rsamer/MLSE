@@ -1,18 +1,29 @@
 # -*- coding: utf-8 -*-
 
+import logging
 from xml.dom import minidom
 
 class Post(object):
 
+    class Answer(object):
+        def __init__(self, pid, body, score):
+            self.pid = pid
+            self.body = body
+            self.score = score
 
-    def __init__(self, pid, title, body, tag_set, score):
+        def __repr__(self):
+            return "Answer({},score={},'{}'".format(self.pid, self.score, self.body[:20].encode("utf8"))
+
+
+    def __init__(self, pid, title, body, tag_set, score, accepted_answer_id=None, answers=[]):
         assert isinstance(tag_set, set)
         self.pid = pid
         self.title = title
         self.body = body
         self.tag_set = tag_set
         self.score = score
-        self.answers = None
+        self.accepted_answer_id = accepted_answer_id
+        self.answers = answers
         self.tokens = None
         self.tokens_pos_tags = None
 
@@ -21,13 +32,36 @@ class Post(object):
     def parse_posts(cls, file_path, tag_dict):
         xmldoc = minidom.parse(file_path)
         item_list = xmldoc.getElementsByTagName('row')
-        posts = []
+        posts = {}
+        grouped_answers = {}
         for s in item_list:
             tag_set = set()
-            if int(s.attributes["PostTypeId"].value) != 1:
-                # TODO: link answers with posts
+            pid = int(s.attributes['Id'].value)
+            score = int(s.attributes['Score'].value)
+            post_type_id = int(s.attributes["PostTypeId"].value)
+            body = s.attributes['Body'].value
+            '''
+            Explanation Post Type IDs:
+            --------------------------
+            1 Question
+            2 Answer
+            3 Wiki
+            4 TagWikiExcerpt
+            5 TagWiki
+            6 ModeratorNomination
+            7 WikiPlaceholder
+            8 PrivilegeWiki
+            '''
+            if post_type_id == 2:
+                question_id = int(s.attributes["ParentId"].value)
+                if question_id not in grouped_answers:
+                    grouped_answers[question_id] = []
+                grouped_answers[question_id] += [cls.Answer(pid, body, score)]
                 continue
+            elif post_type_id >= 3:
+                continue # omit
 
+            assert post_type_id == 1
             for tag_name in s.attributes['Tags'].value.replace("<", "").split(">")[:-1]:
                 if tag_name not in tag_dict:
                     raise RuntimeError("Tag '%s' not found!" % tag_name)
@@ -36,12 +70,19 @@ class Post(object):
                     raise RuntimeError("Tag duplicate!")
                 tag_set.add(tag)
 
-            pid = int(s.attributes['Id'].value)
             title = s.attributes['Title'].value
-            body = s.attributes['Body'].value
-            score = int(s.attributes['Score'].value)
-            posts += [cls(pid, title, body, tag_set, score)]
-        return posts
+            accepted_answer_id = int(s.attributes["AcceptedAnswerId"].value) if s.hasAttribute("AcceptedAnswerId") else None
+            posts[pid] = cls(pid, title, body, tag_set, score, accepted_answer_id, [])
+
+        # finally add answers to corresponding posts
+        for question_id, answers in grouped_answers.iteritems():
+            if question_id not in posts:
+                logging.info("Ignoring answer for non existant post {}".format(question_id))
+                continue
+            corresponding_post = posts[question_id]
+            corresponding_post.answers = answers
+
+        return posts.values()
 
 
     def contains_tag_with_name(self, tag_name):
@@ -54,6 +95,15 @@ class Post(object):
     def remove_tag_set(self, tag_set_to_be_removed):
         assert isinstance(tag_set_to_be_removed, set)
         self.tag_set -= tag_set_to_be_removed
+
+
+    def accepted_answer(self):
+        if not self.accepted_answer_id: return None
+        accepted_answers = filter(lambda a: self.accepted_answer_id == a.pid, self.answers)
+        assert len(accepted_answers) <= 1, "There must be one accepted answer!"
+        if len(accepted_answers) == 0:
+            return None # TODO: rempve from example dataset...
+        return accepted_answers[0]
 
 
     @staticmethod
@@ -74,4 +124,4 @@ class Post(object):
 
 
     def __repr__(self):
-        return "Post({},score={},'{}',tag_set='{}'".format(self.pid, self.score, self.title[:10], self.tag_set)
+        return "Post({},score={},#answers={},'{}',tag_set='{}'".format(self.pid, self.score, len(self.answers), self.title[:10].encode("utf8"), self.tag_set)
