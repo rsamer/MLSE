@@ -33,7 +33,7 @@ from entities import post
 from entities.tag import Tag
 from entities.post import Post
 from preprocessing import preprocessing as prepr
-from unsupervised import clustering
+from unsupervised import clustering, evaluation
 from util.helper import ExitCode, error, compute_hash_of_file
 from util import helper
 import logging
@@ -112,6 +112,13 @@ def main(argv=None):
     new_posts = prepr.preprocess_posts([new_post1, new_post2], tags, filter_untagged_posts=False)
     print new_post2.tokens
     clustering.kmeans(len(tags)*2/3, posts, new_posts)
+
+    # evaluation of clustering
+    test_posts = posts[0:int(len(posts)*0.2)]
+    clustering.kmeans(len(tags), posts, test_posts)
+    precision = evaluation.precision(test_posts)
+
+    print "Overall precision = " + str(precision)
 
     # TODO: continue here...
 
