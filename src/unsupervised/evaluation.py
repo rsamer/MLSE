@@ -19,14 +19,14 @@ def precision(posts):
     for post in posts:
         true_positive = 0
         false_positive = 0
-
+        
         for tag in post.tag_set_prediction:
             if post.contains_tag_with_name(tag.name):
                 true_positive += 1
             else:
                 false_positive += 1
 
-        p = true_positive / (true_positive + false_positive)
+        p = float(true_positive) / float(true_positive + false_positive) if len(post.tag_set_prediction) > 0 else 0
         precisions.append(p)
 
     overall_precision = numpy.mean(precisions)

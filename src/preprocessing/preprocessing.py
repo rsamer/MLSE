@@ -51,9 +51,7 @@ def preprocess_posts(posts, tags, filter_untagged_posts=True, filter_less_releva
                 continue
             #assert accepted_answer is not None
             if accepted_answer.score >= 0:
-                post.body += (" " + accepted_answer.body)*10
-                print post.body
-                print "-"*80
+                post.body += " " + accepted_answer.body
 
     def _strip_invalid_tags_from_posts_and_remove_untagged_posts(posts, tags):
         ''' unassigns all removed tags from posts to avoid data-inconsistency issues '''
@@ -188,7 +186,8 @@ def preprocess_posts(posts, tags, filter_untagged_posts=True, filter_less_releva
 
         regex_hex_numbers = re.compile(r'x[0-9a-fA-F]+', re.IGNORECASE)
 
-        with open(emoticons_data_file) as emoticons_file: emoticons_list = emoticons_file.readlines()
+        with open(emoticons_data_file) as emoticons_file:
+            emoticons_list = emoticons_file.readlines()
 
         regex_number = re.compile(r'^#\d+$', re.IGNORECASE)
 
@@ -313,8 +312,6 @@ def preprocess_posts(posts, tags, filter_untagged_posts=True, filter_less_releva
             post.tokens = map(lambda t: t[0], tagged_tokens)
             post.tokens_pos_tags = map(lambda t: t[1], tagged_tokens)
             removed_tokens |= set(filter(lambda t: t[1] in pos_tags_black_list, pos_tagged_tokens))
-            #print "-"*80
-            #print post.tokens
             existing_pos_tags |= set(map(lambda t: t[1], pos_tagged_tokens))
         print "="*80 + "\n\n"
         print existing_pos_tags
@@ -336,7 +333,6 @@ def preprocess_posts(posts, tags, filter_untagged_posts=True, filter_less_releva
 
 
     # TODO: remove emoticons in _filter_tokens (right AFTER tokenization and NOT before!!)
-    # TODO: remove hex-numbers in _filter_tokens
     # TODO: remove very unique words that only occur once in the whole dataset _filter_tokens ??!!
 
     _remove_stopwords(posts)
