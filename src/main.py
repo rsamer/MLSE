@@ -114,8 +114,9 @@ def main(argv=None):
     clustering.kmeans(len(tags)*2/3, posts, new_posts)
 
     # evaluation of clustering
-    test_posts = posts[0:int(len(posts)*0.2)]
-    clustering.kmeans(len(tags), posts, test_posts)
+    evaluation_posts = posts[0:int(len(posts)*0.2)]
+    test_posts = posts[int(len(posts)*0.2):]
+    clustering.kmeans(len(tags), test_posts, evaluation_posts)
     precision = evaluation.precision(test_posts)
 
     print "Overall precision = " + str(precision)
