@@ -37,6 +37,6 @@ def hac(number_of_clusters, posts, new_posts):
         print "Tags for new post = " + str(tags_of_cluster_sorted[0:10])
         posts_tag_recommendations += [tags_of_cluster_sorted[0:10]]
 
-        post = new_posts[i]
+        post = new_posts[len(new_posts) - (i + 1)]
         post.tag_set_prediction = tags_of_cluster_sorted[0:2]
     return posts_tag_recommendations
