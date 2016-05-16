@@ -107,13 +107,14 @@ def preprocess_posts(posts, tags, filter_untagged_posts=True, filter_less_releva
             -> should be converted to ["I", "love", "object-oriented", "code"]
             since "object-oriented" is a tag name in our tag list
         '''
+        # TODO: if body contains text as tag
         for tag_name in tag_names:
             splitted_tag_name = tag_name.replace("-", " ")
             if splitted_tag_name == tag_name:
                 continue
             for post in posts:
                 post.body = post.body.replace(splitted_tag_name, tag_name)
-                
+
 
     def _tokenize_posts(posts, tag_names):
         ''' Customized tokenizer for our special needs! (e.g. C#, C++, ...) '''
@@ -154,7 +155,7 @@ def preprocess_posts(posts, tags, filter_untagged_posts=True, filter_less_releva
             return tokens
 
         for post in posts:
-            text = ((post.title + " ") * 10) + post.body
+            text = ((post.title + " ") * 1) + post.body
             post.tokens = _tokenize_text(text, tag_names)
 
 

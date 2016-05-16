@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
+#from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.cluster import AgglomerativeClustering
 from entities.tag import Tag
 from entities.post import Post
@@ -24,8 +24,8 @@ def hac(number_of_clusters, posts, new_posts):
     vectorizer = TfidfVectorizer(stop_words=None)
     X = vectorizer.fit_transform(documents)
 
-    C = 1 - cosine_similarity(X.T)
-    model = AgglomerativeClustering(n_clusters=number_of_clusters, linkage='average', affinity='euclidean')
+    #C = 1 - cosine_similarity(X.T)
+    model = AgglomerativeClustering(n_clusters=number_of_clusters, linkage='ward', affinity='euclidean')
     model.fit(X.toarray())
 
     posts_tag_recommendations = []
