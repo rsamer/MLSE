@@ -1,0 +1,26 @@
+Number of posts: 38315
+Number of tags: 1614
+java: 3032
+c#: 2590
+design: 2453
+design-patterns: 2112
+object-oriented: 1772
+c++: 1615
+php: 1542
+algorithms: 1465
+javascript: 1372
+architecture: 1366
+web-development: 1161
+licensing: 1158
+programming-languages: 1153
+database: 1069
+python: 1037
+programming-practices: 1017
+.net: 1015
+unit-testing: 941
+testing: 871
+c: 860
+Min tag/post: 1
+Max tag/post: 5
+Average tag size: 2.6802557745
+Total tag assignment size: 102694
