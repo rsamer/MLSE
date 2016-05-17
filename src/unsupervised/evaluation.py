@@ -10,6 +10,21 @@ def precision(posts):
     """
     assert isinstance(posts, list)
 
+#     y_predictions = []
+#     y_all = []
+#     for post in posts:
+#         for tag in post.tag_set:
+#             y_all += [tag.name]
+#             predicted_tag_names = map(lambda t: t.name, post.tag_set_prediction)
+#             y_predictions += [tag.name if tag.name in predicted_tag_names else ""]
+#     from sklearn import metrics
+#     print y_all
+#     print y_predictions
+#     print ">>>>>>>>> " + str(metrics.precision_score(y_all, y_predictions, average='macro'))
+#     print ">>>>>>>>> " + str(metrics.recall_score(y_all, y_predictions, average='macro'))
+#    metrics.f1_score()
+
+
     # https://pdfs.semanticscholar.org/b7c5/3b62e037180e42b59e5cbb5ed953c6bb00e6.pdf
     # Relative precision is calculated for each post comparing the predicted tags with the "hidden" real tags
     # Overall precision is the mean precision of all posts.

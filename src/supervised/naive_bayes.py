@@ -83,8 +83,8 @@ def plot_results(results):
 def train_and_test_bayes_for_single_tag(tag_name, X_train, y_train, X_test, y_test):
     print "Training: " + tag_name
     #nb_classifier = KNeighborsClassifier(n_neighbors=10) # <--- this is no naive bayes classifier
-    nb_classifier = BernoulliNB()#alpha=.01)
-    #nb_classifier = MultinomialNB()#alpha=.01)
+    #nb_classifier = MultinomialNB(alpha=.01)
+    nb_classifier = BernoulliNB(alpha=.01)
     t0 = time()
     nb_classifier.fit(X_train, y_train)
     train_time = time() - t0
@@ -103,9 +103,6 @@ def train_and_test_bayes_for_single_tag(tag_name, X_train, y_train, X_test, y_te
     prediction_list = map(lambda p: p[1] > p[0], prediction_probabilities_list)
     test_time = time() - t0
     score = metrics.accuracy_score(y_test, prediction_list)
-#    metrics.precision_score(y_train, y_pred, labels, pos_label, average, sample_weight)
-#    metrics.recall_score(y_true, y_pred, labels, pos_label, average, sample_weight)
-#    metrics.f1_score()
     return tag_name, prediction_positive_probabilities, score, train_time, test_time
 
 
@@ -146,10 +143,9 @@ def naive_bayes(train_posts, test_posts, tags):
         prediction_positive_probabilities_of_posts = result[1]
         for idx, test_post in enumerate(test_posts):
             positive_probability_of_post = prediction_positive_probabilities_of_posts[idx]
-            if positive_probability_of_post > 0.5:
-                if test_post not in test_post_tag_prediction_map:
-                    test_post_tag_prediction_map[test_post] = []
-                test_post_tag_prediction_map[test_post] += [(tag, positive_probability_of_post)]
+            if test_post not in test_post_tag_prediction_map:
+                test_post_tag_prediction_map[test_post] = []
+            test_post_tag_prediction_map[test_post] += [(tag, positive_probability_of_post)]
 
     avg_score = float(reduce(lambda x,y: x+y, map(lambda r: r[2], results)))/float(len(results))
     total_train_time = reduce(lambda x,y: x+y, map(lambda r: r[3], results))
@@ -164,7 +160,6 @@ def naive_bayes(train_posts, test_posts, tags):
             continue
 
         # TODO: not sure if score is perfect match...
-        print test_post_tag_prediction_map[test_post]
         sorted_tag_predictions = sorted(test_post_tag_prediction_map[test_post], key=lambda p: p[1], reverse=True)
         sorted_tags = map(lambda p: p[0], sorted_tag_predictions)
         print "Tags for test-post = {}{}".format(post, sorted_tags)

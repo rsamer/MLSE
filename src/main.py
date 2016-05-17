@@ -129,24 +129,24 @@ def main(argv=None):
     print "Overall recall = " + str(recall)
     sys.exit(0)
 
-    print "-" * 80
-    print "k-Means kmeans"
-    print "-" * 80
-    kmeans.kmeans(len(tags), train_posts, test_posts)
-    # evaluation of kmeans
-    precision = evaluation.precision(test_posts)
-    recall = evaluation.recall(test_posts)
-    print "Overall precision = " + str(precision)
-    print "Overall recall = " + str(recall)
+#     print "-" * 80
+#     print "k-Means kmeans"
+#     print "-" * 80
+#     kmeans.kmeans(len(tags), train_posts, test_posts)
+#     # evaluation of kmeans
+#     precision = evaluation.precision(test_posts)
+#     recall = evaluation.recall(test_posts)
+#     print "Overall precision = " + str(precision)
+#     print "Overall recall = " + str(recall)
 
 #     print "-" * 80
 #     print "HAC kmeans"
 #     print "-" * 80
-#     helper.clear_tag_predictions_for_posts(posts_test)
-#     hac.hac(len(tags), posts_train, posts_test)
+#     helper.clear_tag_predictions_for_posts(test_posts)
+#     hac.hac(len(tags), train_posts, test_posts)
 #     # evaluation of hac
-#     precision = evaluation.precision(posts_test)
-#     recall = evaluation.recall(posts_test)
+#     precision = evaluation.precision(test_posts)
+#     recall = evaluation.recall(test_posts)
 #     print "Overall precision = " + str(precision)
 #     print "Overall recall = " + str(recall)
 
