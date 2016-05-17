@@ -162,7 +162,7 @@ def naive_bayes(train_posts, test_posts, tags):
         # TODO: not sure if score is perfect match...
         sorted_tag_predictions = sorted(test_post_tag_prediction_map[test_post], key=lambda p: p[1], reverse=True)
         sorted_tags = map(lambda p: p[0], sorted_tag_predictions)
-        print "Tags for test-post = {}{}".format(post, sorted_tags)
+        print "Suggested Tags for test-post = {}{}".format(post, sorted_tags[:10])
         test_post.tag_set_prediction = sorted_tags[:2]
 
     return
