@@ -119,25 +119,26 @@ def main(argv=None):
 
 
     # split data set
-    train_posts, test_posts, _, _ = train_test_split(posts, np.zeros(len(posts)), test_size=0.2, random_state=42)
+    train_posts, test_posts, _, _ = train_test_split(posts, np.zeros(len(posts)), test_size=0.1, random_state=42)
 
     from supervised import naive_bayes
+    #naive_bayes.naive_bayes_single_classifier(train_posts, test_posts, tags)
     naive_bayes.naive_bayes(train_posts, test_posts, tags)
     precision = evaluation.precision(test_posts)
     recall = evaluation.recall(test_posts)
     print "Overall precision = " + str(precision)
     print "Overall recall = " + str(recall)
-    sys.exit(0)
+    sys.exit()
 
-#     print "-" * 80
-#     print "k-Means kmeans"
-#     print "-" * 80
-#     kmeans.kmeans(len(tags), train_posts, test_posts)
-#     # evaluation of kmeans
-#     precision = evaluation.precision(test_posts)
-#     recall = evaluation.recall(test_posts)
-#     print "Overall precision = " + str(precision)
-#     print "Overall recall = " + str(recall)
+    print "-" * 80
+    print "k-Means kmeans"
+    print "-" * 80
+    kmeans.kmeans(len(tags), train_posts, test_posts)
+    # evaluation of kmeans
+    precision = evaluation.precision(test_posts)
+    recall = evaluation.recall(test_posts)
+    print "Overall precision = " + str(precision)
+    print "Overall recall = " + str(recall)
 
 #     print "-" * 80
 #     print "HAC kmeans"

@@ -83,8 +83,8 @@ def plot_results(results):
 def train_and_test_bayes_for_single_tag(tag_name, X_train, y_train, X_test, y_test):
     print "Training: " + tag_name
     #nb_classifier = KNeighborsClassifier(n_neighbors=10) # <--- this is no naive bayes classifier
-    #nb_classifier = MultinomialNB(alpha=.01)
-    nb_classifier = BernoulliNB(alpha=.01)
+    nb_classifier = MultinomialNB(alpha=.01)
+    #nb_classifier = BernoulliNB(alpha=.01)
     t0 = time()
     nb_classifier.fit(X_train, y_train)
     train_time = time() - t0
@@ -94,8 +94,12 @@ def train_and_test_bayes_for_single_tag(tag_name, X_train, y_train, X_test, y_te
     prediction_probabilities_list = nb_classifier.predict_proba(X_test)
 
     # sanity checks!
-    assert nb_classifier.classes_[0] == False
-    assert nb_classifier.classes_[1] == True
+    classes = nb_classifier.classes_
+    assert len(classes) == 1 or len(classes) == 2
+    assert classes[0] == False
+    if len(classes) == 2:
+        assert classes[1] == True
+
     for p1, p2 in prediction_probabilities_list:
         assert abs(1.0 - (p1+p2)) < 0.001
 
@@ -104,6 +108,90 @@ def train_and_test_bayes_for_single_tag(tag_name, X_train, y_train, X_test, y_te
     test_time = time() - t0
     score = metrics.accuracy_score(y_test, prediction_list)
     return tag_name, prediction_positive_probabilities, score, train_time, test_time
+
+
+def train_and_test_bayes_for_all_tags(X_train, y_train, X_test, y_test):
+    from sklearn.multiclass import OneVsRestClassifier
+    print "Training:"
+#     X_train = [[0, 0], [0, 1], [1, 1]]
+#     y_train = [('first',), ('second',), ('first', 'second')]
+    nb_classifier = OneVsRestClassifier(MultinomialNB())
+    t0 = time()
+    nb_classifier.fit(X_train, y_train)
+    print nb_classifier.classes_
+    train_time = time() - t0
+
+#     nb_classifier = MultinomialNB(alpha=.01)
+#     t0 = time()
+#     nb_classifier.fit(X_train, y_train)
+#     train_time = time() - t0
+
+    t0 = time()
+    #prediction_list = nb_classifier.predict(X_test)
+    prediction_probabilities_list = nb_classifier.predict_proba(X_test)
+
+    # sanity checks!
+#     assert nb_classifier.classes_[0] == False
+#     assert nb_classifier.classes_[1] == True
+#     for p1, p2 in prediction_probabilities_list:
+#         assert abs(1.0 - (p1+p2)) < 0.001
+
+    test_time = time() - t0
+    return prediction_probabilities_list, nb_classifier.classes_, train_time, test_time
+
+
+def naive_bayes_single_classifier(train_posts, test_posts, tags):
+    train_documents = [" ".join(post.tokens) for post in train_posts]
+    test_documents = [" ".join(post.tokens) for post in test_posts]
+
+    #vectorizer = TfidfVectorizer(sublinear_tf=True, max_df=0.5, stop_words='english')
+    vectorizer = TfidfVectorizer(stop_words=None)
+
+    print "Extracting features from the training data using a sparse vectorizer"
+    t0 = time()
+    X_train = vectorizer.fit_transform(train_documents)
+    duration = time() - t0
+    print "duration: %d" % duration
+    print "n_samples: %d, n_features: %d" % X_train.shape
+    print
+
+    print("Extracting features from the test data using the same vectorizer")
+    t0 = time()
+    X_test = vectorizer.transform(test_documents)
+    duration = time() - t0
+    print "duration: %d" % duration
+    print "n_samples: %d, n_features: %d" % X_test.shape
+    print
+
+    results = []
+    #################
+    print('=' * 80)
+    print("Naive Bayes")
+    test_post_tag_prediction_map = {}
+    #all_tag_names = map(lambda t: t.name, tags)
+
+    y_train = map(lambda p: tuple(map(lambda t: t.name, p.tag_set)), train_posts)
+    y_test = map(lambda p: tuple(map(lambda t: t.name, p.tag_set)), test_posts)
+    #y_test = map(lambda p: tag_name in map(lambda t: t.name, p.tag_set), test_posts)
+    result = train_and_test_bayes_for_all_tags(X_train, y_train, X_test, y_test)
+    prediction_positive_probabilities_of_posts = result[0]
+    tag_name_map = {}
+    for tag in tags:
+        tag_name_map[tag.name] = tag
+    tag_names = result[1]
+    print prediction_positive_probabilities_of_posts
+    for post_idx, post_probabilities in enumerate(prediction_positive_probabilities_of_posts):
+        post_probabilities_map = [(tag_name_map[tag_names[tag_idx]], p) for tag_idx, p in enumerate(post_probabilities)]
+        sorted_tag_predictions = sorted(post_probabilities_map, key=lambda p: p[1], reverse=True)
+        sorted_tags = map(lambda p: p[0], sorted_tag_predictions)
+        test_posts[post_idx].tag_set_prediction = sorted_tags[:2]
+    return
+
+#     for idx, test_post in enumerate(test_posts):
+#         positive_probability_of_post = prediction_positive_probabilities_of_posts[idx]
+#         if test_post not in test_post_tag_prediction_map:
+#             test_post_tag_prediction_map[test_post] = []
+#         test_post_tag_prediction_map[test_post] += [(tag, positive_probability_of_post)]
 
 
 def naive_bayes(train_posts, test_posts, tags):

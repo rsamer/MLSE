@@ -51,6 +51,8 @@ def preprocess_posts(posts, tags, filter_untagged_posts=True, filter_less_releva
                 continue
             #assert accepted_answer is not None
             if accepted_answer.score >= 0:
+                print "-"*80
+                print accepted_answer.body
                 post.body += " " + accepted_answer.body
 
     def _strip_invalid_tags_from_posts_and_remove_untagged_posts(posts, tags):
@@ -155,7 +157,7 @@ def preprocess_posts(posts, tags, filter_untagged_posts=True, filter_less_releva
             return tokens
 
         for post in posts:
-            text = ((post.title + " ") * 1) + post.body
+            text = ((post.title + " ") * 10) + post.body
             post.tokens = _tokenize_text(text, tag_names)
 
 
