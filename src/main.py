@@ -122,8 +122,8 @@ def main(argv=None):
     train_posts, test_posts, _, _ = train_test_split(posts, np.zeros(len(posts)), test_size=0.1, random_state=42)
 
     from supervised import naive_bayes
-    #naive_bayes.naive_bayes_single_classifier(train_posts, test_posts, tags)
-    naive_bayes.naive_bayes(train_posts, test_posts, tags)
+    naive_bayes.naive_bayes_single_classifier(train_posts, test_posts, tags)
+    #naive_bayes.naive_bayes(train_posts, test_posts, tags)
     precision = evaluation.precision(test_posts)
     recall = evaluation.recall(test_posts)
     print "Overall precision = " + str(precision)

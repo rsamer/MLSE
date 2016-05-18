@@ -115,7 +115,7 @@ def train_and_test_bayes_for_all_tags(X_train, y_train, X_test, y_test):
     print "Training:"
 #     X_train = [[0, 0], [0, 1], [1, 1]]
 #     y_train = [('first',), ('second',), ('first', 'second')]
-    nb_classifier = OneVsRestClassifier(MultinomialNB())
+    nb_classifier = OneVsRestClassifier(KNeighborsClassifier(n_neighbors=10))#BernoulliNB(alpha=.01))#MultinomialNB(alpha=.01))
     t0 = time()
     nb_classifier.fit(X_train, y_train)
     print nb_classifier.classes_
@@ -184,7 +184,7 @@ def naive_bayes_single_classifier(train_posts, test_posts, tags):
         post_probabilities_map = [(tag_name_map[tag_names[tag_idx]], p) for tag_idx, p in enumerate(post_probabilities)]
         sorted_tag_predictions = sorted(post_probabilities_map, key=lambda p: p[1], reverse=True)
         sorted_tags = map(lambda p: p[0], sorted_tag_predictions)
-        test_posts[post_idx].tag_set_prediction = sorted_tags[:2]
+        test_posts[post_idx].tag_set_prediction = sorted_tags[:1]
     return
 
 #     for idx, test_post in enumerate(test_posts):

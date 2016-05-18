@@ -231,7 +231,7 @@ def main():
     '''
     matrix_list = []
     for post in posts:
-        tag_size = len(post.tags)
+        tag_size = len(post.tag_set)
         if min_tag_size is None or tag_size < min_tag_size:
             min_tag_size = tag_size
         if tag_size > max_tag_size:
@@ -253,7 +253,7 @@ def main():
             max_post_word_count = post_word_count
         total_post_word_count += post_word_count
 
-        matrix_list.append([int(post.tag_exists(tag_name)) for tag_name in top_30_tag_names])
+        matrix_list.append([int(post.contains_tag_with_name(tag_name)) for tag_name in top_30_tag_names])
         #print post
 
     matrix = np.array(matrix_list)
