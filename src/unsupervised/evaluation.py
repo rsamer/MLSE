@@ -76,3 +76,36 @@ def recall(posts):
 
     overall_precision = numpy.mean(recalls)
     return overall_precision
+
+
+def tag_evaluation(posts, tags):
+    """
+    Computes the precision and accuracy for a specific tag overall posts.
+    Make sure these attributes of the post class are set: tag_set, tag_set_predicted
+    """
+    assert isinstance(posts, list)
+
+    for tag in tags[0:5]:
+        true_positive = 0
+        false_positive = 0
+        false_negative = 0
+
+        for post in posts:
+            exists_in_tag_set = post.contains_tag_with_name(tag.name)
+            exists_in_tag_prediction_set = False
+
+            for tag_predicted in post.tag_set_prediction:
+                if tag_predicted.name == tag.name:
+                    exists_in_tag_prediction_set = True
+                    break
+
+            if not exists_in_tag_set and not exists_in_tag_prediction_set:
+                continue
+
+            true_positive += 1 if exists_in_tag_set and exists_in_tag_prediction_set else 0
+            false_positive += 1 if exists_in_tag_prediction_set and not exists_in_tag_set else 0
+            false_negative += 1 if exists_in_tag_set and not exists_in_tag_prediction_set else 0
+
+        p = (float(true_positive) / float(true_positive + false_positive))
+        r = (float(true_positive) / float(true_positive + false_negative))
+        print "Evaluation for tag '" + tag.name + "': Precision=" + str(p) + ", Recall=" + str(r)
