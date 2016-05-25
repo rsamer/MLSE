@@ -79,7 +79,7 @@ def main(argv=None):
     cached_tags_file = os.path.join(cache_dir, full_hash + "_tags.pickle")
     cached_posts_file = os.path.join(cache_dir, full_hash + "_posts.pickle")
     if not os.path.exists(cached_tags_file) or not os.path.exists(cached_posts_file):
-        TAG_FREQUENCY_THRESHOLD = 8
+        TAG_FREQUENCY_THRESHOLD = 3#8
         tags = prepr.filter_tags_and_sort_by_frequency(all_tags, TAG_FREQUENCY_THRESHOLD)
         posts = prepr.preprocess_posts(all_posts, tags, filter_untagged_posts=True)
         Tag.update_tag_counts_according_to_posts(tags, posts)
@@ -90,10 +90,33 @@ def main(argv=None):
     else:
         # loaded from cache
         logging.info("Cache hit!")
+        # TODO: FIXME RELINK!! tag instances have other id() than those within posts...!!
         with open(cached_tags_file, 'r') as fp:
             tags = pickle.load(fp)
         with open(cached_posts_file, 'r') as fp:
             posts = pickle.load(fp)
+
+
+    def suggest_random_tags(n_suggested_tags, test_posts, tags):
+        from random import randint
+        def _random_tag(n_posts_assignments, tags):
+            idx = randint(0, (n_posts_assignments-1))
+            total_sum = 0
+            for t in tags:
+                total_sum += t.count
+                if idx >= total_sum:
+                    continue
+                #print "{}: {}".format(t.name, t.count)
+                return t
+
+        n_posts_assignments = reduce(lambda x,y: x + y, map(lambda t: t.count, tags))
+        assert n_posts_assignments > 0
+        for test_post in test_posts:
+            suggested_tags = []
+            for _ in range(n_suggested_tags):
+                suggested_tags += [_random_tag(n_posts_assignments, tags)]
+            test_post.tag_set_prediction = suggested_tags
+
 
     helper.print_tags_summary(len(all_tags), len(tags))
     helper.print_posts_summary(all_posts, all_posts_assignments, posts)
@@ -102,8 +125,8 @@ def main(argv=None):
     test_post1 = Post(1, "", u"RT @marcobonzanini: just, an example! :D http://example.com/what?q=test #NLP", set(), 100)
     test_post2 = Post(2, "", u"0x2AF3 #143152 A b C d e f g h i j k f# u# and C++ is a test hehe wt iop complicated programming-languages object oriented object-oriented-design compared to C#. AT&T Asp.Net C++!!", set(), 100)
     test_post3 = Post(3, "", u"C++~$§%) is a :=; := :D :-)) ;-)))) testing is important! Blue houses are... ~ hehe wt~iop complicated programming-language compared to C#. AT&T Asp.Net C++ #1234 1234 !!", set(), 100)
-    prepr.preprocess_posts([test_post1, test_post2, test_post3], tags, filter_untagged_posts=False, filter_less_relevant_posts=False)
-    print "\n" + ("-"*80) + "\n" + str(test_post1.tokens) + "\n" + str(test_post2.tokens) + "\n" + str(test_post3.tokens) + "\n" + "-"*80
+    #prepr.preprocess_posts([test_post1, test_post2, test_post3], tags, filter_untagged_posts=False, filter_less_relevant_posts=False)
+    #print "\n" + ("-"*80) + "\n" + str(test_post1.tokens) + "\n" + str(test_post2.tokens) + "\n" + str(test_post3.tokens) + "\n" + "-"*80
     # DEBUG END
 
     logging.info("Finished pre-processing!")
@@ -117,17 +140,34 @@ def main(argv=None):
 #     result = kmeans.kmeans(len(tags)/3, posts, new_posts)
 #     print result
 
+    # TODO: random forest...
 
     # split data set
     train_posts, test_posts, _, _ = train_test_split(posts, np.zeros(len(posts)), test_size=0.1, random_state=42)
+#     suggest_random_tags(2, test_posts, tags)
+#     precision = evaluation.precision(test_posts)
+#     recall = evaluation.recall(test_posts)
+#     print "Overall precision = " + str(precision)
+#     print "Overall recall = " + str(recall)
+
+#     for t in tags:
+#         new_tags = [t]
+#         print new_tags
+#         suggest_random_tags(1, test_posts, new_tags)
+#         precision = evaluation.precision(test_posts)
+#         recall = evaluation.recall(test_posts)
+#         print "Overall precision = " + str(precision)
+#         print "Overall recall = " + str(recall)
+#         print "Overall f1 = " + str(2.0*precision*recall/(precision+recall))
 
     from supervised import naive_bayes
-    naive_bayes.naive_bayes_single_classifier(train_posts, test_posts, tags)
-    #naive_bayes.naive_bayes(train_posts, test_posts, tags)
+    #naive_bayes.naive_bayes_single_classifier(train_posts, test_posts, tags)
+    naive_bayes.naive_bayes(train_posts, test_posts, tags)
     precision = evaluation.precision(test_posts)
     recall = evaluation.recall(test_posts)
     print "Overall precision = " + str(precision)
     print "Overall recall = " + str(recall)
+    print "Overall f1 = " + str(2.0*precision*recall/(precision+recall))
     sys.exit()
 
     print "-" * 80
@@ -139,6 +179,7 @@ def main(argv=None):
     recall = evaluation.recall(test_posts)
     print "Overall precision = " + str(precision)
     print "Overall recall = " + str(recall)
+    print "Overall f1 = " + str(2.0*precision*recall/(precision+recall))
 
 #     print "-" * 80
 #     print "HAC kmeans"

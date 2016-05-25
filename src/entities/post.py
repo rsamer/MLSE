@@ -67,7 +67,7 @@ class Post(object):
                     raise RuntimeError("Tag '%s' not found!" % tag_name)
                 tag = tag_dict[tag_name]
                 if tag in tag_set:
-                    raise RuntimeError("Tag duplicate!")
+                    logging.warn("Multiple tag assignments for tag '{}' in post with ID {}".format(tag_name, pid))
                 tag_set.add(tag)
 
             title = s.attributes['Title'].value

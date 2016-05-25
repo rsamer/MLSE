@@ -51,8 +51,8 @@ def preprocess_posts(posts, tags, filter_untagged_posts=True, filter_less_releva
                 continue
             #assert accepted_answer is not None
             if accepted_answer.score >= 0:
-                print "-"*80
-                print accepted_answer.body
+#                 print "-"*80
+#                 print accepted_answer.body
                 post.body += " " + accepted_answer.body
 
     def _strip_invalid_tags_from_posts_and_remove_untagged_posts(posts, tags):
@@ -70,7 +70,7 @@ def preprocess_posts(posts, tags, filter_untagged_posts=True, filter_less_releva
         logging.info("Filtering less relevant posts according to #answers and score value")
         # filter posts having low score according to given threshold
         posts = filter(lambda p: p.score >= score_threshold, posts)
-        posts = filter(lambda p: p.accepted_answer_id is not None, posts)
+        #posts = filter(lambda p: p.accepted_answer_id is not None, posts)
         posts = filter(lambda p: len(p.answers) > 0 or p.score > 0, posts)
         return posts
 
@@ -333,11 +333,12 @@ def preprocess_posts(posts, tags, filter_untagged_posts=True, filter_less_releva
     _replace_adjacent_tag_occurences(posts, tag_names)
     _tokenize_posts(posts, tag_names)
     _filter_tokens(posts, tag_names)
-
-
+  
+    # TODO: Stanford POS-tagging
+ 
     # TODO: remove emoticons in _filter_tokens (right AFTER tokenization and NOT before!!)
     # TODO: remove very unique words that only occur once in the whole dataset _filter_tokens ??!!
-
+ 
     _remove_stopwords(posts)
     #_pos_tagging(posts)
     #_lemmatization(posts) # not sure if it makes sense to use both lemmatization and stemming

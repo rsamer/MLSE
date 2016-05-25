@@ -48,6 +48,7 @@ def print_tags_summary(total_num_of_tags, num_filtered_tags):
 def print_posts_summary(all_posts, num_of_all_post_assignments, filtered_posts):
     print "-"*80
     print "Total number of posts: %d" % len(all_posts)
+    print "Total number of tag assignments: %d" % num_of_all_post_assignments
     print "Number of remaining posts: %d" % len(filtered_posts)
     print "Removed {}% of all posts".format(round(float(len(all_posts)-len(filtered_posts))/len(all_posts)*100.0, 2))
 

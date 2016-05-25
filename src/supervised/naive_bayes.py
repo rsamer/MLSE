@@ -184,7 +184,7 @@ def naive_bayes_single_classifier(train_posts, test_posts, tags):
         post_probabilities_map = [(tag_name_map[tag_names[tag_idx]], p) for tag_idx, p in enumerate(post_probabilities)]
         sorted_tag_predictions = sorted(post_probabilities_map, key=lambda p: p[1], reverse=True)
         sorted_tags = map(lambda p: p[0], sorted_tag_predictions)
-        test_posts[post_idx].tag_set_prediction = sorted_tags[:1]
+        test_posts[post_idx].tag_set_prediction = sorted_tags[:2]
     return
 
 #     for idx, test_post in enumerate(test_posts):
