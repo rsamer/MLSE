@@ -78,6 +78,17 @@ def recall(posts):
     return overall_precision
 
 
+def f1(posts):
+    """
+    Computes the precision for a tag prediction.
+    Make sure these attributes of the post class are set: tag_set, tag_set_predicted
+    """
+    assert isinstance(posts, list)
+    p = precision(posts)
+    r = recall(posts)
+    return (2.0 * p * r) / (p + r) if (p + r) > 0 else 0
+
+
 def tag_evaluation(posts, tags):
     """
     Computes the precision and accuracy for a specific tag overall posts.

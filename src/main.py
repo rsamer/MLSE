@@ -24,22 +24,23 @@ NOTE: the data set located in ../data/example/ is NOT a representative subset
 @license:    MIT license
 '''
 
-import sys
+import logging
 import os
 import pickle
+import sys
 
-from entities import tag
-from entities import post
-from entities.tag import Tag
-from entities.post import Post
-from preprocessing import preprocessing as prepr
-from unsupervised import evaluation, hac
-from unsupervised import kmeans
-from util.helper import ExitCode, error, compute_hash_of_file
-from util import helper
-import logging
-from sklearn.cross_validation import train_test_split
 import numpy as np
+from sklearn.cross_validation import train_test_split
+
+from entities import post
+from entities import tag
+from entities.post import Post
+from entities.tag import Tag
+from evaluation import evaluation
+from preprocessing import preprocessing as prepr
+from unsupervised import kmeans
+from util import helper
+from util.helper import ExitCode, error, compute_hash_of_file
 
 
 def usage():
@@ -177,9 +178,10 @@ def main(argv=None):
     # evaluation of kmeans
     precision = evaluation.precision(test_posts)
     recall = evaluation.recall(test_posts)
+    f1 = evaluation.f1(test_posts)
     print "Overall precision = " + str(precision)
     print "Overall recall = " + str(recall)
-    print "Overall f1 = " + str(2.0*precision*recall/(precision+recall))
+    print "Overall f1 = " + str(f1)
 
 #     print "-" * 80
 #     print "HAC kmeans"
