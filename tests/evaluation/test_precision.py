@@ -4,7 +4,7 @@ from entities.tag import Tag
 from unsupervised import evaluation
 
 
-class TestEvaluation(unittest.TestCase):
+class TestPrecision(unittest.TestCase):
     def test_precision_no_false_positives(self):
         tag1 = Tag("tag1", 1)
         tag2 = Tag("tag2", 1)
