@@ -6,6 +6,7 @@ import nltk
 import os
 import re
 
+_logger = logging.getLogger(__name__)
 main_dir = os.path.dirname(os.path.realpath(__file__)) + "/../../"
 nltk.data.path = [main_dir + "corpora/nltk_data"]
 emoticons_data_file = main_dir + "corpora/emoticons/emoticons"
@@ -13,25 +14,23 @@ emoticons_data_file = main_dir + "corpora/emoticons/emoticons"
 tokens_punctuation_re = re.compile(r"(\.|!|\?|\(|\)|~)$")
 single_character_tokens_re = re.compile(r"^\W$")
 
-log = logging.getLogger("preprocessing.filters")
-
 
 def to_lower_case(posts):
-    logging.info("Lower case post title and body")
+    _logger.info("Lower case post title and body")
     for post in posts:
         post.title = post.title.lower()
         post.body = post.body.lower()
 
 
 def strip_code_segments(posts):
-    logging.info("Stripping code snippet from posts")
+    _logger.info("Stripping code snippet from posts")
     for post in posts:
         assert (isinstance(post, Post))
         post.body = re.sub('<code>.*?</code>', '', post.body)
 
 
 def strip_html_tags(posts):
-    logging.info("Stripping HTML-tags from posts")
+    _logger.info("Stripping HTML-tags from posts")
     try:
         from bs4 import BeautifulSoup  # @UnresolvedImport
     except ImportError:
@@ -43,7 +42,7 @@ def strip_html_tags(posts):
         post.body = BeautifulSoup(post.body, "html.parser").text.strip()
 
 def filter_tokens(posts, tag_names):
-    logging.info("Filter posts' tokens")
+    _logger.info("Filter posts' tokens")
     regex_url = re.compile(
         r'^(?:http|ftp)s?://'  # http:// https:// ftp:// ftps://
         r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|'  # domain...
@@ -123,7 +122,7 @@ def filter_tokens(posts, tag_names):
         total_number_of_filtered_tokens += (num_of_unfiltered_tokens - len(post.tokens))
 
     if total_number_of_tokens != 0:
-        logging.info("Removed {} ({}%) of {} tokens (altogether)".format(total_number_of_filtered_tokens,
+        _logger.info("Removed {} ({}%) of {} tokens (altogether)".format(total_number_of_filtered_tokens,
                                                                          round(float(
                                                                              total_number_of_filtered_tokens) / total_number_of_tokens * 100.0,
                                                                                2),
@@ -145,7 +144,7 @@ def add_accepted_answer_text_to_body(posts):
 
 
 def filter_less_relevant_posts(posts, score_threshold):
-    logging.info("Filtering less relevant posts according to #answers and score value")
+    _logger.info("Filtering less relevant posts according to #answers and score value")
     # filter posts having low score according to given threshold
     posts = filter(lambda p: p.score >= score_threshold, posts)
     # posts = filter(lambda p: p.accepted_answer_id is not None, posts)

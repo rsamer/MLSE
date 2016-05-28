@@ -3,6 +3,8 @@
 import logging
 from xml.dom import minidom
 
+_logger = logging.getLogger(__name__)
+
 class Answer(object):
     def __init__(self, pid, body, score):
         self.pid = pid
@@ -67,7 +69,7 @@ class Post(object):
                     raise RuntimeError("Tag '%s' not found!" % tag_name)
                 tag = tag_dict[tag_name]
                 if tag in tag_set:
-                    logging.warn("Multiple tag assignments for tag '{}' in post with ID {}".format(tag_name, pid))
+                    _logger.warn("Multiple tag assignments for tag '{}' in post with ID {}".format(tag_name, pid))
                 tag_set.add(tag)
 
             title = s.attributes['Title'].value
@@ -77,7 +79,7 @@ class Post(object):
         # finally add answers to corresponding posts
         for question_id, answers in grouped_answers.iteritems():
             if question_id not in posts:
-                logging.info("Ignoring answer for non existant post {}".format(question_id))
+                _logger.info("Ignoring answer for non existant post {}".format(question_id))
                 continue
             corresponding_post = posts[question_id]
             corresponding_post.answers = answers

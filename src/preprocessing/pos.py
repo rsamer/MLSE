@@ -7,12 +7,11 @@ import os
 main_dir = os.path.dirname(os.path.realpath(__file__)) + "/../../"
 nltk.data.path = [main_dir + "corpora/nltk_data"]
 
-log = logging.getLogger("preprocessing.pos")
-
+_logger = logging.getLogger(__name__)
 
 # TODO: Stanford POS-tagging
 def pos_tagging(posts):
-    logging.info("Pos-tagging for posts' tokens")
+    _logger.info("Pos-tagging for posts' tokens")
     try:
         import nltk
     except ImportError:

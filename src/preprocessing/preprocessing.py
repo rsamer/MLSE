@@ -15,12 +15,10 @@ import nltk
 import os
 import itertools
 
+_logger = logging.getLogger(__name__)
 main_dir = os.path.dirname(os.path.realpath(__file__)) + "/../../"
 nltk.data.path = [main_dir + "corpora/nltk_data"]
 emoticons_data_file = main_dir + "corpora/emoticons/emoticons"
-
-log = logging.getLogger("preprocessing.preprocessing")
-
 tokens_punctuation_re = re.compile(r"(\.|!|\?|\(|\)|~)$")
 single_character_tokens_re = re.compile(r"^\W$")
 
@@ -29,9 +27,9 @@ def filter_tags_and_sort_by_frequency(tags, frequency_threshold):
     ''' Sorts tags by frequency and removes less frequent tags according to given threshold.
         Finally, unassigns removed tags from given post-list.
     '''
-    logging.info("-"*80)
-    logging.info("Filter tags and sort by frequency")
-    logging.info("-"*80)
+    _logger.info("-"*80)
+    _logger.info("Filter tags and sort by frequency")
+    _logger.info("-"*80)
     assert isinstance(tags, list)
     reverse_sorted_tags = Tag.sort_tags_by_frequency(tags, reverse=True) # descendent order
 
@@ -45,9 +43,9 @@ def filter_tags_and_sort_by_frequency(tags, frequency_threshold):
 
 def preprocess_posts(posts, tag_list, filter_untagged_posts=True, filter_less_relevant_posts=True):
 
-    logging.info("-"*80)
-    logging.info("Preprocessing posts")
-    logging.info("-"*80)
+    _logger.info("-"*80)
+    _logger.info("Preprocessing posts")
+    _logger.info("-"*80)
 
     assert isinstance(posts, list)
     tag_names = [tag.name.lower() for tag in tag_list]

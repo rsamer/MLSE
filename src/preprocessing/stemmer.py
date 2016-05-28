@@ -4,14 +4,12 @@ import logging
 import nltk
 import os
 
+_logger = logging.getLogger(__name__)
 main_dir = os.path.dirname(os.path.realpath(__file__)) + "/../../"
 nltk.data.path = [main_dir + "corpora/nltk_data"]
 
-log = logging.getLogger("preprocessing.stemmer")
-
-
 def porter_stemmer(posts):
-    logging.info("Stemming for posts' tokens")
+    _logger.info("Stemming for posts' tokens")
     try:
         from nltk.stem.porter import PorterStemmer
     except ImportError:

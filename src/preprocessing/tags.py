@@ -2,8 +2,7 @@
 
 import logging
 
-log = logging.getLogger("preprocessing.tags")
-
+_logger = logging.getLogger(__name__)
 
 def replace_adjacent_tag_occurences(posts, tag_names):
     ''' replaces "-" by " " in all tag names e.g. "object-oriented" -> "object oriented"
@@ -23,7 +22,7 @@ def replace_adjacent_tag_occurences(posts, tag_names):
 
 def strip_invalid_tags_from_posts_and_remove_untagged_posts(posts, tags):
     ''' unassigns all removed tags from posts to avoid data-inconsistency issues '''
-    logging.info("Stripping invalid tags from posts and removing untagged posts")
+    _logger.info("Stripping invalid tags from posts and removing untagged posts")
     new_post_list = []
     for post in posts:
         post.tag_set = post.tag_set.intersection(tags)

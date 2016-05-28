@@ -90,9 +90,9 @@ def f1(posts):
 
 
 def print_evaluation_results(test_posts):
-    print "Overall precision = " + str(precision(test_posts))
-    print "Overall recall = " + str(recall(test_posts))
-    print "Overall f1 = " + str(f1(test_posts))
+    print "Overall precision = %0.3f" % precision(test_posts)
+    print "Overall recall = %0.3f" % recall(test_posts)
+    print "Overall f1 = %0.3f" % f1(test_posts)
 
 
 def print_tag_evaluation(posts, tags):

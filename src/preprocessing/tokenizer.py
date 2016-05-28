@@ -3,15 +3,14 @@
 import re
 import logging
 
-log = logging.getLogger("preprocessing.tokenizer")
-
+_logger = logging.getLogger(__name__)
 tokens_punctuation_re = re.compile(r"(\.|!|\?|\(|\)|~)$")
 single_character_tokens_re = re.compile(r"^\W$")
 
 
 def tokenize_posts(posts, tag_names):
     ''' Customized tokenizer for our special needs! (e.g. C#, C++, ...) '''
-    logging.info("Tokenizing posts")
+    _logger.info("Tokenizing posts")
     # based on: http://stackoverflow.com/a/36463112
     regex_str = [
                     # r'(?:[:;=\^\-oO][\-_\.]?[\)\(\]\[\-DPOp_\^\\\/])', # emoticons (Note: they are removed after tokenization!) # TODO why not here?

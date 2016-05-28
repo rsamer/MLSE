@@ -4,14 +4,12 @@ import nltk
 import os
 import logging
 
+_logger = logging.getLogger(__name__)
 main_dir = os.path.dirname(os.path.realpath(__file__)) + "/../../"
 nltk.data.path = [main_dir + "corpora/nltk_data"]
 
-log = logging.getLogger("preprocessing.stopwords")
-
-
 def remove_stopwords(posts):
-    logging.info("Removing stop-words from posts' tokens")
+    _logger.info("Removing stop-words from posts' tokens")
     try:
         from nltk.corpus import stopwords
     except ImportError:

@@ -41,6 +41,8 @@ from unsupervised import kmeans
 from util.docopt import docopt
 
 __version__ = 1.0
+_logger = logging.getLogger(__name__)
+
 
 def usage():
     usage = '''Automatic Tag Suggestion for StackExchange posts
@@ -101,19 +103,18 @@ def preprocess_tags_and_posts(all_tags, all_posts, tag_frequency_threshold):
 
 def main():
     kwargs = usage()
-    print kwargs
     data_set_path = kwargs['data_set_path']
     enable_caching = kwargs['enable_caching']
     setup_logging(logging.DEBUG)
     helper.make_dir_if_not_exists(helper.CACHE_PATH)
 
     # 1) Parsing
-    logging.info("Parsing...")
+    _logger.info("Parsing...")
     all_tags, all_posts, cache_file_name_prefix = parser.parse_tags_and_posts(data_set_path)
     all_posts_assignments = reduce(lambda x,y: x + y, map(lambda p: len(p.tag_set), all_posts))
 
     # 2) Preprocessing
-    logging.info("Preprocessing...")
+    _logger.info("Preprocessing...")
     TAG_FREQUENCY_THRESHOLD = kwargs['tag_frequency_threshold']
     # TODO: FIXME: invalidate cache if tag-frequency has changed!!!
     if not enable_caching or not helper.cache_exists_for_preprocessed_tags_and_posts(cache_file_name_prefix):
@@ -121,7 +122,7 @@ def main():
         if enable_caching:
             helper.write_preprocessed_tags_and_posts_to_cache(cache_file_name_prefix, tags, posts)
     else:
-        logging.info("Cache hit!")
+        _logger.info("Cache hit!")
         tags, posts = helper.load_preprocessed_tags_and_posts_from_cache(cache_file_name_prefix)
 
     helper.print_tags_summary(len(all_tags), len(tags))
@@ -129,21 +130,21 @@ def main():
 
     # 3) Split data set
     test_size = 0.1
-    logging.info("Splitting data set!")
-    logging.info(" Training: {}%, Test: {}%".format( (1-test_size)*100, test_size*100 ))
+    _logger.info("Splitting data set!")
+    _logger.info(" Training: {}%, Test: {}%".format( (1-test_size)*100, test_size*100 ))
     # NOTE: last 2 return values are omitted since y-values are already
     #       included in our Post-instances
     train_posts, test_posts, _, _ = train_test_split(posts, np.zeros(len(posts)), test_size=test_size, random_state=42)
 
-    logging.info("-"*80)
-    logging.info("Randomly suggest 2 most frequent tags...")
-    logging.info("-"*80)
+    _logger.info("-"*80)
+    _logger.info("Randomly suggest 2 most frequent tags...")
+    _logger.info("-"*80)
     helper.suggest_random_tags(2, test_posts, tags)
     evaluation.print_evaluation_results(test_posts)
 
-    logging.info("-"*80)
-    logging.info("Only auggest most frequent tag...")
-    logging.info("-"*80)
+    _logger.info("-"*80)
+    _logger.info("Only auggest most frequent tag...")
+    _logger.info("-"*80)
     for t in tags:
         new_tags = [t]
         print t
@@ -152,27 +153,27 @@ def main():
     sys.exit()
 
     # 3) learning
-    logging.info("Learning...")
+    _logger.info("Learning...")
 
     #naive_bayes.naive_bayes_single_classifier(train_posts, test_posts, tags)
-    logging.info("-"*80)
-    logging.info("Naive bayes...")
-    logging.info("-"*80)
+    _logger.info("-"*80)
+    _logger.info("Naive bayes...")
+    _logger.info("-"*80)
     naive_bayes.naive_bayes(train_posts, test_posts, tags)
     evaluation.print_evaluation_results(test_posts)
 
-    logging.info("-"*80)
-    logging.info("k-Means...")
-    logging.info("-"*80)
+    _logger.info("-"*80)
+    _logger.info("k-Means...")
+    _logger.info("-"*80)
     kmeans.kmeans(len(tags), train_posts, test_posts)
     evaluation.print_evaluation_results(test_posts)
 
     # TODO: random forest...
     # TODO: linear SVM...
 
-#     logging.info("-"*80)
-#     logging.info("HAC...")
-#     logging.info("-"*80)
+#     _logger.info("-"*80)
+#     _logger.info("HAC...")
+#     _logger.info("-"*80)
 #     helper.clear_tag_predictions_for_posts(test_posts)
 #     hac.hac(len(tags), train_posts, test_posts)
 #     evaluation.print_evaluation_results(test_posts)

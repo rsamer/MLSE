@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import logging
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -17,8 +18,8 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn import metrics
 from sklearn.utils.extmath import density
 from time import time
-import logging
 
+_logger = logging.getLogger(__name__)
 
 def trim(s):
     """Trim string to fit on terminal (assuming 80-column display)"""
@@ -238,9 +239,9 @@ def naive_bayes(train_posts, test_posts, tags):
     avg_score = float(reduce(lambda x,y: x+y, map(lambda r: r[2], results)))/float(len(results))
     total_train_time = reduce(lambda x,y: x+y, map(lambda r: r[3], results))
     total_test_time = reduce(lambda x,y: x+y, map(lambda r: r[4], results))
-    logging.info("Total train time: %0.3fs", total_train_time)
-    logging.info("Total test time: %0.3fs", total_test_time)
-    logging.info("Average score: %0.3f%%", avg_score*100.0)
+    _logger.info("Total train time: %0.3fs", total_train_time)
+    _logger.info("Total test time: %0.3fs", total_test_time)
+    _logger.info("Average score: %0.3f%%", avg_score*100.0)
 
     for idx, test_post in enumerate(test_posts):
         if test_post not in test_post_tag_prediction_map:
