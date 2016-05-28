@@ -89,8 +89,15 @@ def f1(posts):
     return (2.0 * p * r) / (p + r) if (p + r) > 0 else 0
 
 
-def tag_evaluation(posts, tags):
+def print_evaluation_results(test_posts):
+    print "Overall precision = " + str(precision(test_posts))
+    print "Overall recall = " + str(recall(test_posts))
+    print "Overall f1 = " + str(f1(test_posts))
+
+
+def print_tag_evaluation(posts, tags):
     """
+    NOTE: used for testing!
     Computes the precision and accuracy for a specific tag overall posts.
     Make sure these attributes of the post class are set: tag_set, tag_set_predicted
     """

@@ -3,10 +3,12 @@
 import os
 import sys
 import hashlib
+import pickle
 
 
 SRC_PATH = os.path.join(os.path.realpath(os.path.dirname(__file__)), "..")
 APP_PATH = os.path.join(SRC_PATH, "..")
+CACHE_PATH = os.path.join(APP_PATH, "temp", "cache")
 
 
 class ExitCode(object):
@@ -35,6 +37,58 @@ def is_complete_data_set(path):
     required_files = ["Posts.xml", "Tags.xml"]
     available_files = filter(lambda f: os.path.isfile(os.path.join(path, f)), required_files)
     return set(available_files) == set(required_files)
+
+
+def _cache_file_paths(cached_file_name_prefix):
+    cached_tags_file_path = os.path.join(CACHE_PATH, cached_file_name_prefix + "_tags.pickle")
+    cached_posts_file_path = os.path.join(CACHE_PATH, cached_file_name_prefix + "_posts.pickle")
+    return cached_tags_file_path, cached_posts_file_path
+
+
+def cache_exists_for_preprocessed_tags_and_posts(cache_file_name_prefix):
+    cached_tags_file_path, cached_posts_file_path = _cache_file_paths(cache_file_name_prefix)
+    return os.path.exists(cached_tags_file_path) and os.path.exists(cached_posts_file_path)
+
+
+def write_preprocessed_tags_and_posts_to_cache(cache_file_name_prefix, tags, posts):
+    cache_tags_file_path, cache_posts_file_path = _cache_file_paths(cache_file_name_prefix)
+    with open(cache_tags_file_path, 'wb') as fp:
+        pickle.dump(tags, fp)
+    with open(cache_posts_file_path, 'wb') as fp:
+        pickle.dump(posts, fp)
+
+
+def load_preprocessed_tags_and_posts_from_cache(cache_file_name_prefix):
+    cache_tags_file_path, cache_posts_file_path = _cache_file_paths(cache_file_name_prefix)
+    assert cache_tags_file_path is not None
+    assert cache_posts_file_path is not None
+    with open(cache_tags_file_path, 'r') as fp:
+        cached_preprocessed_tags = pickle.load(fp)
+    with open(cache_posts_file_path, 'r') as fp:
+        cached_preprocessed_posts = pickle.load(fp)
+    # TODO: FIXME RELINK!! tag instances have other id() than those within posts...!!
+    return cached_preprocessed_tags, cached_preprocessed_posts
+
+
+def suggest_random_tags(n_suggested_tags, test_posts, tags):
+    from random import randint
+    def _random_tag(n_posts_assignments, tags):
+        idx = randint(0, (n_posts_assignments-1))
+        total_sum = 0
+        for t in tags:
+            total_sum += t.count
+            if idx >= total_sum:
+                continue
+            #print "{}: {}".format(t.name, t.count)
+            return t
+
+    n_posts_assignments = reduce(lambda x,y: x + y, map(lambda t: t.count, tags))
+    assert n_posts_assignments > 0
+    for test_post in test_posts:
+        suggested_tags = []
+        for _ in range(n_suggested_tags):
+            suggested_tags += [_random_tag(n_posts_assignments, tags)]
+        test_post.tag_set_prediction = suggested_tags
 
 
 def print_tags_summary(total_num_of_tags, num_filtered_tags):
