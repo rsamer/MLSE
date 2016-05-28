@@ -4,6 +4,8 @@ import os
 import sys
 import hashlib
 import pickle
+import progressbar
+import threading
 
 
 SRC_PATH = os.path.join(os.path.realpath(os.path.dirname(__file__)), "..")
@@ -122,3 +124,43 @@ def compute_hash_of_file(file_path):
 def clear_tag_predictions_for_posts(posts):
     for post in posts:
         post.tag_set_prediction = None
+
+
+class ProgressBar(object):
+
+    def __init__(self, num_of_iterations, output_stream=sys.stdout):
+        self._iterations_counter = 0
+        self.num_of_iterations = num_of_iterations
+        self._output_stream = output_stream
+        self.lock = threading.RLock()
+        self.finished = False
+        widgets = [progressbar.Percentage(), ' ', progressbar.Bar(), ' ', progressbar.ETA()]
+        self.pbar = progressbar.ProgressBar(widgets=widgets, maxval=100)
+        self.pbar.start()
+
+    def finish(self):
+        with self.lock:
+            if self.finished: return
+            self.finished = True
+            self.pbar.finish()
+            assert self.is_full() # Note: reentrant lock! no deadlock can happen here!
+
+    def is_full(self):
+        with self.lock:
+            return (self._iterations_counter == self.num_of_iterations)
+
+    def update(self, increment=1):
+        with self.lock:
+            if self.num_of_iterations == None:
+                if self._output_stream != None:
+                    self._output_stream.write("[WARNING] Number of iterations not set!")
+                return
+
+            if self._iterations_counter + increment > self.num_of_iterations:
+                if self._output_stream != None:
+                    self._output_stream.write("[WARNING] Progress counter overflow!")
+                return
+
+            self._iterations_counter = self._iterations_counter + increment
+            percentage = float(self._iterations_counter)/float(self.num_of_iterations)*100.0
+            self.pbar.update(int(round(percentage)))

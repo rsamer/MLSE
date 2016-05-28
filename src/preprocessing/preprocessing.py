@@ -3,7 +3,6 @@
 import re
 import logging
 from entities.tag import Tag
-from entities.post import Post
 import tokenizer
 import filters
 import tags
@@ -24,7 +23,8 @@ single_character_tokens_re = re.compile(r"^\W$")
 
 
 def filter_tags_and_sort_by_frequency(tags, frequency_threshold):
-    ''' Sorts tags by frequency and removes less frequent tags according to given threshold.
+    '''
+        Sorts tags by frequency and removes less frequent tags according to given threshold.
         Finally, unassigns removed tags from given post-list.
     '''
     _logger.info("-"*80)
@@ -50,7 +50,7 @@ def preprocess_posts(posts, tag_list, filter_untagged_posts=True, filter_less_re
     assert isinstance(posts, list)
     tag_names = [tag.name.lower() for tag in tag_list]
 
-    filters.add_accepted_answer_text_to_body(posts)
+    filters.add_accepted_answer_text_to_body(posts) # XXX: this is no filtering function...??
 
     if filter_less_relevant_posts:
         posts = filters.filter_less_relevant_posts(posts, 0)
@@ -62,12 +62,14 @@ def preprocess_posts(posts, tag_list, filter_untagged_posts=True, filter_less_re
     filters.strip_html_tags(posts)
     tags.replace_adjacent_tag_occurences(posts, tag_names)
     tokenizer.tokenize_posts(posts, tag_names)
+    n_tokens = reduce(lambda x,y: x + y, map(lambda t: len(t.tokens), posts))
     filters.filter_tokens(posts, tag_names)
-
-    # TODO: remove very unique words that only occur once in the whole dataset _filter_tokens ??!!
-
     stopwords.remove_stopwords(posts)
-    #pos.pos_tagging(posts)
-    #lemmatizer.word_net_lemmatizer(posts) # not sure if it makes sense to use both lemmatization and stemming
+    pos.pos_tagging(posts)
+    n_filtered_tokens = n_tokens - reduce(lambda x,y: x + y, map(lambda t: len(t.tokens), posts))
+    if n_tokens > 0:
+        _logger.info("Removed {} ({}%) of {} tokens (altogether)".format(n_filtered_tokens,
+                        round(float(n_filtered_tokens) / n_tokens * 100.0, 2), n_tokens))
+    #lemmatizer.word_net_lemmatizer(posts) # it does not makes sense to use both lemmatization and stemming
     stemmer.porter_stemmer(posts)
     return posts

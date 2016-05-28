@@ -74,12 +74,8 @@ def filter_tokens(posts, tag_names):
 
     regex_number = re.compile(r'^#\d+$', re.IGNORECASE)
 
-    total_number_of_filtered_tokens = 0
-    total_number_of_tokens = 0
     for post in posts:
         tokens = post.tokens
-        num_of_unfiltered_tokens = len(tokens)
-        total_number_of_tokens += num_of_unfiltered_tokens
 
         # remove empty tokens, numbers and those single-character words that are no letters
         tokens = filter(lambda t: len(t) > 0 and not t.isdigit() and len(single_character_tokens_re.findall(t)) == 0,
@@ -119,14 +115,9 @@ def filter_tokens(posts, tag_names):
         tokens = [word for word in tokens if regex_emoticons.match(word) is None]
 
         post.tokens = tokens
-        total_number_of_filtered_tokens += (num_of_unfiltered_tokens - len(post.tokens))
 
-    if total_number_of_tokens != 0:
-        _logger.info("Removed {} ({}%) of {} tokens (altogether)".format(total_number_of_filtered_tokens,
-                                                                         round(float(
-                                                                             total_number_of_filtered_tokens) / total_number_of_tokens * 100.0,
-                                                                               2),
-                                                                         total_number_of_tokens))
+    # TODO: remove very unique words that only occur once in the whole dataset _filter_tokens ??!!
+    return
 
 
 def add_accepted_answer_text_to_body(posts):
