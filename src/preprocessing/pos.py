@@ -19,6 +19,9 @@ def pos_tagging(posts):
         POS-Tagging via Stanford POS tagger
         NOTE: This library creates a Java process in the background.
               Please make sure you have installed Java 1.6 or higher.
+
+              sudo apt-get install default-jre
+              sudo apt-get install default-jdk
     '''
     _logger.info("Pos-tagging for posts' tokens")
     try:
@@ -72,10 +75,10 @@ def pos_tagging(posts):
     pos_tags_black_list = ['CC', 'CD', 'DT', 'EX', 'LS', 'MD', 'PDT', 'POS', 'PRP', 'PRP$', 'RP', 'TO', 'UH', 'WDT', 'WP', 'WP$', 'WRB']
     existing_stanford_pos_tags = set()
     removed_stanford_tokens = set()
-    # Note: "-mx4g" sets java's max memory size to 4 GB RAM
+    # Note: "-mx30g" sets java's max memory size to 30 GB RAM
     #       Please change when experiencing OS-related problems!
     for post in posts:
-        english_postagger = StanfordPOSTagger(pos_tagger_data_path, pos_tagger_jar_path, java_options='-mx4g')
+        english_postagger = StanfordPOSTagger(pos_tagger_data_path, pos_tagger_jar_path, java_options='-mx30g')
         pos_tagged_tokens = english_postagger.tag(post.tokens)
         tagged_tokens = filter(lambda t: t[1] not in pos_tags_black_list, pos_tagged_tokens)
         post.tokens = map(lambda t: t[0], tagged_tokens)
