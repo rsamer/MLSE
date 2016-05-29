@@ -28,6 +28,10 @@ def tfidf(train_posts, test_posts):
     duration = time() - t0
     _logger.debug("duration: %d" % duration)
     _logger.debug("n_samples: %d, n_features: %d" % X_test.shape)
+
+    _logger.info("X_train: {}".format(X_train.shape))
+    _logger.info("X_test: {}".format(X_test.shape))
+
     assert len(test_posts) == X_test.shape[0]
     assert len(test_posts) == X_test.shape[0]
     assert X_train.shape[1] == X_test.shape[1]
@@ -58,6 +62,7 @@ def tfidf(train_posts, test_posts):
     print "-"*80
     print "-"*80
     print features[:200]
+#     import sys;sys.exit()
     # }
 
     return X_train, X_test

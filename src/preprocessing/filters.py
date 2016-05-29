@@ -10,6 +10,15 @@ emoticons_data_file = os.path.join(helper.APP_PATH, "corpora", "emoticons", "emo
 tokens_punctuation_re = re.compile(r"(\.|!|\?|\(|\)|~)$")
 single_character_tokens_re = re.compile(r"^\W$")
 
+KNOWN_FILE_EXTENSIONS_MAP = {
+    "jar": "java",
+    "js": "javascript",
+    "h": "c",
+    "py": "python",
+    "s": "assembly",
+    "rb": "ruby"
+}
+
 
 def to_lower_case(posts):
     _logger.info("Lower case post title and body")
@@ -77,12 +86,56 @@ def filter_tokens(posts, tag_names):
     for post in posts:
         tokens = post.tokens
 
+        # remove urls
+        # XXX: not sure if this removes important words! => word.startswith("https://")
+        tokens = [word for word in tokens if regex_url.match(word) is None]
+
+        # also remove www-links that do not start with "http://"!!
+        tokens = filter(lambda t: not t.startswith("www."), tokens)
+
+        # remove emoticons (list from https://en.wikipedia.org/wiki/List_of_emoticons)
+        tokens = [word for word in tokens if word not in emoticons_list]
+
+        # remove emoticons (regex)
+        tokens = [word for word in tokens if regex_emoticons.match(word) is None]
+
+        # remove words that start or end with "_"
+        tokens = filter(lambda t: not t.startswith("_") and not t.endswith("_"), tokens)
+
+        new_tokens = []
+        for t in tokens:
+            if t in tag_names:
+                new_tokens.append([t])
+                continue
+
+            separator = None
+            for sep in ["-", ".", "_", ",", "/"]:
+                if sep in t:
+                    separator = sep
+                    break
+            if separator is None:
+                new_tokens.append([t])
+                continue
+
+            parts = t.split(separator)
+            assert len(parts) > 1
+            if len(parts) == 2 and separator == ".":
+                if parts[1] in KNOWN_FILE_EXTENSIONS_MAP:
+                    new_tokens.append(KNOWN_FILE_EXTENSIONS_MAP[parts[1]])
+                    continue
+#                 else:
+#                     print parts[1]
+            new_tokens.append(parts)
+        tokens = [t for sub_tokens in new_tokens for t in sub_tokens]
+
         # remove empty tokens, numbers and those single-character words that are no letters
         tokens = filter(lambda t: len(t) > 0 and not t.isdigit() and len(single_character_tokens_re.findall(t)) == 0,
                         tokens)
 
-        # remove single-character words that are not part of our tag list
-        tokens = filter(lambda t: len(t) > 1 or t in tag_names, tokens)
+        # remove single- and dual-character words that are not part of our tag list
+        tokens = filter(lambda t: len(t) > 2 or t in tag_names, tokens)
+#         # remove single-character words that are not part of our tag list
+#         tokens = filter(lambda t: len(t) > 1 or t in tag_names, tokens)
 
         # remove "'s" at the end
         # "'s" is not useful for us because it may only indicate the verb "be", "have"
@@ -95,12 +148,14 @@ def filter_tokens(posts, tag_names):
         # of possessive nouns (e.g. the planets' orbits)
         tokens = map(lambda t: t[:-2] if t.endswith("s'") else t, tokens)
 
-        # remove "'ve" at the end (e.g. we've got...)
-        tokens = map(lambda t: t[:-2] if t.endswith("'ve") else t, tokens)
+        # remove "'ve", "'ed" "'re", "'ll" at the end (e.g. we've got...)
+        tokens = map(lambda t: t[:-3] if t.endswith("'ve") or t.endswith("'ed") or t.endswith("'re") or t.endswith("'ll") else t, tokens)
 
-        # remove urls
-        # XXX: not sure if this removes important words! => word.startswith("https://")
-        tokens = [word for word in tokens if regex_url.match(word) is None]
+        # remove "'d" at the end (e.g. we'd...)
+        tokens = map(lambda t: t[:-2] if t.endswith("'d") else t, tokens)
+
+        # remove words ending with "n't" at the end (e.g. isn't)
+        tokens = filter(lambda t: not t.endswith("n't"), tokens)
 
         # also remove numbers starting with #
         tokens = [word for word in tokens if regex_number.match(word) is None]
@@ -112,25 +167,14 @@ def filter_tokens(posts, tag_names):
         tokens = filter(lambda t: regex_float_number.match(t) is None, tokens)
         tokens = filter(lambda t: regex_long_number_in_separated_format.match(t) is None, tokens)
 
-        # remove words that start or end with "_"
-        tokens = filter(lambda t: not t.startswith("_") and not t.endswith("_"), tokens)
-
-        # remove numbers
-        tokens = filter(lambda t: not t.isdigit(), tokens)
-
-        # also remove www-links that do not start with "http://"!!
-        tokens = filter(lambda t: not t.startswith("www."), tokens)
-
-        # remove emoticons (list from https://en.wikipedia.org/wiki/List_of_emoticons)
-        tokens = [word for word in tokens if word not in emoticons_list]
-
-        # remove emoticons (regex)
-        tokens = [word for word in tokens if regex_emoticons.match(word) is None]
+        # remove @-mentions
+        tokens = filter(lambda t: not t.startswith("@"), tokens)
 
         post.tokens = tokens
         progress_bar.update()
 
     progress_bar.finish()
+
     # TODO: remove very unique words that only occur once in the whole dataset _filter_tokens ??!!
     return
 

@@ -15,7 +15,8 @@ def remove_stopwords(posts):
     except ImportError:
         raise RuntimeError('Please install nltk library!')
 
-    stop_words = stopwords.words('english')
+    additional_stop_words = ["e.g", "i.e", "vs", "vice-versa"] # without "." at the end!!
+    stop_words = stopwords.words('english') + additional_stop_words
 
     progress_bar = helper.ProgressBar(len(posts))
     for post in posts:
