@@ -25,7 +25,7 @@ _logger = logging.getLogger(__name__)
 def train_and_test_bayes_for_single_tag(tag_name, X_train, y_train, X_test, y_test):
     _logger.debug("Training: %s" % tag_name)
     #nb_classifier = KNeighborsClassifier(n_neighbors=10) # <--- this is no naive bayes classifier
-    nb_classifier = MultinomialNB(alpha=.01)
+    nb_classifier = MultinomialNB(alpha=.01) # 1.0 <-- laplace smoothing!
     #nb_classifier = BernoulliNB(alpha=.01)
     t0 = time()
     nb_classifier.fit(X_train, y_train)

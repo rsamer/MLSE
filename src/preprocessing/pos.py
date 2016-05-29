@@ -9,7 +9,7 @@ from util import helper
 pos_tagger_dir = os.path.join(helper.APP_PATH, 'postagger')
 pos_tagger_data_path = os.path.join(pos_tagger_dir, 'models', 'english-bidirectional-distsim.tagger')
 pos_tagger_jar_path = os.path.join(pos_tagger_dir, 'stanford-postagger.jar')
-nltk.data.path = [helper.APP_PATH + "corpora/nltk_data"]
+nltk.data.path = [os.path.join(helper.APP_PATH, "corpora", "nltk_data")]
 
 _logger = logging.getLogger(__name__)
 

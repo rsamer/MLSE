@@ -3,10 +3,10 @@
 import logging
 import nltk
 import os
+from util import helper
 
 _logger = logging.getLogger(__name__)
-main_dir = os.path.dirname(os.path.realpath(__file__)) + "/../../"
-nltk.data.path = [main_dir + "corpora/nltk_data"]
+nltk.data.path = [os.path.join(helper.APP_PATH, "corpora", "nltk_data")]
 
 
 def word_net_lemmatizer(posts):
