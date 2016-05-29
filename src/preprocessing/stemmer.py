@@ -3,6 +3,7 @@
 import logging
 import nltk
 import os
+from util import helper
 
 _logger = logging.getLogger(__name__)
 main_dir = os.path.dirname(os.path.realpath(__file__)) + "/../../"
@@ -17,5 +18,9 @@ def porter_stemmer(posts):
 
     porter = PorterStemmer()
 
+    progress_bar = helper.ProgressBar(len(posts))
     for post in posts:
         post.tokens = [porter.stem(word) for word in post.tokens]
+        progress_bar.update()
+
+    progress_bar.finish()

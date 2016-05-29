@@ -2,6 +2,7 @@
 
 import re
 import logging
+from util import helper
 
 _logger = logging.getLogger(__name__)
 tokens_punctuation_re = re.compile(r"(\.|!|\?|\(|\)|~)$")
@@ -47,7 +48,11 @@ def tokenize_posts(posts, tag_names):
         tokens = map(filter_all_tailing_punctuation_characters, tokens)
         return tokens
 
+    progress_bar = helper.ProgressBar(len(posts))
     for post in posts:
         text = ((post.title + " ") * 10) + post.body
         post.tokens = _tokenize_text(text, tag_names)
+        progress_bar.update()
+
+    progress_bar.finish()
 

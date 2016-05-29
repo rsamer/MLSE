@@ -10,6 +10,7 @@ import threading
 
 SRC_PATH = os.path.join(os.path.realpath(os.path.dirname(__file__)), "..")
 APP_PATH = os.path.join(SRC_PATH, "..")
+LOG_PATH = os.path.join(APP_PATH, "logs")
 CACHE_PATH = os.path.join(APP_PATH, "temp", "cache")
 
 
@@ -86,11 +87,15 @@ def suggest_random_tags(n_suggested_tags, test_posts, tags):
 
     n_posts_assignments = reduce(lambda x,y: x + y, map(lambda t: t.count, tags))
     assert n_posts_assignments > 0
+    progress_bar = ProgressBar(len(test_posts))
     for test_post in test_posts:
         suggested_tags = []
         for _ in range(n_suggested_tags):
             suggested_tags += [_random_tag(n_posts_assignments, tags)]
         test_post.tag_set_prediction = suggested_tags
+        progress_bar.update()
+
+    progress_bar.finish()
 
 
 def print_tags_summary(total_num_of_tags, num_filtered_tags):

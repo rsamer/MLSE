@@ -71,11 +71,12 @@ def usage():
 
 
 def setup_logging(log_level):
+    #import os
     logging.basicConfig(
-        filename=None,
+        filename=None, #os.path.join(helper.LOG_PATH, "automatic_tagger.log"),
         level=log_level,
         format='%(asctime)s: %(levelname)7s: [%(name)s]: %(message)s',
-        datefmt='%Y-%m-%d %H:%M:%S',
+        datefmt='%Y-%m-%d %H:%M:%S'
     )
 
 
@@ -105,7 +106,7 @@ def main():
     kwargs = usage()
     data_set_path = kwargs['data_set_path']
     enable_caching = kwargs['enable_caching']
-    setup_logging(logging.DEBUG)
+    setup_logging(logging.INFO)
     helper.make_dir_if_not_exists(helper.CACHE_PATH)
 
     # 1) Parsing
@@ -136,21 +137,15 @@ def main():
     #       included in our Post-instances
     train_posts, test_posts, _, _ = train_test_split(posts, np.zeros(len(posts)), test_size=test_size, random_state=42)
 
+    # Suggest most frequent tags (baseline)
     _logger.info("-"*80)
     _logger.info("Randomly suggest 2 most frequent tags...")
-    _logger.info("-"*80)
     helper.suggest_random_tags(2, test_posts, tags)
     evaluation.print_evaluation_results(test_posts)
-
     _logger.info("-"*80)
-    _logger.info("Only auggest most frequent tag...")
-    _logger.info("-"*80)
-    for t in tags:
-        new_tags = [t]
-        print t
-        helper.suggest_random_tags(1, test_posts, new_tags)
-        evaluation.print_evaluation_results(test_posts)
-    sys.exit()
+    _logger.info("Only auggest most frequent tag '%s'..." % tags[0])
+    helper.suggest_random_tags(1, test_posts, [tags[0]])
+    evaluation.print_evaluation_results(test_posts)
 
     # 3) learning
     _logger.info("Learning...")
@@ -158,13 +153,11 @@ def main():
     #naive_bayes.naive_bayes_single_classifier(train_posts, test_posts, tags)
     _logger.info("-"*80)
     _logger.info("Naive bayes...")
-    _logger.info("-"*80)
     naive_bayes.naive_bayes(train_posts, test_posts, tags)
     evaluation.print_evaluation_results(test_posts)
 
     _logger.info("-"*80)
     _logger.info("k-Means...")
-    _logger.info("-"*80)
     kmeans.kmeans(len(tags), train_posts, test_posts)
     evaluation.print_evaluation_results(test_posts)
 

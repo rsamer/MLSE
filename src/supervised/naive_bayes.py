@@ -4,7 +4,6 @@ import logging
 import numpy as np
 import matplotlib.pyplot as plt
 
-from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import RidgeClassifier
 from sklearn.pipeline import Pipeline
 from sklearn.svm import LinearSVC
@@ -18,71 +17,13 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn import metrics
 from sklearn.utils.extmath import density
 from time import time
+from util import helper
+from transformation import tfidf
 
 _logger = logging.getLogger(__name__)
 
-def trim(s):
-    """Trim string to fit on terminal (assuming 80-column display)"""
-    return s if len(s) <= 80 else s[:77] + "..."
-
-###############################################################################
-# Benchmark classifiers
-def benchmark(classifier, X_train, y_train, X_test, y_test):
-    print('_' * 80)
-    print("Training: ")
-    print(classifier)
-    t0 = time()
-    classifier.fit(X_train, y_train)
-    train_time = time() - t0
-    print("train time: %0.3fs" % train_time)
-
-    t0 = time()
-    pred = classifier.predict(X_test)
-    test_time = time() - t0
-    print("test time:  %0.3fs" % test_time)
-
-    score = metrics.accuracy_score(y_test, pred)
-    print("accuracy:   %0.3f" % score)
-
-    if hasattr(classifier, 'coef_'):
-        print("dimensionality: %d" % classifier.coef_.shape[1])
-        print("density: %f" % density(classifier.coef_))
-        print()
-
-    print("classification report:")
-    print(metrics.classification_report(y_test, pred, target_names=None))#categories))
-    print("confusion matrix:")
-    print(metrics.confusion_matrix(y_test, pred))
-    print()
-    clf_descr = str(classifier).split('(')[0]
-    return clf_descr, score, train_time, test_time
-
-
-def plot_results(results):
-    # make some plots
-    indices = np.arange(len(results))
-    results = [[x[i] for x in results] for i in range(4)]
-    clf_names, score, training_time, test_time = results
-    training_time = np.array(training_time) / np.max(training_time)
-    test_time = np.array(test_time) / np.max(test_time)
-
-    plt.figure(figsize=(12, 8))
-    plt.title("Score")
-    plt.barh(indices, score, .2, label="score", color='r')
-    plt.barh(indices + .3, training_time, .2, label="training time", color='g')
-    plt.barh(indices + .6, test_time, .2, label="test time", color='b')
-    plt.yticks(())
-    plt.legend(loc='best')
-    plt.subplots_adjust(left=.25)
-    plt.subplots_adjust(top=.95)
-    plt.subplots_adjust(bottom=.05)
-    for i, c in zip(indices, clf_names):
-        plt.text(-.3, i, c)
-    plt.show()
-
-
 def train_and_test_bayes_for_single_tag(tag_name, X_train, y_train, X_test, y_test):
-    print "Training: " + tag_name
+    _logger.debug("Training: %s" % tag_name)
     #nb_classifier = KNeighborsClassifier(n_neighbors=10) # <--- this is no naive bayes classifier
     nb_classifier = MultinomialNB(alpha=.01)
     #nb_classifier = BernoulliNB(alpha=.01)
@@ -142,35 +83,11 @@ def train_and_test_bayes_for_all_tags(X_train, y_train, X_test, y_test):
 
 
 def naive_bayes_single_classifier(train_posts, test_posts, tags):
-    train_documents = [" ".join(post.tokens) for post in train_posts]
-    test_documents = [" ".join(post.tokens) for post in test_posts]
+    _logger.info("Naive Bayes - Single classifier")
+    X_train, X_test = tfidf.tfidf(train_posts, test_posts)
 
-    #vectorizer = TfidfVectorizer(sublinear_tf=True, max_df=0.5, stop_words='english')
-    vectorizer = TfidfVectorizer(stop_words=None)
-
-    print "Extracting features from the training data using a sparse vectorizer"
-    t0 = time()
-    X_train = vectorizer.fit_transform(train_documents)
-    duration = time() - t0
-    print "duration: %d" % duration
-    print "n_samples: %d, n_features: %d" % X_train.shape
-    print
-
-    print("Extracting features from the test data using the same vectorizer")
-    t0 = time()
-    X_test = vectorizer.transform(test_documents)
-    duration = time() - t0
-    print "duration: %d" % duration
-    print "n_samples: %d, n_features: %d" % X_test.shape
-    print
-
-    results = []
-    #################
-    print('=' * 80)
     print("Naive Bayes")
-    test_post_tag_prediction_map = {}
     #all_tag_names = map(lambda t: t.name, tags)
-
     y_train = map(lambda p: tuple(map(lambda t: t.name, p.tag_set)), train_posts)
     y_test = map(lambda p: tuple(map(lambda t: t.name, p.tag_set)), test_posts)
     #y_test = map(lambda p: tag_name in map(lambda t: t.name, p.tag_set), test_posts)
@@ -187,7 +104,7 @@ def naive_bayes_single_classifier(train_posts, test_posts, tags):
         sorted_tags = map(lambda p: p[0], sorted_tag_predictions)
         test_posts[post_idx].tag_set_prediction = sorted_tags[:2]
     return
-
+#    test_post_tag_prediction_map = {}
 #     for idx, test_post in enumerate(test_posts):
 #         positive_probability_of_post = prediction_positive_probabilities_of_posts[idx]
 #         if test_post not in test_post_tag_prediction_map:
@@ -196,33 +113,11 @@ def naive_bayes_single_classifier(train_posts, test_posts, tags):
 
 
 def naive_bayes(train_posts, test_posts, tags):
-    train_documents = [" ".join(post.tokens) for post in train_posts]
-    test_documents = [" ".join(post.tokens) for post in test_posts]
-
-    #vectorizer = TfidfVectorizer(sublinear_tf=True, max_df=0.5, stop_words='english')
-    vectorizer = TfidfVectorizer(stop_words=None)
-
-    print "Extracting features from the training data using a sparse vectorizer"
-    t0 = time()
-    X_train = vectorizer.fit_transform(train_documents)
-    duration = time() - t0
-    print "duration: %d" % duration
-    print "n_samples: %d, n_features: %d" % X_train.shape
-    print
-
-    print("Extracting features from the test data using the same vectorizer")
-    t0 = time()
-    X_test = vectorizer.transform(test_documents)
-    duration = time() - t0
-    print "duration: %d" % duration
-    print "n_samples: %d, n_features: %d" % X_test.shape
-    print
-
-    results = []
-    #################
-    print('=' * 80)
-    print("Naive Bayes")
+    _logger.info("Naive Bayes - One classifier per tag")
+    X_train, X_test = tfidf.tfidf(train_posts, test_posts)
+    progress_bar = helper.ProgressBar(len(tags))
     test_post_tag_prediction_map = {}
+    results = []
     for tag in tags:
         tag_name = tag.name
         y_train = map(lambda p: tag_name in map(lambda t: t.name, p.tag_set), train_posts)
@@ -235,6 +130,8 @@ def naive_bayes(train_posts, test_posts, tags):
             if test_post not in test_post_tag_prediction_map:
                 test_post_tag_prediction_map[test_post] = []
             test_post_tag_prediction_map[test_post] += [(tag, positive_probability_of_post)]
+        progress_bar.update()
+    progress_bar.finish()
 
     avg_score = float(reduce(lambda x,y: x+y, map(lambda r: r[2], results)))/float(len(results))
     total_train_time = reduce(lambda x,y: x+y, map(lambda r: r[3], results))
@@ -248,13 +145,71 @@ def naive_bayes(train_posts, test_posts, tags):
             test_post.tag_set_prediction = []
             continue
 
-        # TODO: not sure if score is perfect match...
+        # TODO: not sure if a higher score will actually be a better match...
         sorted_tag_predictions = sorted(test_post_tag_prediction_map[test_post], key=lambda p: p[1], reverse=True)
         sorted_tags = map(lambda p: p[0], sorted_tag_predictions)
         test_post.tag_set_prediction = sorted_tags[:2]
-        print "Suggested Tags for test-post = {}{}".format(test_post, sorted_tags[:10])
+        _logger.debug("Suggested Tags for test-post = {}{}".format(test_post, sorted_tags[:10]))
 
     return
+
+
+
+###############################################################################
+# Benchmark classifiers
+def benchmark(classifier, X_train, y_train, X_test, y_test):
+    print('_' * 80)
+    print("Training: ")
+    print(classifier)
+    t0 = time()
+    classifier.fit(X_train, y_train)
+    train_time = time() - t0
+    print("train time: %0.3fs" % train_time)
+
+    t0 = time()
+    pred = classifier.predict(X_test)
+    test_time = time() - t0
+    print("test time:  %0.3fs" % test_time)
+
+    score = metrics.accuracy_score(y_test, pred)
+    print("accuracy:   %0.3f" % score)
+
+    if hasattr(classifier, 'coef_'):
+        print("dimensionality: %d" % classifier.coef_.shape[1])
+        print("density: %f" % density(classifier.coef_))
+        print()
+
+    print("classification report:")
+    print(metrics.classification_report(y_test, pred, target_names=None))#categories))
+    print("confusion matrix:")
+    print(metrics.confusion_matrix(y_test, pred))
+    print()
+    clf_descr = str(classifier).split('(')[0]
+    return clf_descr, score, train_time, test_time
+
+
+def plot_results(results):
+    # make some plots
+    indices = np.arange(len(results))
+    results = [[x[i] for x in results] for i in range(4)]
+    clf_names, score, training_time, test_time = results
+    training_time = np.array(training_time) / np.max(training_time)
+    test_time = np.array(test_time) / np.max(test_time)
+
+    plt.figure(figsize=(12, 8))
+    plt.title("Score")
+    plt.barh(indices, score, .2, label="score", color='r')
+    plt.barh(indices + .3, training_time, .2, label="training time", color='g')
+    plt.barh(indices + .6, test_time, .2, label="test time", color='b')
+    plt.yticks(())
+    plt.legend(loc='best')
+    plt.subplots_adjust(left=.25)
+    plt.subplots_adjust(top=.95)
+    plt.subplots_adjust(bottom=.05)
+    for i, c in zip(indices, clf_names):
+        plt.text(-.3, i, c)
+    plt.show()
+
     #################
 
 

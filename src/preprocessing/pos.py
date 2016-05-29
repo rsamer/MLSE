@@ -74,8 +74,8 @@ def pos_tagging(posts):
     removed_stanford_tokens = set()
     # Note: "-mx4g" sets java's max memory size to 4 GB RAM
     #       Please change when experiencing OS-related problems!
-    english_postagger = StanfordPOSTagger(pos_tagger_data_path, pos_tagger_jar_path, java_options='-mx4g')
-    for idx, post in enumerate(posts):
+    for post in posts:
+        english_postagger = StanfordPOSTagger(pos_tagger_data_path, pos_tagger_jar_path, java_options='-mx4g')
         pos_tagged_tokens = english_postagger.tag(post.tokens)
         tagged_tokens = filter(lambda t: t[1] not in pos_tags_black_list, pos_tagged_tokens)
         post.tokens = map(lambda t: t[0], tagged_tokens)

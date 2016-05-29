@@ -65,7 +65,7 @@ def preprocess_posts(posts, tag_list, filter_untagged_posts=True, filter_less_re
     n_tokens = reduce(lambda x,y: x + y, map(lambda t: len(t.tokens), posts))
     filters.filter_tokens(posts, tag_names)
     stopwords.remove_stopwords(posts)
-    pos.pos_tagging(posts)
+    #pos.pos_tagging(posts)
     n_filtered_tokens = n_tokens - reduce(lambda x,y: x + y, map(lambda t: len(t.tokens), posts))
     if n_tokens > 0:
         _logger.info("Removed {} ({}%) of {} tokens (altogether)".format(n_filtered_tokens,

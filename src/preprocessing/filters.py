@@ -5,6 +5,7 @@ import logging
 import nltk
 import os
 import re
+from util import helper
 
 _logger = logging.getLogger(__name__)
 main_dir = os.path.dirname(os.path.realpath(__file__)) + "/../../"
@@ -74,6 +75,7 @@ def filter_tokens(posts, tag_names):
 
     regex_number = re.compile(r'^#\d+$', re.IGNORECASE)
 
+    progress_bar = helper.ProgressBar(len(posts))
     for post in posts:
         tokens = post.tokens
 
@@ -115,6 +117,9 @@ def filter_tokens(posts, tag_names):
         tokens = [word for word in tokens if regex_emoticons.match(word) is None]
 
         post.tokens = tokens
+        progress_bar.update()
+
+    progress_bar.finish()
 
     # TODO: remove very unique words that only occur once in the whole dataset _filter_tokens ??!!
     return
