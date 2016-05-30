@@ -20,8 +20,8 @@ def add_accepted_answer_text_to_body(posts):
 #             print accepted_answer.body
 
 
-def add_title_to_body(posts):
+def add_title_to_body(posts, weight):
     assert isinstance(posts, list)
 
     for post in posts:
-        post.body = ((post.title + " ") * 10) + post.body
+        post.body = ((post.title + " ") * weight) + post.body

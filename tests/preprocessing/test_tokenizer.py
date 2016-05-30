@@ -2,6 +2,7 @@ import unittest
 from entities.post import Post
 from preprocessing import tokenizer
 
+
 class TestTokenizer(unittest.TestCase):
     def test_tokenizer(self):
         self.assert_tokens("this is a test", [], ["this", "is", "a", "test"])

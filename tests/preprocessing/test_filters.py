@@ -1,6 +1,8 @@
 import unittest
 from entities.post import Post
+from entities.post import Answer
 from preprocessing import filters
+
 
 class TestFilters(unittest.TestCase):
     def test_to_lower_case(self):
@@ -73,7 +75,7 @@ class TestFilters(unittest.TestCase):
 
     def test_filter_less_relevant_posts(self):
         post1 = Post(1, "", "", set([]), 10)
-        post2 = Post(1, "", "", set([]), 11)
+        post2 = Post(2, "", "", set([]), 11)
 
         posts = [post1, post2]
         posts = filters.filter_less_relevant_posts(posts, 11)
@@ -91,7 +93,7 @@ class TestFilters(unittest.TestCase):
 
         post1.score = 10
         post2.score = 0
-        post2.answers = ["test"]
+        post2.answers = [Answer(3, "body", 1)]
         posts = [post1, post2]
         posts = filters.filter_less_relevant_posts(posts, 0)
         self.assertEqual([post1, post2], posts)

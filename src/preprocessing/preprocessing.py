@@ -39,7 +39,7 @@ def preprocess_posts(posts, tag_list, filter_posts=True):
         posts = filters.filter_less_relevant_posts(posts, 0)
         posts = tags.strip_invalid_tags_from_posts_and_remove_untagged_posts(posts, tag_list)
 
-    selection.add_title_to_body(posts)
+    selection.add_title_to_body(posts, 10)
     selection.add_accepted_answer_text_to_body(posts)
 
     filters.to_lower_case(posts)

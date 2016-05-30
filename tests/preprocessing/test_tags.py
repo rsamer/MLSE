@@ -2,6 +2,7 @@ import unittest
 from entities.post import Post
 from preprocessing import tags
 
+
 class TestTags(unittest.TestCase):
     def test_replace_adjacent_tag_occurences(self):
         post = Post(1, "", "", set([]), 1)

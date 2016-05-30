@@ -2,6 +2,7 @@ import unittest
 from entities.post import Post
 from preprocessing import stopwords
 
+
 class TestStopwords(unittest.TestCase):
     def test_stopwords(self):
         self.assert_stopword_removal("my house is small so I have to move out", "house I move")
