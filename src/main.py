@@ -62,7 +62,7 @@ def usage():
     kwargs = {}
     kwargs['enable_caching'] = arguments["--use-caching"]
     kwargs['tag_frequency_threshold'] = int(arguments["--tag-frequ-thr"]) if arguments["--tag-frequ-thr"] else DEFAULT_TAG_FREQUENCY_THRESHOLD
-    kwargs['test_size'] = max(0.01, min(0.5, float(arguments["--test-size"]))) if arguments["--test-size"] else DEFAULT_TEST_SIZE
+    kwargs['test_size'] = max(0.01, min(0.5, float(arguments["--test-size"][0]))) if arguments["--test-size"] else DEFAULT_TEST_SIZE
     kwargs['data_set_path'] = arguments["<data-set-path>"]
     show_version_only = arguments["--version"]
     if show_version_only:

@@ -11,6 +11,7 @@ tokens_punctuation_re = re.compile(r"(\.|!|\?|\(|\)|~)$")
 single_character_tokens_re = re.compile(r"^\W$")
 
 KNOWN_FILE_EXTENSIONS_MAP = {
+    "exe": "windows",
     "jar": "java",
     "js": "javascript",
     "h": "c",

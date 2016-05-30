@@ -6,17 +6,19 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 
 _logger = logging.getLogger(__name__)
 
-def tfidf(train_posts, test_posts, max_features=None):
-    train_documents = [" ".join(post.tokens) for post in train_posts]
-    test_documents = [" ".join(post.tokens) for post in test_posts]
+def extract_tokens(post):
+    return post.tokens
 
+def tfidf(train_posts, test_posts, max_features=None):
     _logger.info("TFIDF-Vectorizer (Transformation)")
     #vectorizer = TfidfVectorizer(sublinear_tf=True, max_df=0.5, stop_words='english')
-    vectorizer = TfidfVectorizer(stop_words=None, max_features=max_features)
+    vectorizer = TfidfVectorizer(stop_words=None, preprocessor=extract_tokens,
+                                 analyzer=extract_tokens,
+                                 tokenizer=extract_tokens, token_pattern=r'.*', max_features=None)#max_features)
 
     _logger.debug("Extracting features from the training data using a sparse vectorizer")
     t0 = time()
-    X_train = vectorizer.fit_transform(train_documents)
+    X_train = vectorizer.fit_transform(train_posts)
     duration = time() - t0
     _logger.debug("duration: %d" % duration)
     _logger.debug("n_samples: %d, n_features: %d" % X_train.shape)
@@ -24,7 +26,7 @@ def tfidf(train_posts, test_posts, max_features=None):
 
     _logger.debug("Extracting features from the test data using the same vectorizer")
     t0 = time()
-    X_test = vectorizer.transform(test_documents)
+    X_test = vectorizer.transform(test_posts)
     duration = time() - t0
     _logger.debug("duration: %d" % duration)
     _logger.debug("n_samples: %d, n_features: %d" % X_test.shape)
@@ -43,7 +45,7 @@ def tfidf(train_posts, test_posts, max_features=None):
         tokens = []
         for i in d.indices:
             tokens += [features[i]]
-        for expected_token in train_documents[idx].split():
+        for expected_token in train_posts[idx].tokens:
             #assert expected_token in tokens
             if expected_token not in tokens:
                 critical_token_names.add(expected_token)
@@ -51,18 +53,20 @@ def tfidf(train_posts, test_posts, max_features=None):
         tokens = []
         for i in d.indices:
             tokens += [features[i]]
-        for expected_token in test_documents[idx].split():
+        for expected_token in test_posts[idx].tokens:
             #assert expected_token in tokens
             if expected_token not in tokens:
                 critical_token_names.add(expected_token)
-#     print "-"*80
-#     #print "Critical token names:"
-#     #print critical_token_names
-#     print "-"*80
-#     print "-"*80
-#     print "-"*80
-#     print features
-#     import sys;sys.exit()
+    print "-"*80
+    print "Critical token names:"
+    print critical_token_names
+    print "-"*80
+    print "-"*80
+    print "-"*80
+    print features[:600]
+    print len(critical_token_names)
+    print len(features)
+    #import sys;sys.exit()
     # }
 
     return X_train, X_test

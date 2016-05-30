@@ -5,7 +5,7 @@ import logging
 from util import helper
 
 _logger = logging.getLogger(__name__)
-tokens_punctuation_re = re.compile(r"(\.|,|'|!|:|\"|\?|/|\(|\)|~)$")
+tokens_punctuation_re = re.compile(r"(\.|,|'|!|:|;|\"|\?|/|\(|\)|~)$")
 single_character_tokens_re = re.compile(r"^\W$")
 
 
