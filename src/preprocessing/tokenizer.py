@@ -53,8 +53,7 @@ def tokenize_posts(posts, tag_names):
 
     progress_bar = helper.ProgressBar(len(posts))
     for post in posts:
-        text = ((post.title + " ") * 10) + post.body
-        post.tokens = _tokenize_text(text, tag_names)
+        post.tokens = _tokenize_text(post.body, tag_names)
         progress_bar.update()
 
     progress_bar.finish()

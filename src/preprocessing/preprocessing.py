@@ -7,6 +7,7 @@ import filters
 import tags
 import stopwords
 import stemmer
+import selection
 import pos
 import lemmatizer
 import itertools
@@ -38,17 +39,23 @@ def preprocess_posts(posts, tag_list, filter_posts=True):
         posts = filters.filter_less_relevant_posts(posts, 0)
         posts = tags.strip_invalid_tags_from_posts_and_remove_untagged_posts(posts, tag_list)
 
-    filters.add_accepted_answer_text_to_body(posts) # XXX: this is no filtering function...??
+    selection.add_title_to_body(posts)
+    selection.add_accepted_answer_text_to_body(posts)
+
     filters.to_lower_case(posts)
     filters.strip_code_segments(posts)
     filters.strip_html_tags(posts)
+
     tag_names = map(lambda t: t.name.lower(), tag_list)
     tags.replace_adjacent_tag_occurences(posts, tag_names)
+
     tokenizer.tokenize_posts(posts, tag_names)
     n_tokens = reduce(lambda x,y: x + y, map(lambda t: len(t.tokens), posts))
     filters.filter_tokens(posts, tag_names)
+
     stopwords.remove_stopwords(posts)
     #pos.pos_tagging(posts)
+
     n_filtered_tokens = n_tokens - reduce(lambda x,y: x + y, map(lambda t: len(t.tokens), posts))
     if n_tokens > 0:
         _logger.info("Removed {} ({}%) of {} tokens (altogether)".format(n_filtered_tokens,

@@ -179,18 +179,6 @@ def filter_tokens(posts, tag_names):
     return
 
 
-def add_accepted_answer_text_to_body(posts):
-    for post in posts:
-        accepted_answer = post.accepted_answer()
-        if accepted_answer is None:
-            continue
-        # assert accepted_answer is not None
-        if accepted_answer.score >= 0: # do not include negatively rated answers!
-            post.body += " " + accepted_answer.body
-#             print "-"*80
-#             print accepted_answer.body
-
-
 def filter_less_relevant_posts(posts, score_threshold):
     _logger.info("Filtering less relevant posts according to #answers and score value")
     # filter posts having low score according to given threshold
