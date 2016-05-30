@@ -98,7 +98,10 @@ def setup_logging(log_level):
 
 
 def preprocess_tags_and_posts(all_tags, all_posts, tag_frequency_threshold):
-    filtered_tags = prepr.filter_tags_and_sort_by_frequency(all_tags, tag_frequency_threshold)
+    from preprocessing import tags
+    #filtered_tags = all_tags # f1=0.349
+    filtered_tags, all_posts = tags.replace_tag_synonyms(all_tags, all_posts) # f1=0.368, f1=0.352
+    filtered_tags = prepr.filter_tags_and_sort_by_frequency(filtered_tags, tag_frequency_threshold)
     posts = prepr.preprocess_posts(all_posts, filtered_tags, filter_posts=True)
     Tag.update_tag_counts_according_to_posts(filtered_tags, posts)
     return filtered_tags, posts
@@ -160,12 +163,14 @@ def main():
     _logger.info("-"*80)
     _logger.info("Naive bayes...")
     from transformation import tfidf
-#     for n_features in range(1000, 3100, 100):
-    n_features = 2300
-    X_train, X_test = tfidf.tfidf(train_posts, test_posts, max_features=n_features)
-    naive_bayes.naive_bayes(X_train, X_test, train_posts, test_posts, tags)
-    #naive_bayes.naive_bayes_single_classifier(train_posts, test_posts, tags)
-    evaluation.print_evaluation_results(test_posts)
+    #for n_features in range(1000, 3100, 100):
+    if True:
+        n_features = 2200
+        X_train, X_test = tfidf.tfidf(train_posts, test_posts, max_features=n_features)
+        naive_bayes.naive_bayes(X_train, X_test, train_posts, test_posts, tags)
+        #naive_bayes.naive_bayes_single_classifier(train_posts, test_posts, tags)
+        print "With features: %d" % n_features
+        evaluation.print_evaluation_results(test_posts)
     # TODO: random forest...
     # TODO: linear SVM...
 
