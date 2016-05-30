@@ -23,6 +23,27 @@ class TestFilters(unittest.TestCase):
         filters.strip_code_segments([post])
         self.assertEqual("this is a test", post.body)
 
+    def test_strip_html_tags(self):
+        post = Post(1, "title", "this is a <strong>test</strong>", set([]), 1)
+        filters.strip_html_tags([post])
+        self.assertEqual("this is a test", post.body)
+
+        post = Post(1, "title", "<html>this is a <strong>test</strong></html>", set([]), 1)
+        filters.strip_html_tags([post])
+        self.assertEqual("this is a test", post.body)
+
+        post = Post(1, "title", "<html>this is a <strong>test</html>", set([]), 1)
+        filters.strip_html_tags([post])
+        self.assertEqual("this is a test", post.body)
+
+        post = Post(1, "title", "this is a <img /> test", set([]), 1)
+        filters.strip_html_tags([post])
+        self.assertEqual("this is a  test", post.body)
+
+        post = Post(1, "title", "this is &nbsp;", set([]), 1)
+        filters.strip_html_tags([post])
+        self.assertEqual("this is", post.body)
+
 
 if __name__ == '__main__':
     unittest.main()
