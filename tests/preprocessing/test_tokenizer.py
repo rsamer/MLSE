@@ -24,6 +24,7 @@ class TestTokenizer(unittest.TestCase):
         self.assert_tokens("this? is a test", [], ["this", "is", "a", "test"])
         self.assert_tokens("don't", [], ["don't"])
         self.assert_tokens("do not", [], ["do", "not"])
+        self.assert_tokens("hello 1234", [], ["hello", "1234"])
 
     def assert_tokens(self, body, tags, expected_tokens):
         post = Post(1, "title", body, set([]), 1)
