@@ -5,6 +5,7 @@ from xml.dom import minidom
 
 _logger = logging.getLogger(__name__)
 
+
 class Answer(object):
     def __init__(self, pid, body, score):
         self.pid = pid
@@ -14,10 +15,12 @@ class Answer(object):
     def __repr__(self):
         return "Answer({},score={},'{}'".format(self.pid, self.score, self.body[:20].encode("utf8"))
 
+
 class Post(object):
 
     def __init__(self, pid, title, body, tag_set, score, accepted_answer_id=None, answers=[]):
         assert isinstance(tag_set, set)
+        assert isinstance(answers, list)
         self.pid = pid
         self.title = title
         self.body = body
@@ -28,7 +31,6 @@ class Post(object):
         self.answers = answers
         self.tokens = None
         self.tokens_pos_tags = None
-
 
     @classmethod
     def parse_posts(cls, file_path, tag_dict):
@@ -86,18 +88,15 @@ class Post(object):
 
         return posts.values()
 
-
     def contains_tag_with_name(self, tag_name):
         for tag in self.tag_set:
             if tag.name == tag_name:# in tag.name:
                 return True
         return False
 
-
     def remove_tag_set(self, tag_set_to_be_removed):
         assert isinstance(tag_set_to_be_removed, set)
         self.tag_set -= tag_set_to_be_removed
-
 
     def accepted_answer(self):
         if not self.accepted_answer_id: return None
@@ -106,7 +105,6 @@ class Post(object):
         if len(accepted_answers) == 0:
             return None # TODO: rempve from example dataset...
         return accepted_answers[0]
-
 
     @staticmethod
     def copied_new_counted_tags_for_posts(posts):
@@ -123,7 +121,6 @@ class Post(object):
                     tag_dict[tag.name] = new_tag
                 tag_dict[tag.name].count += 1
         return tag_dict.values()
-
 
     def __repr__(self):
         return "Post({},score={},#answers={},'{}',tag_set='{}'".format(self.pid, self.score, len(self.answers), self.title[:10].encode("utf8"), self.tag_set)

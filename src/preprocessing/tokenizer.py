@@ -5,11 +5,14 @@ import logging
 from util import helper
 
 _logger = logging.getLogger(__name__)
-tokens_punctuation_re = re.compile(r"(\.|,|'|!|:|;|\"|\?|/|\(|\)|~)$")
+tokens_punctuation_re = re.compile(r"(\.|,|'|-|!|:|;|\"|\?|/|\(|\)|~)$")
 single_character_tokens_re = re.compile(r"^\W$")
 
 
 def tokenize_posts(posts, tag_names):
+    assert isinstance(posts, list)
+    assert isinstance(tag_names, list)
+
     ''' Customized tokenizer for our special needs! (e.g. C#, C++, ...) '''
     _logger.info("Tokenizing posts")
     # based on: http://stackoverflow.com/a/36463112
@@ -49,12 +52,12 @@ def tokenize_posts(posts, tag_names):
         tokens = tokenize(" " + s + " ")
         tokens = [token.strip() for token in tokens]  # remove whitespaces before and after
         tokens = map(filter_all_tailing_punctuation_characters, tokens)
+        tokens = [token for token in tokens if len(token) > 0]  # remove empty tokens
         return tokens
 
     progress_bar = helper.ProgressBar(len(posts))
     for post in posts:
-        text = ((post.title + " ") * 10) + post.body
-        post.tokens = _tokenize_text(text, tag_names)
+        post.tokens = _tokenize_text(post.body, tag_names)
         progress_bar.update()
 
     progress_bar.finish()
