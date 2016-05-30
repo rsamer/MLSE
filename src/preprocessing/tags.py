@@ -5,6 +5,7 @@ from entities.post import Post
 
 _logger = logging.getLogger(__name__)
 
+
 def replace_adjacent_tag_occurences(posts, tag_names):
     ''' replaces "-" by " " in all tag names e.g. "object-oriented" -> "object oriented"
         and then looks for two (or more) adjacent words that represent a known tag name
