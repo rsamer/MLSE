@@ -71,6 +71,30 @@ class TestFilters(unittest.TestCase):
         filters.filter_tokens([post], [])
         self.assertEqual(["test"], post.tokens)
 
+    def test_filter_less_relevant_posts(self):
+        post1 = Post(1, "", "", set([]), 10)
+        post2 = Post(1, "", "", set([]), 11)
+
+        posts = [post1, post2]
+        posts = filters.filter_less_relevant_posts(posts, 11)
+        self.assertEqual([post2], posts)
+
+        post2.score = 0
+        posts = [post1, post2]
+        posts = filters.filter_less_relevant_posts(posts, -1)
+        self.assertEqual([post1], posts)
+
+        post2.score = 10
+        posts = [post1, post2]
+        posts = filters.filter_less_relevant_posts(posts, 2)
+        self.assertEqual([post1, post2], posts)
+
+        post1.score = 10
+        post2.score = 0
+        post2.answers = ["test"]
+        posts = [post1, post2]
+        posts = filters.filter_less_relevant_posts(posts, 0)
+        self.assertEqual([post1, post2], posts)
 
 if __name__ == '__main__':
     unittest.main()
