@@ -49,6 +49,7 @@ def tokenize_posts(posts, tag_names):
         tokens = tokenize(" " + s + " ")
         tokens = [token.strip() for token in tokens]  # remove whitespaces before and after
         tokens = map(filter_all_tailing_punctuation_characters, tokens)
+        tokens = [token for token in tokens if len(token) > 0]  # remove empty tokens
         return tokens
 
     progress_bar = helper.ProgressBar(len(posts))

@@ -5,8 +5,7 @@ from preprocessing import tokenizer
 class TestTokenizer(unittest.TestCase):
     def test_tokenizer(self):
         self.assert_tokens("this is a test", [], ["this", "is", "a", "test"])
-
-        # TODO do not concatenate title to body in tokenize_posts and continue here...
+        self.assert_tokens("this, is a test", [], ["this", "is", "a", "test"])
 
     def assert_tokens(self, body, tags, expected_tokens):
         post = Post(1, "title", body, set([]), 1)
