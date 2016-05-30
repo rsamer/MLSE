@@ -44,6 +44,9 @@ def strip_html_tags(posts):
 
     for post in posts:
         assert isinstance(post, Post)
+        post.title = post.title.replace("&nbsp;", " ")
+        post.body = post.body.replace("&nbsp;", " ")
+
         post.title = BeautifulSoup(post.title, "html.parser").text.strip()
         post.body = BeautifulSoup(post.body, "html.parser").text.strip()
 
@@ -76,11 +79,12 @@ def filter_tokens(posts, tag_names):
 
     regex_hex_numbers = re.compile(r'^0?x[0-9a-fA-F]+$', re.IGNORECASE)
     regex_number = re.compile(r'^#\d+$', re.IGNORECASE)
+    regex_color_code = re.compile(r'^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$', re.IGNORECASE)
     regex_float_number = re.compile(r'^\d+\.\d+$', re.IGNORECASE)
     regex_long_number_in_separated_format = re.compile(r'^\d+,\d+(,\d+)?$', re.IGNORECASE)
 
     with open(emoticons_data_file) as emoticons_file:
-        emoticons_list = emoticons_file.readlines()
+        emoticons_list = emoticons_file.read().splitlines()
 
     progress_bar = helper.ProgressBar(len(posts))
     for post in posts:
@@ -162,6 +166,9 @@ def filter_tokens(posts, tag_names):
 
         # remove hexadecimal numbers
         tokens = [word for word in tokens if regex_hex_numbers.match(word) is None]
+
+        # remove hexadecimal color_codes
+        tokens = [word for word in tokens if regex_color_code.match(word) is None]
 
         # remove . and , separated numbers and enumerations!
         tokens = filter(lambda t: regex_float_number.match(t) is None, tokens)

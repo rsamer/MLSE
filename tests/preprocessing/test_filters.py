@@ -40,9 +40,36 @@ class TestFilters(unittest.TestCase):
         filters.strip_html_tags([post])
         self.assertEqual("this is a  test", post.body)
 
-        post = Post(1, "title", "this is &nbsp;", set([]), 1)
+        post = Post(1, "title", "this is &nbsp; a test", set([]), 1)
         filters.strip_html_tags([post])
-        self.assertEqual("this is", post.body)
+        self.assertEqual("this is   a test", post.body)
+
+    def test_tokens(self):
+        post = Post(1, "", "", set([]), 1)
+
+        post.tokens = ["www.tugraz.at", "http://www.tugraz.at", "test"]
+        filters.filter_tokens([post], [])
+        self.assertEqual(["test"], post.tokens)
+
+        post.tokens = [":-)", ":D", ";)", "xD", ":o)", "test"]
+        filters.filter_tokens([post], [])
+        self.assertEqual(["test"], post.tokens)
+
+        post.tokens = ["_test_", "a", "bc"]
+        filters.filter_tokens([post], [])
+        self.assertEqual([], post.tokens)
+
+        post.tokens = ["a", "bc"]
+        filters.filter_tokens([post], ["a"])
+        self.assertEqual(["a"], post.tokens)
+
+        post.tokens = ["he's", "planets'", "you're", "we've", "isn't", "haven't"]
+        filters.filter_tokens([post], [])
+        self.assertEqual(["he", "planet", "you", "we"], post.tokens)
+
+        post.tokens = ["#123", "#124.2", "123,45", "123.45", "#FF0000", "#ff0000", "test"]
+        filters.filter_tokens([post], [])
+        self.assertEqual(["test"], post.tokens)
 
 
 if __name__ == '__main__':
