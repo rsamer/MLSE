@@ -5,11 +5,14 @@ import logging
 from util import helper
 
 _logger = logging.getLogger(__name__)
-tokens_punctuation_re = re.compile(r"(\.|,|'|!|:|\"|\?|/|\(|\)|~)$")
+tokens_punctuation_re = re.compile(r"(\.|,|'|-|!|:|\"|\?|/|\(|\)|~)$")
 single_character_tokens_re = re.compile(r"^\W$")
 
 
 def tokenize_posts(posts, tag_names):
+    assert isinstance(posts, list)
+    assert isinstance(tag_names, list)
+
     ''' Customized tokenizer for our special needs! (e.g. C#, C++, ...) '''
     _logger.info("Tokenizing posts")
     # based on: http://stackoverflow.com/a/36463112
