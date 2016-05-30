@@ -6,13 +6,13 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 
 _logger = logging.getLogger(__name__)
 
-def tfidf(train_posts, test_posts):
+def tfidf(train_posts, test_posts, max_features=None):
     train_documents = [" ".join(post.tokens) for post in train_posts]
     test_documents = [" ".join(post.tokens) for post in test_posts]
 
     _logger.info("TFIDF-Vectorizer (Transformation)")
     #vectorizer = TfidfVectorizer(sublinear_tf=True, max_df=0.5, stop_words='english')
-    vectorizer = TfidfVectorizer(stop_words=None) # max_features=2000
+    vectorizer = TfidfVectorizer(stop_words=None, max_features=max_features)
 
     _logger.debug("Extracting features from the training data using a sparse vectorizer")
     t0 = time()
@@ -55,13 +55,13 @@ def tfidf(train_posts, test_posts):
             #assert expected_token in tokens
             if expected_token not in tokens:
                 critical_token_names.add(expected_token)
-    print "-"*80
-    print "Critical token names:"
-    print critical_token_names
-    print "-"*80
-    print "-"*80
-    print "-"*80
-    print features[:200]
+#     print "-"*80
+#     #print "Critical token names:"
+#     #print critical_token_names
+#     print "-"*80
+#     print "-"*80
+#     print "-"*80
+#     print features
 #     import sys;sys.exit()
     # }
 

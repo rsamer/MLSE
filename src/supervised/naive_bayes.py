@@ -112,9 +112,8 @@ def naive_bayes_single_classifier(train_posts, test_posts, tags):
 #         test_post_tag_prediction_map[test_post] += [(tag, positive_probability_of_post)]
 
 
-def naive_bayes(train_posts, test_posts, tags):
+def naive_bayes(X_train, X_test, train_posts, test_posts, tags):
     _logger.info("Naive Bayes - One classifier per tag")
-    X_train, X_test = tfidf.tfidf(train_posts, test_posts)
     progress_bar = helper.ProgressBar(len(tags))
     test_post_tag_prediction_map = {}
     results = []

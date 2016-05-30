@@ -109,9 +109,9 @@ def main():
     data_set_path = kwargs['data_set_path']
     enable_caching = kwargs['enable_caching']
     setup_logging(logging.INFO)
+    helper.make_dir_if_not_exists(helper.CACHE_PATH)
     if enable_caching:
         _logger.info("Caching enabled!")
-        helper.make_dir_if_not_exists(helper.CACHE_PATH)
 
     # 1) Parsing
     _logger.info("Parsing...")
@@ -124,8 +124,7 @@ def main():
     _logger.info("Preprocessing...")
     if not enable_caching or not helper.cache_exists_for_preprocessed_tags_and_posts(cache_file_name_prefix):
         tags, posts = preprocess_tags_and_posts(all_tags, all_posts, tag_frequency_threshold)
-        if enable_caching:
-            helper.write_preprocessed_tags_and_posts_to_cache(cache_file_name_prefix, tags, posts)
+        helper.write_preprocessed_tags_and_posts_to_cache(cache_file_name_prefix, tags, posts)
     else:
         _logger.info("Cache hit!")
         tags, posts = helper.load_preprocessed_tags_and_posts_from_cache(cache_file_name_prefix)
@@ -160,7 +159,11 @@ def main():
     # supervised
     _logger.info("-"*80)
     _logger.info("Naive bayes...")
-    naive_bayes.naive_bayes(train_posts, test_posts, tags)
+    from transformation import tfidf
+#     for n_features in range(1000, 3100, 100):
+    n_features = 2300
+    X_train, X_test = tfidf.tfidf(train_posts, test_posts, max_features=n_features)
+    naive_bayes.naive_bayes(X_train, X_test, train_posts, test_posts, tags)
     #naive_bayes.naive_bayes_single_classifier(train_posts, test_posts, tags)
     evaluation.print_evaluation_results(test_posts)
     # TODO: random forest...

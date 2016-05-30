@@ -74,7 +74,7 @@ def filter_tokens(posts, tag_names):
           <3                         # heart
         )""", re.IGNORECASE)
 
-    regex_hex_numbers = re.compile(r'x[0-9a-fA-F]+', re.IGNORECASE)
+    regex_hex_numbers = re.compile(r'^0?x[0-9a-fA-F]+$', re.IGNORECASE)
     regex_number = re.compile(r'^#\d+$', re.IGNORECASE)
     regex_float_number = re.compile(r'^\d+\.\d+$', re.IGNORECASE)
     regex_long_number_in_separated_format = re.compile(r'^\d+,\d+(,\d+)?$', re.IGNORECASE)
@@ -151,8 +151,8 @@ def filter_tokens(posts, tag_names):
         # remove "'ve", "'ed" "'re", "'ll" at the end (e.g. we've got...)
         tokens = map(lambda t: t[:-3] if t.endswith("'ve") or t.endswith("'ed") or t.endswith("'re") or t.endswith("'ll") else t, tokens)
 
-        # remove "'d" at the end (e.g. we'd...)
-        tokens = map(lambda t: t[:-2] if t.endswith("'d") else t, tokens)
+        # remove "'d" and "'m" at the end (e.g. we'd...)
+        tokens = map(lambda t: t[:-2] if t.endswith("'d") or t.endswith("'m") else t, tokens)
 
         # remove words ending with "n't" at the end (e.g. isn't)
         tokens = filter(lambda t: not t.endswith("n't"), tokens)

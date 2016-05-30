@@ -24,10 +24,6 @@ def pos_tagging(posts):
               sudo apt-get install default-jdk
     '''
     _logger.info("Pos-tagging for posts' tokens")
-    try:
-        import nltk
-    except ImportError:
-        raise RuntimeError('Please install nltk library!')
 
     '''
         See: http://www.comp.leeds.ac.uk/ccalas/tagsets/upenn.html
@@ -71,8 +67,8 @@ def pos_tagging(posts):
         WRB    Wh-adverb                           how however whence whenever where whereby whereever wherein whereof why
     '''
     progress_bar = helper.ProgressBar(len(posts))
-#     pos_tags_black_list = ['CC', 'CD', 'DT', 'EX', 'IN', 'LS', 'MD', 'PDT', 'POS', 'PRP', 'PRP$', 'RP', 'TO', 'UH', 'VBZ', 'WDT', 'WP', 'WP$', 'WRB']
-    pos_tags_black_list = ['CC', 'CD', 'DT', 'EX', 'LS', 'MD', 'PDT', 'POS', 'PRP', 'PRP$', 'RP', 'TO', 'UH', 'WDT', 'WP', 'WP$', 'WRB']
+    pos_tags_black_list = ['CC', 'CD', 'DT', 'EX', 'IN', 'LS', 'MD', 'PDT', 'POS', 'PRP', 'PRP$', 'RP', 'TO', 'UH', 'VBZ', 'WDT', 'WP', 'WP$', 'WRB']
+#    pos_tags_black_list = ['CC', 'CD', 'DT', 'EX', 'LS', 'MD', 'PDT', 'POS', 'PRP', 'PRP$', 'RP', 'TO', 'UH', 'WDT', 'WP', 'WP$', 'WRB']
     existing_stanford_pos_tags = set()
     removed_stanford_tokens = set()
     # Note: "-mx30g" sets java's max memory size to 30 GB RAM
