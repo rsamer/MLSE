@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 
 from sklearn.linear_model import RidgeClassifier
 from sklearn.pipeline import Pipeline
+from sklearn.svm import SVC
 from sklearn.svm import LinearSVC
 from sklearn.linear_model import SGDClassifier
 from sklearn.linear_model import Perceptron
@@ -13,6 +14,7 @@ from sklearn.linear_model import PassiveAggressiveClassifier
 from sklearn.naive_bayes import BernoulliNB, MultinomialNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neighbors import NearestCentroid
+from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn import metrics
 from sklearn.utils.extmath import density
@@ -24,8 +26,13 @@ _logger = logging.getLogger(__name__)
 
 def train_and_test_bayes_for_single_tag(tag_name, X_train, y_train, X_test, y_test):
     _logger.debug("Training: %s" % tag_name)
-    #nb_classifier = KNeighborsClassifier(n_neighbors=10) # <--- this is no naive bayes classifier
-    nb_classifier = MultinomialNB(alpha=.03) # <-- lidstone smoothing (1.0 would be laplace smoothing!)
+    #nb_classifier = KNeighborsClassifier(n_neighbors=10) # f1 = 0.386 (features=2900)
+    nb_classifier = RandomForestClassifier(n_estimators=100, max_depth=None, n_jobs=-1) # f1=0.390
+    #nb_classifier = SVC(kernel="linear", C=0.025, probability=True)
+    #nb_classifier = SVC(kernel="rbf", C=0.025, probability=True)
+    #penalty = "l2" #"l1"
+    #nb_classifier = LinearSVC(loss='l2', penalty=penalty, dual=False, tol=1e-3)
+    #nb_classifier = MultinomialNB(alpha=.03) # <-- lidstone smoothing (1.0 would be laplace smoothing!)
     #nb_classifier = BernoulliNB(alpha=.01)
     t0 = time()
     nb_classifier.fit(X_train, y_train)
@@ -57,7 +64,7 @@ def train_and_test_bayes_for_all_tags(X_train, y_train, X_test, y_test):
     print "Training:"
 #     X_train = [[0, 0], [0, 1], [1, 1]]
 #     y_train = [('first',), ('second',), ('first', 'second')]
-    nb_classifier = OneVsRestClassifier(KNeighborsClassifier(n_neighbors=10))#BernoulliNB(alpha=.01))#MultinomialNB(alpha=.01))
+    nb_classifier = OneVsRestClassifier(KNeighborsClassifier(n_neighbors=10), n_jobs=-1)#BernoulliNB(alpha=.01))#MultinomialNB(alpha=.01))
     t0 = time()
     nb_classifier.fit(X_train, y_train)
     print nb_classifier.classes_

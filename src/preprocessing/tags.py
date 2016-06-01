@@ -14,7 +14,6 @@ def replace_tag_synonyms(tags, posts):
     with open(synonyms_file_path, 'rb') as f:
         reader = csv.reader(f)
         for row in reader:
-            print row[1]
             assert row[1] not in tag_name_replacement_map
             tag_name_replacement_map[row[1]] = row[0]
 
