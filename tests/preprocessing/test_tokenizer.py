@@ -27,10 +27,10 @@ class TestTokenizer(unittest.TestCase):
         self.assert_tokens("do not", [], ["do", "not"])
         self.assert_tokens("hello 1234", [], ["hello", "1234"])
 
-    def assert_tokens(self, body, tags, expected_tokens):
+    def assert_tokens(self, body, tag_names, expected_tokens):
         post = Post(1, "title", body, set([]), 1)
 
-        tokenizer.tokenize_posts([post], tag_names=tags)
+        tokenizer.tokenize_posts([post], tag_names=tag_names)
         self.assertEqual(expected_tokens, post.tokens)
 
 
