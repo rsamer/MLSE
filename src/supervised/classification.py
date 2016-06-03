@@ -6,14 +6,10 @@ import matplotlib.pyplot as plt
 
 from sklearn.linear_model import RidgeClassifier
 from sklearn.pipeline import Pipeline
-from sklearn.svm import LinearSVC
 from sklearn.linear_model import SGDClassifier
 from sklearn.linear_model import Perceptron
 from sklearn.linear_model import PassiveAggressiveClassifier
-from sklearn.naive_bayes import BernoulliNB, MultinomialNB
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.neighbors import NearestCentroid
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.tree import DecisionTreeClassifier
 from sklearn import metrics
 from sklearn.utils.extmath import density
 from time import time
@@ -22,21 +18,19 @@ from transformation import tfidf
 
 _logger = logging.getLogger(__name__)
 
-def train_and_test_bayes_for_single_tag(tag_name, X_train, y_train, X_test, y_test):
+def train_and_test_classifier_for_single_tag(classifier, tag_name, X_train, y_train, X_test, y_test):
     _logger.debug("Training: %s" % tag_name)
-    #nb_classifier = KNeighborsClassifier(n_neighbors=10) # <--- this is no naive bayes classifier
-    nb_classifier = MultinomialNB(alpha=.03) # <-- lidstone smoothing (1.0 would be laplace smoothing!)
-    #nb_classifier = BernoulliNB(alpha=.01)
+
     t0 = time()
-    nb_classifier.fit(X_train, y_train)
+    classifier.fit(X_train, y_train)
     train_time = time() - t0
 
     t0 = time()
-    #prediction_list = nb_classifier.predict(X_test)
-    prediction_probabilities_list = nb_classifier.predict_proba(X_test)
+    #prediction_list = classifier.predict(X_test)
+    prediction_probabilities_list = classifier.predict_proba(X_test)
 
     # sanity checks!
-    classes = nb_classifier.classes_
+    classes = classifier.classes_
     assert len(classes) == 1 or len(classes) == 2
     assert classes[0] == False
     if len(classes) == 2:
@@ -52,37 +46,37 @@ def train_and_test_bayes_for_single_tag(tag_name, X_train, y_train, X_test, y_te
     return tag_name, prediction_positive_probabilities, score, train_time, test_time
 
 
-def train_and_test_bayes_for_all_tags(X_train, y_train, X_test, y_test):
+def train_and_test_classifier_for_all_tags(X_train, y_train, X_test, y_test):
     from sklearn.multiclass import OneVsRestClassifier
     print "Training:"
 #     X_train = [[0, 0], [0, 1], [1, 1]]
 #     y_train = [('first',), ('second',), ('first', 'second')]
-    nb_classifier = OneVsRestClassifier(KNeighborsClassifier(n_neighbors=10))#BernoulliNB(alpha=.01))#MultinomialNB(alpha=.01))
+    classifier = OneVsRestClassifier(KNeighborsClassifier(n_neighbors=10), n_jobs=-1)#BernoulliNB(alpha=.01))#MultinomialNB(alpha=.01))
     t0 = time()
-    nb_classifier.fit(X_train, y_train)
-    print nb_classifier.classes_
+    classifier.fit(X_train, y_train)
+    print classifier.classes_
     train_time = time() - t0
 
-#     nb_classifier = MultinomialNB(alpha=.01)
+#     classifier = MultinomialNB(alpha=.01)
 #     t0 = time()
-#     nb_classifier.fit(X_train, y_train)
+#     classifier.fit(X_train, y_train)
 #     train_time = time() - t0
 
     t0 = time()
-    #prediction_list = nb_classifier.predict(X_test)
-    prediction_probabilities_list = nb_classifier.predict_proba(X_test)
+    #prediction_list = classifier.predict(X_test)
+    prediction_probabilities_list = classifier.predict_proba(X_test)
 
     # sanity checks!
-#     assert nb_classifier.classes_[0] == False
-#     assert nb_classifier.classes_[1] == True
+#     assert classifier.classes_[0] == False
+#     assert classifier.classes_[1] == True
 #     for p1, p2 in prediction_probabilities_list:
 #         assert abs(1.0 - (p1+p2)) < 0.001
 
     test_time = time() - t0
-    return prediction_probabilities_list, nb_classifier.classes_, train_time, test_time
+    return prediction_probabilities_list, classifier.classes_, train_time, test_time
 
 
-def naive_bayes_single_classifier(train_posts, test_posts, tags):
+def single_classifier(train_posts, test_posts, tags):
     _logger.info("Naive Bayes - Single classifier")
     X_train, X_test = tfidf.tfidf(train_posts, test_posts)
 
@@ -91,7 +85,7 @@ def naive_bayes_single_classifier(train_posts, test_posts, tags):
     y_train = map(lambda p: tuple(map(lambda t: t.name, p.tag_set)), train_posts)
     y_test = map(lambda p: tuple(map(lambda t: t.name, p.tag_set)), test_posts)
     #y_test = map(lambda p: tag_name in map(lambda t: t.name, p.tag_set), test_posts)
-    result = train_and_test_bayes_for_all_tags(X_train, y_train, X_test, y_test)
+    result = train_and_test_classifier_for_all_tags(X_train, y_train, X_test, y_test)
     prediction_positive_probabilities_of_posts = result[0]
     tag_name_map = {}
     for tag in tags:
@@ -112,8 +106,8 @@ def naive_bayes_single_classifier(train_posts, test_posts, tags):
 #         test_post_tag_prediction_map[test_post] += [(tag, positive_probability_of_post)]
 
 
-def naive_bayes(X_train, X_test, train_posts, test_posts, tags):
-    _logger.info("Naive Bayes - One classifier per tag")
+def classification(classifier, X_train, X_test, train_posts, test_posts, tags):
+    _logger.info("%s - One classifier per tag", classifier.__class__.__name__)
     progress_bar = helper.ProgressBar(len(tags))
     test_post_tag_prediction_map = {}
     results = []
@@ -121,7 +115,7 @@ def naive_bayes(X_train, X_test, train_posts, test_posts, tags):
         tag_name = tag.name
         y_train = map(lambda p: tag_name in map(lambda t: t.name, p.tag_set), train_posts)
         y_test = map(lambda p: tag_name in map(lambda t: t.name, p.tag_set), test_posts)
-        result = train_and_test_bayes_for_single_tag(tag_name, X_train, y_train, X_test, y_test)
+        result = train_and_test_classifier_for_single_tag(classifier, tag_name, X_train, y_train, X_test, y_test)
         results.append(result)
         prediction_positive_probabilities_of_posts = result[1]
         for idx, test_post in enumerate(test_posts):

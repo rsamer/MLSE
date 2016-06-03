@@ -11,10 +11,10 @@ class TestStemmer(unittest.TestCase):
         stemmer.porter_stemmer([post])
         self.assertEqual(["hous"], post.tokens)
 
-        post.tokens = ["So", "sixth", "abundantly", "had", "great", "yielding", "cattle", "together", "it", "him", "whales",
+        post.tokens = ["asp.net", "c++", "c#", "c", "So", "sixth", "abundantly", "had", "great", "yielding", "cattle", "together", "it", "him", "whales",
                        "rule", "air", "i", "lights", "yielding", "our", "green", "set", "forth", "years", "so",
                        "gathering", "land", "over"]
-        expected_tokens = ["So", "sixth", "abundantli", "had", "great", "yield", "cattl", "togeth", "it", "him", "whale",
+        expected_tokens = ["asp.net", "c++", "c#", "c", "So", "sixth", "abundantli", "had", "great", "yield", "cattl", "togeth", "it", "him", "whale",
                            "rule", "air", "i", "light", "yield", "our", "green", "set", "forth", "year", "so",
                            "gather", "land", "over"]
 
