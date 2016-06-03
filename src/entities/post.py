@@ -81,7 +81,7 @@ class Post(object):
         # finally add answers to corresponding posts
         for question_id, answers in grouped_answers.iteritems():
             if question_id not in posts:
-                _logger.info("Ignoring answer for non existant post {}".format(question_id))
+                _logger.debug("Ignoring answer for non existent post {}".format(question_id))
                 continue
             corresponding_post = posts[question_id]
             corresponding_post.answers = answers

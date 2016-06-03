@@ -30,7 +30,7 @@ import numpy as np
 from entities.tag import Tag
 from preprocessing import parser, preprocessing as prepr
 from sklearn.cross_validation import train_test_split
-from supervised import naive_bayes
+from supervised import classification
 from unsupervised import kmeans, hac
 from evaluation import evaluation
 from util import helper
@@ -157,23 +157,42 @@ def main():
 #     helper.suggest_random_tags(1, test_posts, [tags[0]])
 #     evaluation.print_evaluation_results(test_posts)
 
+    # transformation
+    _logger.info("-" * 80)
+    _logger.info("Transformation...")
+    n_features = 2500  # 2200 # 2500 for KNN
+    from transformation import tfidf
+    X_train, X_test = tfidf.tfidf(train_posts, test_posts, max_features=n_features)
+
     # 3) learning
     _logger.info("Learning...")
 
     # supervised
     _logger.info("-"*80)
-    _logger.info("Naive bayes...")
-    from transformation import tfidf
+    _logger.info("Supervised - Classification...")
 #    for n_features in range(1000, 3100, 100):
-    if True:
-        n_features = 2500#2200 # 2500 for KNN
-        X_train, X_test = tfidf.tfidf(train_posts, test_posts, max_features=n_features)
-        naive_bayes.naive_bayes(X_train, X_test, train_posts, test_posts, tags)
-        #naive_bayes.naive_bayes_single_classifier(train_posts, test_posts, tags)
+
+    from sklearn.neighbors import KNeighborsClassifier
+    from sklearn.naive_bayes import BernoulliNB, MultinomialNB
+    from sklearn.ensemble import RandomForestClassifier
+    from sklearn.svm import SVC
+    from sklearn.svm import LinearSVC
+
+    classifiers = [
+        KNeighborsClassifier(n_neighbors=10), # f1 = 0.386 (features=2900)
+        RandomForestClassifier(n_estimators=100, max_depth=None, n_jobs=-1),  # f1=0.390
+        SVC(kernel="linear", C=0.025, probability=True),
+        #SVC(kernel="rbf", C=0.025, probability=True), # penalty = "l2" #"l1"
+        #LinearSVC(loss='l2', penalty="l2", dual=False, tol=1e-3),
+        MultinomialNB(alpha=.03), # <-- lidstone smoothing (1.0 would be laplace smoothing!)
+        BernoulliNB(alpha=.01)
+    ]
+
+    for classifier in classifiers:
+        classification.classification(classifier, X_train, X_test, train_posts, test_posts, tags)
+        #classification.single_classifier(train_posts, test_posts, tags)
         print "With features: %d" % n_features
         evaluation.print_evaluation_results(test_posts)
-    # TODO: random forest...
-    # TODO: linear SVM...
 
 #     # unsupervised
 #     _logger.info("-"*80)
