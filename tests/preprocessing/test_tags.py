@@ -22,12 +22,12 @@ class TestTags(unittest.TestCase):
         tag2 = Tag("tag2", 1)
         tag3 = Tag("tag3", 1)
         tag4 = Tag("tag4", 1)
-        tagTest = Tag("tagTest", 1)
+        tag_test = Tag("tag-test", 1)
 
         post1.tag_set = {tag1}
-        post2.tag_set = {tagTest}
+        post2.tag_set = {tag_test}
         posts = [post1, post2]
-        posts = tags.strip_invalid_tags_from_posts_and_remove_untagged_posts(posts, [tagTest])
+        posts = tags.strip_invalid_tags_from_posts_and_remove_untagged_posts(posts, [tag_test])
         self.assertEqual([post2], posts)
         self.assertEqual(1, len(post2.tag_set))
 
@@ -46,7 +46,7 @@ class TestTags(unittest.TestCase):
         tag2 = Tag("apache", 1)
         tag3 = Tag("apache2", 1)
 
-        post.tag_set = set([tag1, tag2, tag3])
+        post.tag_set = {tag1, tag2, tag3}
 
         tag_list = [tag1, tag2, tag3]
         self.assertEqual(3, len(tag_list))
@@ -59,8 +59,9 @@ class TestTags(unittest.TestCase):
         self.assertEqual(tag2, tag_list[1])
 
         self.assertEqual(2, len(post.tag_set))
-        self.assertEqual(tag1, list(post.tag_set)[0])
-        self.assertEqual(tag2, list(post.tag_set)[1])
+        self.assertNotEquals(list(post.tag_set)[0], list(post.tag_set)[1])
+        self.assertTrue(list(post.tag_set)[0] == tag1 or list(post.tag_set)[0] == tag2)
+        self.assertTrue(list(post.tag_set)[1] == tag1 or list(post.tag_set)[1] == tag2)
 
 
 if __name__ == '__main__':
