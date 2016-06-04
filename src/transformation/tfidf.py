@@ -13,13 +13,15 @@ def tfidf(train_posts, test_posts, max_features=None):
     _logger.info("TFIDF-Vectorizer (Transformation)")
     #vectorizer = TfidfVectorizer(sublinear_tf=True, max_df=0.5, stop_words='english')
     vectorizer = TfidfVectorizer(stop_words=None,
+                                 ngram_range=(1, 3),#(1, 1),
                                  preprocessor=extract_tokens,
                                  analyzer=extract_tokens,
                                  tokenizer=extract_tokens,
                                  #token_pattern=r'.*',
+                                 min_df=2, # get rid of noise!
                                  use_idf=True,
-                                 sublinear_tf=False,
                                  smooth_idf=False,
+                                 sublinear_tf=False,
                                  norm=None,
                                  max_features=max_features)
 

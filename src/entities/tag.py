@@ -5,6 +5,7 @@ from xml.dom import minidom
 class Tag(object):
     def __init__(self, name, count):
         self.name = name
+        self.preprocessed_tag_name = None
         self.count = count
 
 

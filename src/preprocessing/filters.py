@@ -178,6 +178,9 @@ def filter_tokens(posts, tag_names):
         # remove @-mentions
         tokens = filter(lambda t: not t.startswith("@"), tokens)
 
+        # make sure that all tokens do not contain any whitespaces before and at the end
+        tokens = map(lambda t: t.strip(), tokens)
+
         post.tokens = tokens
         progress_bar.update()
 
