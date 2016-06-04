@@ -4,12 +4,12 @@ import logging
 import numpy as np
 import matplotlib.pyplot as plt
 
-from sklearn.linear_model import RidgeClassifier
-from sklearn.pipeline import Pipeline
-from sklearn.linear_model import SGDClassifier
-from sklearn.linear_model import Perceptron
-from sklearn.linear_model import PassiveAggressiveClassifier
-from sklearn.tree import DecisionTreeClassifier
+# from sklearn.linear_model import RidgeClassifier
+# from sklearn.pipeline import Pipeline
+# from sklearn.linear_model import SGDClassifier
+# from sklearn.linear_model import Perceptron
+# from sklearn.linear_model import PassiveAggressiveClassifier
+# from sklearn.tree import DecisionTreeClassifier
 from sklearn import metrics
 from sklearn.utils.extmath import density
 from time import time
@@ -26,8 +26,12 @@ def train_and_test_classifier_for_single_tag(classifier, tag_name, X_train, y_tr
     train_time = time() - t0
 
     t0 = time()
+    #if hasattr(classifier, "decision_function"):
     #prediction_list = classifier.predict(X_test)
+    #    prediction_probabilities_list = classifier.decision_function(X_test) # for ensemble methods!
+    #else:
     prediction_probabilities_list = classifier.predict_proba(X_test)
+        
 
     # sanity checks!
     classes = classifier.classes_
@@ -46,21 +50,14 @@ def train_and_test_classifier_for_single_tag(classifier, tag_name, X_train, y_tr
     return tag_name, prediction_positive_probabilities, score, train_time, test_time
 
 
-def train_and_test_classifier_for_all_tags(X_train, y_train, X_test, y_test):
+def train_and_test_classifier_for_all_tags(classifier, X_train, y_train, X_test, y_test):
     from sklearn.multiclass import OneVsRestClassifier
-    print "Training:"
 #     X_train = [[0, 0], [0, 1], [1, 1]]
 #     y_train = [('first',), ('second',), ('first', 'second')]
-    classifier = OneVsRestClassifier(KNeighborsClassifier(n_neighbors=10), n_jobs=-1)#BernoulliNB(alpha=.01))#MultinomialNB(alpha=.01))
+    classifier = OneVsRestClassifier(classifier, n_jobs=-1)
     t0 = time()
     classifier.fit(X_train, y_train)
-    print classifier.classes_
     train_time = time() - t0
-
-#     classifier = MultinomialNB(alpha=.01)
-#     t0 = time()
-#     classifier.fit(X_train, y_train)
-#     train_time = time() - t0
 
     t0 = time()
     #prediction_list = classifier.predict(X_test)
@@ -76,22 +73,19 @@ def train_and_test_classifier_for_all_tags(X_train, y_train, X_test, y_test):
     return prediction_probabilities_list, classifier.classes_, train_time, test_time
 
 
-def single_classifier(train_posts, test_posts, tags):
-    _logger.info("Naive Bayes - Single classifier")
-    X_train, X_test = tfidf.tfidf(train_posts, test_posts)
-
-    print("Naive Bayes")
+def single_classifier(classifier, X_train, X_test, train_posts, test_posts, tags):
+    _logger.info("%s - OneVsRestClassifier", classifier.__class__.__name__)
     #all_tag_names = map(lambda t: t.name, tags)
     y_train = map(lambda p: tuple(map(lambda t: t.name, p.tag_set)), train_posts)
     y_test = map(lambda p: tuple(map(lambda t: t.name, p.tag_set)), test_posts)
     #y_test = map(lambda p: tag_name in map(lambda t: t.name, p.tag_set), test_posts)
-    result = train_and_test_classifier_for_all_tags(X_train, y_train, X_test, y_test)
+    result = train_and_test_classifier_for_all_tags(classifier, X_train, y_train, X_test, y_test)
     prediction_positive_probabilities_of_posts = result[0]
     tag_name_map = {}
     for tag in tags:
         tag_name_map[tag.name] = tag
     tag_names = result[1]
-    print prediction_positive_probabilities_of_posts
+    #print prediction_positive_probabilities_of_posts
     for post_idx, post_probabilities in enumerate(prediction_positive_probabilities_of_posts):
         post_probabilities_map = [(tag_name_map[tag_names[tag_idx]], p) for tag_idx, p in enumerate(post_probabilities)]
         sorted_tag_predictions = sorted(post_probabilities_map, key=lambda p: p[1], reverse=True)

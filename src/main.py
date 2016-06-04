@@ -177,17 +177,27 @@ def main():
     from sklearn.neighbors import KNeighborsClassifier
     from sklearn.naive_bayes import BernoulliNB, MultinomialNB
     from sklearn.ensemble import RandomForestClassifier
+    from sklearn.ensemble import AdaBoostClassifier
+    from sklearn.tree import DecisionTreeClassifier
     from sklearn.svm import SVC
     from sklearn.svm import LinearSVC
+    from sklearn.dummy import DummyClassifier
 
     classifiers = [
-        KNeighborsClassifier(n_neighbors=10), # f1 = 0.386 (features=2900)
-        RandomForestClassifier(n_estimators=100, max_depth=None, n_jobs=-1),  # f1=0.390
+        DummyClassifier("most_frequent"), # very primitive/simple baseline!
+        AdaBoostClassifier(
+            DecisionTreeClassifier(max_depth=2),
+            n_estimators=600,
+            learning_rate=1.5,
+            algorithm="SAMME"),
         SVC(kernel="linear", C=0.025, probability=True),
+        SVC(kernel="linear", C=0.4, probability=True),
+        #KNeighborsClassifier(n_neighbors=10), # f1 = 0.386 (features=2900)
+        #RandomForestClassifier(n_estimators=200, max_depth=None, n_jobs=-1),  # f1=0.390
         #SVC(kernel="rbf", C=0.025, probability=True), # penalty = "l2" #"l1"
         #LinearSVC(loss='l2', penalty="l2", dual=False, tol=1e-3),
         MultinomialNB(alpha=.03), # <-- lidstone smoothing (1.0 would be laplace smoothing!)
-        BernoulliNB(alpha=.01)
+        #BernoulliNB(alpha=.01)
     ]
 
     for classifier in classifiers:
@@ -195,6 +205,11 @@ def main():
         #classification.single_classifier(train_posts, test_posts, tags)
         print "With features: %d" % n_features
         evaluation.print_evaluation_results(test_posts)
+
+#         classification.single_classifier(classifier, X_train, X_test, train_posts, test_posts, tags)
+#         #classification.single_classifier(train_posts, test_posts, tags)
+#         print "With features: %d" % n_features
+#         evaluation.print_evaluation_results(test_posts)
 
 #     # unsupervised
 #     _logger.info("-"*80)
