@@ -92,7 +92,6 @@ def filter_tokens(posts, tag_names):
         tokens = post.tokens
 
         # remove urls
-        # XXX: not sure if this removes important words! => word.startswith("https://")
         tokens = [word for word in tokens if regex_url.match(word) is None]
 
         # also remove www-links that do not start with "http://"!!
@@ -101,7 +100,7 @@ def filter_tokens(posts, tag_names):
         # remove emoticons (list from https://en.wikipedia.org/wiki/List_of_emoticons)
         tokens = [word for word in tokens if word not in emoticons_list]
 
-        # remove emoticons (regex)
+        # remove more-complex emoticons (regex)
         tokens = [word for word in tokens if regex_emoticons.match(word) is None]
 
         # remove words that start or end with "_"
