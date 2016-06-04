@@ -31,7 +31,7 @@ def replace_tag_synonyms(tags, posts):
                 if new_tag_name not in tag_name_tag_map:
                     _logger.debug("Ignoring non existant tag %s", new_tag_name)
                     continue
-                _logger.info("Replaced %s with %s", tag, tag_name_tag_map[new_tag_name])
+                _logger.debug("Replaced %s with %s", tag, tag_name_tag_map[new_tag_name])
                 new_tag_set.add(tag_name_tag_map[new_tag_name])
                 counter_assigned_synonym_tags += 1
             else:

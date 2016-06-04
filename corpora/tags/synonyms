@@ -6,6 +6,7 @@ apache,apache2
 api,api-design
 c,c11
 c++,c++11
+career-development,career-transition
 continuous-integration,continuation
 continuous-integration,continuous-delivery
 code-reviews,review
@@ -18,8 +19,10 @@ compiler,decompile
 compiler,gcc
 compiler,visual-c++
 compiler,llvm
+character-encoding,unicode
 database,database-design
 database,database-development
+database,relational-database
 design,anti-patterns
 design,application-design
 design,design-by-contract
@@ -44,6 +47,7 @@ ui,gui
 ui,gui-design
 ui,user-interface
 ios,iphone
+ide,development-environment
 java,javafx
 java,javadocs
 java,java8
@@ -52,8 +56,10 @@ java,jsp
 java,jre
 java,jvm
 javascript,mootools
+job-definition,job-title
 licensing,agpl
 licensing,apache-license
+licensing,bsd-license
 licensing,gpl
 licensing,lgpl
 licensing,mit-license
@@ -62,6 +68,7 @@ linux,linux-development
 linux,linux-kernel
 lisp,lisp-machine
 memory,memory-usage
+methodology,development-methodologies
 modeling,model
 modeling,modelling
 multithreading,threading
@@ -79,10 +86,14 @@ open-source,free-software
 open-source,freeware
 python,python-3.x
 python,ironpython
+scrum,scrum-master
+search,search-engine
 security,secure-coding
 security,passwords
 security,cryptography
 security,defensive-programming
+software-developer,senior-developer
+software-developer,junior-programmer
 sql,sql-injection
 sql-server,sql-server-ce
 sql-server,mysql
