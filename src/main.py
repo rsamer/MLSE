@@ -103,6 +103,7 @@ def preprocess_tags_and_posts(all_tags, all_posts, tag_frequency_threshold):
     # FIXME: fails for academia dataset!
     #filtered_tags, all_posts = tags.replace_tag_synonyms(all_tags, all_posts) # f1=0.368, f1=0.352
     filtered_tags = prepr.filter_tags_and_sort_by_frequency(filtered_tags, tag_frequency_threshold)
+    prepr.preprocess_tags(filtered_tags)
     posts = prepr.preprocess_posts(all_posts, filtered_tags, filter_posts=True)
     Tag.update_tag_counts_according_to_posts(filtered_tags, posts)
     return filtered_tags, posts
@@ -160,9 +161,10 @@ def main():
     # transformation
     _logger.info("-" * 80)
     _logger.info("Transformation...")
-    n_features = 2500  # 2200 # 2500 for KNN
-    from transformation import tfidf
-    X_train, X_test = tfidf.tfidf(train_posts, test_posts, max_features=n_features)
+    n_features = 20000 #2500  # 2200 # 2500 for KNN
+    from transformation import tfidf, features
+    X_train, X_test = tfidf.tfidf(train_posts, test_posts, max_features=None)
+    #X_train, X_test = features.numeric_features(train_posts, test_posts, tags)
 
     # 3) learning
     _logger.info("Learning...")
