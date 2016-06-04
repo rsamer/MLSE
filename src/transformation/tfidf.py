@@ -17,8 +17,12 @@ def tfidf(train_posts, test_posts, max_features=None):
                                  preprocessor=extract_tokens,
                                  analyzer=extract_tokens,
                                  tokenizer=extract_tokens,
-                                 token_pattern=r'.*',
+                                 #token_pattern=r'.*',
                                  min_df=2, # get rid of noise!
+                                 use_idf=True,
+                                 smooth_idf=False,
+                                 sublinear_tf=False,
+                                 norm=None,
                                  max_features=max_features)
 
     _logger.debug("Extracting features from the training data using a sparse vectorizer")
