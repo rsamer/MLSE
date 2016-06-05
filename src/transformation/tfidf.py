@@ -22,8 +22,8 @@ def tfidf(train_posts, test_posts, max_features=None):
                                  use_idf=True,
                                  smooth_idf=False,
                                  sublinear_tf=False,
-                                 norm=None,
-                                 max_features=max_features)
+                                 norm=None,)
+    #                             max_features=max_features)
 
     _logger.debug("Extracting features from the training data using a sparse vectorizer")
     t0 = time()
@@ -48,34 +48,19 @@ def tfidf(train_posts, test_posts, max_features=None):
     assert X_train.shape[1] == X_test.shape[1]
 
     # SANITY CHECK {
-#     features = vectorizer.get_feature_names()
-#     critical_token_names = set()
-#     for idx, d in enumerate(X_train):
-#         tokens = []
-#         for i in d.indices:
-#             tokens += [features[i]]
-#         for expected_token in train_posts[idx].tokens:
-#             #assert expected_token in tokens
-#             if expected_token not in tokens:
-#                 critical_token_names.add(expected_token)
-#     for idx, d in enumerate(X_test):
-#         tokens = []
-#         for i in d.indices:
-#             tokens += [features[i]]
-#         for expected_token in test_posts[idx].tokens:
-#             #assert expected_token in tokens
-#             if expected_token not in tokens:
-#                 critical_token_names.add(expected_token)
-#     print "-"*80
-#     print "Critical token names:"
-#     print critical_token_names
-#     print "-"*80
-#     print "-"*80
-#     print "-"*80
-#     print features[:600]
-#     print len(critical_token_names)
-#     print len(features)
-    #import sys;sys.exit()
+    features = vectorizer.get_feature_names()
+    assert len(features) == len(vectorizer.vocabulary_)
+    removed_features = set()
+    for idx, d in enumerate(X_train):
+        tokens = []
+        for i in d.indices:
+            tokens += [features[i]]
+        for expected_token in train_posts[idx].tokens:
+            #assert expected_token in tokens
+            if expected_token not in tokens:
+                removed_features.add(expected_token)
+    assert len(vectorizer.stop_words_) == len(removed_features)
     # }
-
+    _logger.info("Removed %d features by TfidfVectorizer", len(vectorizer.stop_words_))
+    _logger.info("%d features used for training", len(vectorizer.vocabulary_))
     return X_train, X_test

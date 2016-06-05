@@ -52,25 +52,25 @@ def train_and_test_classifier_for_single_tag(classifier, tag_name, X_train, y_tr
 
 def train_and_test_classifier_for_all_tags(classifier, X_train, y_train, X_test, y_test):
     from sklearn.multiclass import OneVsRestClassifier
-#     X_train = [[0, 0], [0, 1], [1, 1]]
-#     y_train = [('first',), ('second',), ('first', 'second')]
     classifier = OneVsRestClassifier(classifier, n_jobs=-1)
     t0 = time()
     classifier.fit(X_train, y_train)
     train_time = time() - t0
-
     t0 = time()
     #prediction_list = classifier.predict(X_test)
     prediction_probabilities_list = classifier.predict_proba(X_test)
-
-    # sanity checks!
-#     assert classifier.classes_[0] == False
-#     assert classifier.classes_[1] == True
-#     for p1, p2 in prediction_probabilities_list:
-#         assert abs(1.0 - (p1+p2)) < 0.001
-
     test_time = time() - t0
     return prediction_probabilities_list, classifier.classes_, train_time, test_time
+
+
+def one_vs_rest(clf, X_train, y_train):
+    from sklearn.multiclass import OneVsRestClassifier
+    _logger.info("%s - OneVsRestClassifier", clf.__class__.__name__)
+    one_vs_rest_clf = OneVsRestClassifier(clf, n_jobs=1)#-1)
+    t0 = time()
+    one_vs_rest_clf.fit(X_train, y_train)
+    train_time = time() - t0
+    return one_vs_rest_clf, train_time
 
 
 def single_classifier(classifier, X_train, X_test, train_posts, test_posts, tags):
@@ -91,7 +91,6 @@ def single_classifier(classifier, X_train, X_test, train_posts, test_posts, tags
         sorted_tag_predictions = sorted(post_probabilities_map, key=lambda p: p[1], reverse=True)
         sorted_tags = map(lambda p: p[0], sorted_tag_predictions)
         test_posts[post_idx].tag_set_prediction = sorted_tags[:2]
-    return
 #    test_post_tag_prediction_map = {}
 #     for idx, test_post in enumerate(test_posts):
 #         positive_probability_of_post = prediction_positive_probabilities_of_posts[idx]
