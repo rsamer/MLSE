@@ -163,7 +163,7 @@ def main():
     _logger.info("Transformation...")
     n_features = 20000 #2500  # 2200 # 2500 for KNN
     from transformation import tfidf, features
-    X_train, X_test = tfidf.tfidf(train_posts, test_posts, max_features=None)
+    X_train, X_test = tfidf.tfidf(train_posts, test_posts, max_features=None, min_df=2)
     #X_train, X_test = features.numeric_features(train_posts, test_posts, tags)
 
     # 3) learning

@@ -9,7 +9,7 @@ _logger = logging.getLogger(__name__)
 def extract_tokens(post):
     return post.tokens
 
-def tfidf(train_posts, test_posts, max_features=None):
+def tfidf(train_posts, test_posts, max_features=None, min_df=1):
     _logger.info("TFIDF-Vectorizer (Transformation)")
     #vectorizer = TfidfVectorizer(sublinear_tf=True, max_df=0.5, stop_words='english')
     vectorizer = TfidfVectorizer(stop_words=None,
@@ -18,7 +18,7 @@ def tfidf(train_posts, test_posts, max_features=None):
                                  analyzer=extract_tokens,
                                  tokenizer=extract_tokens,
                                  #token_pattern=r'.*',
-                                 min_df=2, # get rid of noise!
+                                 min_df=min_df, # get rid of noise!
                                  use_idf=True,
                                  smooth_idf=False,
                                  sublinear_tf=False,
