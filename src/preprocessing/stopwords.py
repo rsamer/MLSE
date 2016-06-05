@@ -8,6 +8,7 @@ from util import helper
 _logger = logging.getLogger(__name__)
 nltk.data.path = [os.path.join(helper.APP_PATH, "corpora", "nltk_data")]
 
+
 def remove_stopwords(posts):
     _logger.info("Removing stop-words from posts' tokens")
     try:
@@ -19,10 +20,13 @@ def remove_stopwords(posts):
     additional_stop_words = ["e.g", "i.e", "vs", "vice-versa"] + data_set_stop_words # without "." at the end!!
     stop_words = stopwords.words('english') + additional_stop_words
 
+    def _remove_stopwords(tokens):
+        return filter(lambda t: t not in stop_words, tokens)
+
     progress_bar = helper.ProgressBar(len(posts))
     for post in posts:
-        #post.tokens = [word for word in post.tokens if word not in stop_words]
-        post.tokens = filter(lambda t: t not in stop_words, post.tokens)
+        post.title_tokens = _remove_stopwords(post.title_tokens)
+        post.body_tokens = _remove_stopwords(post.body_tokens)
         progress_bar.update()
 
     progress_bar.finish()

@@ -26,12 +26,14 @@ class TestFilters(unittest.TestCase):
         self.assertEqual("this is a test", post.body)
 
     def test_strip_html_tags(self):
-        post = Post(1, "title", "this is a <strong>test</strong>", set([]), 1)
+        post = Post(1, "title &nbsp;", "this is a <strong>test</strong>", set([]), 1)
         filters.strip_html_tags([post])
+        self.assertEqual("title", post.title)
         self.assertEqual("this is a test", post.body)
 
-        post = Post(1, "title", "<html>this is a <strong>test</strong></html>", set([]), 1)
+        post = Post(1, "<strong>title</strong>", "<html>this is a <strong>test</strong></html>", set([]), 1)
         filters.strip_html_tags([post])
+        self.assertEqual("title", post.title)
         self.assertEqual("this is a test", post.body)
 
         post = Post(1, "title", "<html>this is a <strong>test</html>", set([]), 1)
@@ -49,29 +51,34 @@ class TestFilters(unittest.TestCase):
     def test_tokens(self):
         post = Post(1, "", "", set([]), 1)
 
-        post.tokens = ["www.tugraz.at", "http://www.tugraz.at", "test"]
+        post.title_tokens = ["www.tugraz.at", "title"]
+        post.body_tokens = ["www.tugraz.at", "http://www.tugraz.at", "test"]
         filters.filter_tokens([post], [])
-        self.assertEqual(["test"], post.tokens)
+        self.assertEqual(["title"], post.title_tokens)
+        self.assertEqual(["test"], post.body_tokens)
 
-        post.tokens = [":-)", ":D", ";)", "xD", ":o)", "test"]
+        post.body_tokens = [":-)", ":D", ";)", "xD", ":o)", "test"]
         filters.filter_tokens([post], [])
-        self.assertEqual(["test"], post.tokens)
+        self.assertEqual(["test"], post.body_tokens)
 
-        post.tokens = ["_test_", "a", "bc"]
+        post.body_tokens = ["_test_", "a", "bc"]
         filters.filter_tokens([post], [])
-        self.assertEqual([], post.tokens)
+        self.assertEqual([], post.body_tokens)
 
-        post.tokens = ["a", "bc"]
+        post.title_tokens = ["a", "test"]
+        post.body_tokens = ["a", "bc"]
         filters.filter_tokens([post], ["a"])
-        self.assertEqual(["a"], post.tokens)
+        self.assertEqual(["a", "test"], post.title_tokens)
+        self.assertEqual(["a"], post.body_tokens)
+        self.assertEqual(["a", "test", "a"], post.tokens(1))
 
-        post.tokens = ["he's", "planets'", "you're", "we've", "isn't", "haven't"]
+        post.body_tokens = ["he's", "planets'", "you're", "we've", "isn't", "haven't"]
         filters.filter_tokens([post], [])
-        self.assertEqual(["he", "planet", "you", "we"], post.tokens)
+        self.assertEqual(["he", "planet", "you", "we"], post.body_tokens)
 
-        post.tokens = ["#123", "#124.2", "123,45", "123.45", "#FF0000", "#ff0000", "test"]
+        post.body_tokens = ["#123", "#124.2", "123,45", "123.45", "#FF0000", "#ff0000", "test"]
         filters.filter_tokens([post], [])
-        self.assertEqual(["test"], post.tokens)
+        self.assertEqual(["test"], post.body_tokens)
 
     def test_filter_less_relevant_posts(self):
         post1 = Post(1, "", "", set([]), 10)

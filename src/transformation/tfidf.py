@@ -6,8 +6,10 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 
 _logger = logging.getLogger(__name__)
 
+
 def extract_tokens(post):
-    return post.tokens
+    return post.tokens()
+
 
 def tfidf(train_posts, test_posts, max_features=None, min_df=1):
     _logger.info("TFIDF-Vectorizer (Transformation)")
@@ -54,7 +56,7 @@ def tfidf(train_posts, test_posts, max_features=None, min_df=1):
 #         tokens = []
 #         for i in d.indices:
 #             tokens += [features[i]]
-#         for expected_token in train_posts[idx].tokens:
+#         for expected_token in train_posts[idx].tokens():
 #             #assert expected_token in tokens
 #             if expected_token not in tokens:
 #                 critical_token_names.add(expected_token)
@@ -62,7 +64,7 @@ def tfidf(train_posts, test_posts, max_features=None, min_df=1):
 #         tokens = []
 #         for i in d.indices:
 #             tokens += [features[i]]
-#         for expected_token in test_posts[idx].tokens:
+#         for expected_token in test_posts[idx].tokens():
 #             #assert expected_token in tokens
 #             if expected_token not in tokens:
 #                 critical_token_names.add(expected_token)

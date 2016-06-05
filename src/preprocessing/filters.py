@@ -87,10 +87,7 @@ def filter_tokens(posts, tag_names):
     with open(emoticons_data_file) as emoticons_file:
         emoticons_list = emoticons_file.read().splitlines()
 
-    progress_bar = helper.ProgressBar(len(posts))
-    for post in posts:
-        tokens = post.tokens
-
+    def _filter_tokens(tokens, tag_names):
         # remove urls
         tokens = [word for word in tokens if regex_url.match(word) is None]
 
@@ -127,8 +124,8 @@ def filter_tokens(posts, tag_names):
                 if parts[1] in KNOWN_FILE_EXTENSIONS_MAP:
                     new_tokens.append(KNOWN_FILE_EXTENSIONS_MAP[parts[1]])
                     continue
-#                 else:
-#                     print parts[1]
+                    #                 else:
+                    #                     print parts[1]
             new_tokens.append(parts)
         tokens = [t for sub_tokens in new_tokens for t in sub_tokens]
 
@@ -138,22 +135,21 @@ def filter_tokens(posts, tag_names):
 
         # remove single- and dual-character words that are not part of our tag list
         tokens = filter(lambda t: len(t) > 2 or t in tag_names, tokens)
-#         # remove single-character words that are not part of our tag list
-#         tokens = filter(lambda t: len(t) > 1 or t in tag_names, tokens)
+        #         # remove single-character words that are not part of our tag list
+        #         tokens = filter(lambda t: len(t) > 1 or t in tag_names, tokens)
 
-        # remove "'s" at the end
-        # "'s" is not useful for us because it may only indicate the verb "be", "have"
-        # (e.g. "He's got ..." or "It's ...")
-        # or may indicate a possessive nouns (e.g. His wife's shoes...)
+        # remove "'s" at the end: not useful for us because it may only indicate the verb "be", "have"
+        # (e.g. "He's got ..." or "It's ...")or may indicate a possessive nouns (e.g. His wife's shoes...)
         tokens = map(lambda t: t[:-2] if t.endswith("'s") else t, tokens)
 
-        # remove "s'" at the end
-        # "s'" is also not useful for us since it indicates the plural version
+        # remove "s'" at the end: not useful for us since it indicates the plural version
         # of possessive nouns (e.g. the planets' orbits)
         tokens = map(lambda t: t[:-2] if t.endswith("s'") else t, tokens)
 
         # remove "'ve", "'ed" "'re", "'ll" at the end (e.g. we've got...)
-        tokens = map(lambda t: t[:-3] if t.endswith("'ve") or t.endswith("'ed") or t.endswith("'re") or t.endswith("'ll") else t, tokens)
+        tokens = map(
+            lambda t: t[:-3] if t.endswith("'ve") or t.endswith("'ed") or t.endswith("'re") or t.endswith("'ll") else t,
+            tokens)
 
         # remove "'d" and "'m" at the end (e.g. we'd...)
         tokens = map(lambda t: t[:-2] if t.endswith("'d") or t.endswith("'m") else t, tokens)
@@ -180,7 +176,13 @@ def filter_tokens(posts, tag_names):
         # make sure that all tokens do not contain any whitespaces before and at the end
         tokens = map(lambda t: t.strip(), tokens)
 
-        post.tokens = tokens
+        return tokens
+
+    progress_bar = helper.ProgressBar(len(posts))
+
+    for post in posts:
+        post.body_tokens = _filter_tokens(post.body_tokens, tag_names)
+        post.title_tokens = _filter_tokens(post.title_tokens, tag_names)
         progress_bar.update()
 
     progress_bar.finish()

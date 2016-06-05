@@ -8,6 +8,7 @@ from util import helper
 _logger = logging.getLogger(__name__)
 nltk.data.path = [os.path.join(helper.APP_PATH, "corpora", "nltk_data")]
 
+
 def porter_stemmer_tags(tags):
     _logger.info("Stemming tags")
     try:
@@ -36,7 +37,8 @@ def porter_stemmer(posts):
 
     progress_bar = helper.ProgressBar(len(posts))
     for post in posts:
-        post.tokens = [porter.stem(word) for word in post.tokens]
+        post.body_tokens = [porter.stem(word) for word in post.body_tokens]
+        post.title_tokens = [porter.stem(word) for word in post.title_tokens]
         progress_bar.update()
 
     progress_bar.finish()

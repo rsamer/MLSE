@@ -82,21 +82,6 @@ def setup_logging(log_level):
     )
 
 
-# TODO: move this to tests!!
-# DEBUG BEGIN
-#test_post1 = Post(1, "", u"RT @marcobonzanini: just, an example! :D http://example.com/what?q=test #NLP", set(), 100)
-#test_post2 = Post(2, "", u"0x2AF3 #143152 A b C d e f g h i j k f# u# and C++ is a test hehe wt iop complicated programming-languages object oriented object-oriented-design compared to C#. AT&T Asp.Net C++!!", set(), 100)
-#test_post3 = Post(3, "", u"C++~$§%) is a :=; := :D :-)) ;-)))) testing is important! Blue houses are... ~ hehe wt~iop complicated programming-language compared to C#. AT&T Asp.Net C++ #1234 1234 !!", set(), 100)
-##prepr.preprocess_posts([test_post1, test_post2, test_post3], tags, filter_posts=False)
-##print "\n" + ("-"*80) + "\n" + str(test_post1.tokens) + "\n" + str(test_post2.tokens) + "\n" + str(test_post3.tokens) + "\n" + "-"*80
-# DEBUG END
-#new_post1 = Post(1, u"Do dynamic typed languages deserve all the criticism?", u"I have read a few articles on Internet about programming language choice in the enterprise. Recently many dynamic typed languages have been popular, i.e. Ruby, Python, PHP and Erlang. But many enterprises still stay with static typed languages like C, C++, C# and Java. And yes, one of the benefits of static typed languages is that programming errors are caught earlier, at compile time, rather than at run time. But there are also advantages with dynamic typed languages. (more on Wikipedia) The main reason why enterprises don't start to use languages like Erlang, Ruby and Python, seem to be the fact that they are dynamic typed. That also seem to be the main reason why people on StackOverflow decide against Erlang. See Why did you decide against Erlang. However, there seem to be a strong criticism against dynamic typing in the enterprises, but I don't really get it why it is that strong. Really, why is there so much criticism against dynamic typing in the enterprises? Does it really affect the cost of projects that much, or what? But maybe I'm wrong.", set())
-#     new_post1 = Post(1, u"Java.util.List thread-safe?", u"Is a java.util.List thread-safe? From C++ I know that std::vectors are not thread-safe. Concurrency issues are very hard to debug and very important to find because nowadays most devices have a multicore cpu.", set(), 100)
-#     new_post2 = Post(2, u"Choosing a Java Web Framework now?", u'we are in the planning stage of migrating a large website which is built on a custom developed mvc framework to a java based web framework which provides built-in support for ajax, rich media content, mashup, templates based layout, validation, maximum html/java code separation. Grails looked like a good choice, however, we do not want to use a scripting language. We want to continue using java. Template based layout is a primary concern as we intend to use this web application with multiple web sites with similar functionality but radically different look and feel. Is portal based solution a good fit to this problem? Any insights on using "Spring Roo" or "Play" will be very helpful. I did find similar posts like this, but it is more than a year old. Things have surely changed in the mean time! EDIT 1: Thanks for the great answers! This site is turning to be the best single source for in-the-trenches programmer info. However, I was expecting more info on using a portal-cms duo. Jahia looks goods. Anything similar?', set(), 100)
-#     new_posts = prepr.preprocess_posts([new_post1, new_post2], tags, filter_posts=False)
-#     print new_post2.tokens
-
-
 def preprocess_tags_and_posts(all_tags, all_posts, tag_frequency_threshold):
     from preprocessing import tags
     filtered_tags = all_tags # f1=0.349
@@ -185,18 +170,15 @@ def main():
 
     classifiers = [
         DummyClassifier("most_frequent"), # very primitive/simple baseline!
-        AdaBoostClassifier(
-            DecisionTreeClassifier(max_depth=2),
-            n_estimators=600,
-            learning_rate=1.5,
-            algorithm="SAMME"),
+        AdaBoostClassifier(DecisionTreeClassifier(max_depth=2), n_estimators=600, learning_rate=1.5, algorithm="SAMME"),
         SVC(kernel="linear", C=0.025, probability=True),
         SVC(kernel="linear", C=0.4, probability=True),
+        MultinomialNB(alpha=.03), # <-- lidstone smoothing (1.0 would be laplace smoothing!)
+
         #KNeighborsClassifier(n_neighbors=10), # f1 = 0.386 (features=2900)
         #RandomForestClassifier(n_estimators=200, max_depth=None, n_jobs=-1),  # f1=0.390
         #SVC(kernel="rbf", C=0.025, probability=True), # penalty = "l2" #"l1"
         #LinearSVC(loss='l2', penalty="l2", dual=False, tol=1e-3),
-        MultinomialNB(alpha=.03), # <-- lidstone smoothing (1.0 would be laplace smoothing!)
         #BernoulliNB(alpha=.01)
     ]
 
@@ -211,17 +193,17 @@ def main():
 #         print "With features: %d" % n_features
 #         evaluation.print_evaluation_results(test_posts)
 
-#     # unsupervised
-#     _logger.info("-"*80)
-#     _logger.info("k-Means...")
-#     kmeans.kmeans(len(tags), train_posts, test_posts)
-#     evaluation.print_evaluation_results(test_posts)
+    #unsupervised
+#    _logger.info("-"*80)
+#    _logger.info("k-Means...")
+#    kmeans.kmeans(len(tags), train_posts, test_posts)
+#    evaluation.print_evaluation_results(test_posts)
 # 
-#     _logger.info("-"*80)
-#     _logger.info("HAC...")
-#     helper.clear_tag_predictions_for_posts(test_posts)
-#     hac.hac(len(tags), train_posts, test_posts)
-#     evaluation.print_evaluation_results(test_posts)
+#   _logger.info("-"*80)
+#   _logger.info("HAC...")
+#   helper.clear_tag_predictions_for_posts(test_posts)
+#   hac.hac(len(tags), train_posts, test_posts)
+#   evaluation.print_evaluation_results(test_posts)
     return ExitCode.SUCCESS
 
 

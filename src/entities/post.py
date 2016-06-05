@@ -29,8 +29,10 @@ class Post(object):
         self.score = score
         self.accepted_answer_id = accepted_answer_id
         self.answers = answers
-        self.tokens = None
-        self.tokens_pos_tags = None
+        self.title_tokens = None
+        self.title_tokens_pos_tags = None
+        self.body_tokens = None
+        self.body_tokens_pos_tags = None
 
     @classmethod
     def parse_posts(cls, file_path, tag_dict):
@@ -105,6 +107,9 @@ class Post(object):
         if len(accepted_answers) == 0:
             return None # TODO: rempve from example dataset...
         return accepted_answers[0]
+
+    def tokens(self, title_weight=3):
+        return self.title_tokens * title_weight + self.body_tokens
 
     @staticmethod
     def copied_new_counted_tags_for_posts(posts):
