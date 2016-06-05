@@ -93,10 +93,10 @@ def tokenize_posts(posts, tag_names):
         # finally remove empty tokens
         return filter(lambda t: len(t) > 0, tokens)
 
-
     progress_bar = helper.ProgressBar(len(posts))
     for post in posts:
-        post.tokens = _tokenize_text(post.body, tag_names)
+        post.body_tokens = _tokenize_text(post.body, tag_names)
+        post.title_tokens = _tokenize_text(post.title, tag_names)
         progress_bar.update()
 
     progress_bar.finish()

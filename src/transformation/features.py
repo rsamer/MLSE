@@ -22,15 +22,15 @@ def numeric_features(train_posts, test_posts, tag_list):
             feature_list = []
             for tag in tag_list:
                 # feature 1: does title contain tag x
-                # TODO: separate title and body tokens
-                feature_list += [int(tag.name in post.title.split())]
+                feature_list += [int(tag.name in post.title_tokens)]
                 # feature 2: does body contain tag x
-                feature_list += [int(tag.name in post.tokens)]
+                feature_list += [int(tag.name in post.body_tokens)]
+
                 if "-" in tag.name:
-                    # feature 3: does title contain relaxed tag x
+                    # feature 3: does title or body contain relaxed tag x
                     relaxed_words = tag.name.split("-")
-                    n_occurences_title = len(filter(lambda w: w in post.title.split(), relaxed_words))
-                    n_occurences_body = len(filter(lambda w: w in post.tokens, relaxed_words))
+                    n_occurences_title = len(filter(lambda w: w in post.title_tokens, relaxed_words))
+                    n_occurences_body = len(filter(lambda w: w in post.body_tokens, relaxed_words))
                     feature_list += [n_occurences_title == len(relaxed_words)]
                     feature_list += [n_occurences_body == len(relaxed_words)]
             X += [np.array(feature_list)]

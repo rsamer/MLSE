@@ -5,6 +5,7 @@ from entities.tag import Tag
 from entities.post import Post
 from util.helper import compute_hash_of_file
 
+
 def parse_tags_and_posts(path):
     tags_path, posts_path = os.path.join(path, 'Tags.xml'), os.path.join(path, 'Posts.xml')
     cache_file_name_prefix = compute_hash_of_file(tags_path) + "_" + compute_hash_of_file(posts_path)

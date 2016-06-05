@@ -100,7 +100,7 @@ def setup_logging(log_level):
         datefmt='%Y-%m-%d %H:%M:%S'
     )
     # based on: http://stackoverflow.com/a/1336640
-    if platform.system()=='Windows':
+    if platform.system() == 'Windows':
         # Windows does not support ANSI escapes and we are using API calls to set the console color
         logging.StreamHandler.emit = helper.add_coloring_to_emit_windows(logging.StreamHandler.emit)
     else:
@@ -205,7 +205,7 @@ def main():
 #     _logger.info("Transformation...")
 #     n_features = 20000 #2500  # 2200 # 2500 for KNN
 #     from transformation import tfidf, features
-#     X_train, X_test = tfidf.tfidf(train_posts, test_posts, max_features=None)
+#     X_train, X_test = tfidf.tfidf(train_posts, test_posts, max_features=None, min_df=2)
     #X_train, X_test = features.numeric_features(train_posts, test_posts, tags)
 
     # 3) learning
@@ -280,19 +280,15 @@ def main():
 
     classifiers = [
 #         DummyClassifier("most_frequent"), # very primitive/simple baseline!
-        #SGDClassifier(),
-#         AdaBoostClassifier(
-#             DecisionTreeClassifier(max_depth=2),
-#             n_estimators=200,
-#             learning_rate=1.5,
-#             algorithm="SAMME"),
+#        AdaBoostClassifier(DecisionTreeClassifier(max_depth=2), n_estimators=200, learning_rate=1.5, algorithm="SAMME"),
 #        SVC(kernel="linear", C=0.4, probability=True),
         #KNeighborsClassifier(n_neighbors=10), # f1 = 0.386 (features=2900)
         #RandomForestClassifier(n_estimators=200, max_depth=None, n_jobs=-1),  # f1=0.390
-        SVC(kernel="rbf", C=0.025, probability=True), # penalty = "l2" #"l1"
-        #LinearSVC(loss='l2', penalty="l2", dual=False, tol=1e-3),
         MultinomialNB(alpha=.03), # <-- lidstone smoothing (1.0 would be laplace smoothing!)
         #BernoulliNB(alpha=.01)
+        SVC(kernel="linear", C=0.025, probability=True),
+        SVC(kernel="rbf", C=0.025, probability=True), # penalty = "l2" #"l1"
+        #LinearSVC(loss='l2', penalty="l2", dual=False, tol=1e-3),
     ]
 
     # TODO: remove single_classifier in classification.py -> http://stackoverflow.com/a/31586026
@@ -396,17 +392,17 @@ def main():
 #         print "With features: %d" % n_features
 #         evaluation.print_evaluation_results(test_posts)
 
-#     # unsupervised
-#     _logger.info("-"*80)
-#     _logger.info("k-Means...")
-#     kmeans.kmeans(len(tags), train_posts, test_posts)
-#     evaluation.print_evaluation_results(test_posts)
+    #unsupervised
+#    _logger.info("-"*80)
+#    _logger.info("k-Means...")
+#    kmeans.kmeans(len(tags), train_posts, test_posts)
+#    evaluation.print_evaluation_results(test_posts)
 # 
-#     _logger.info("-"*80)
-#     _logger.info("HAC...")
-#     helper.clear_tag_predictions_for_posts(test_posts)
-#     hac.hac(len(tags), train_posts, test_posts)
-#     evaluation.print_evaluation_results(test_posts)
+#    _logger.info("-"*80)
+#    _logger.info("HAC...")
+#    helper.clear_tag_predictions_for_posts(test_posts)
+#    hac.hac(len(tags), train_posts, test_posts)
+#    evaluation.print_evaluation_results(test_posts)
     return ExitCode.SUCCESS
 
     # Suggest most frequent tags (baseline)

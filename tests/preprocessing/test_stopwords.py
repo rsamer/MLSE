@@ -14,11 +14,13 @@ class TestStopwords(unittest.TestCase):
         self.assert_stopword_removal("completely without yet", "")
 
     def assert_stopword_removal(self, body, expected_body):
-        post = Post(1, "title", body, set([]), 1)
-        post.tokens = body.split()
+        post = Post(1, "title my is to", body, set([]), 1)
+        post.title_tokens = post.title.split()
+        post.body_tokens = post.body.split()
 
         stopwords.remove_stopwords([post])
-        self.assertEqual(expected_body, " ".join(post.tokens))
+        self.assertEqual("title", " ".join(post.title_tokens))
+        self.assertEqual(expected_body, " ".join(post.body_tokens))
 
 
 if __name__ == '__main__':

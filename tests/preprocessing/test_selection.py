@@ -8,23 +8,13 @@ class TestSelection(unittest.TestCase):
     def test_add_title_to_body(self):
         post = Post(1, "", "", set([]), 1)
 
-        post.title = "title test"
-        post.body = "body test"
-        selection.add_title_to_body([post], 10)
-        self.assertEqual("title test", post.title)
-        self.assertEqual("title test " * 10 + "body test", post.body)
+        post.title_tokens = ["title", "test"]
+        post.body_tokens = ["body", "test"]
+        self.assertEqual(["title", "test"] * 10 + ["body", "test"], post.tokens(10))
 
-        post.title = "title"
-        post.body = "body"
-        selection.add_title_to_body([post], 0)
-        self.assertEqual("title", post.title)
-        self.assertEqual("body", post.body)
-
-        post.title = "title"
-        post.body = "body"
-        selection.add_title_to_body([post], 1)
-        self.assertEqual("title", post.title)
-        self.assertEqual("title body", post.body)
+        post.title_tokens = ["title"]
+        post.body_tokens = ["body"]
+        self.assertEqual(["body"], post.tokens(0))
 
     def test_add_accepted_answer_text_to_body(self):
         post = Post(1, "title", "body", set([]), 1)

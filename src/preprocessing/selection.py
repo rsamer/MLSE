@@ -18,10 +18,3 @@ def add_accepted_answer_text_to_body(posts):
             post.body += " " + accepted_answer.body
 #             print "-"*80
 #             print accepted_answer.body
-
-
-def add_title_to_body(posts, weight):
-    assert isinstance(posts, list)
-
-    for post in posts:
-        post.body = ((post.title + " ") * weight) + post.body

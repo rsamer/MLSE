@@ -6,24 +6,27 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 
 _logger = logging.getLogger(__name__)
 
-def extract_tokens(post):
-    return post.tokens
 
-def tfidf(train_posts, test_posts, max_features=None):
+def extract_tokens(post):
+    return post.tokens()
+
+
+def tfidf(train_posts, test_posts, max_features=None, min_df=1, max_df=1.0):
     _logger.info("TFIDF-Vectorizer (Transformation)")
     #vectorizer = TfidfVectorizer(sublinear_tf=True, max_df=0.5, stop_words='english')
     vectorizer = TfidfVectorizer(stop_words=None,
-                                 ngram_range=(1, 3),#(1, 1),
+                                 #ngram_range=(1, 3), # no impact when using our own tokenizer/preprocessor/analyzer
                                  preprocessor=extract_tokens,
                                  analyzer=extract_tokens,
                                  tokenizer=extract_tokens,
                                  #token_pattern=r'.*',
-                                 min_df=2, # get rid of noise!
+                                 min_df=min_df, # get rid of noise!
+                                 max_df=max_df,
                                  use_idf=True,
-                                 smooth_idf=False,
                                  sublinear_tf=False,
-                                 norm=None,)
-    #                             max_features=max_features)
+                                 smooth_idf=True,
+                                 norm="l2",
+                                 max_features=max_features)
 
     _logger.debug("Extracting features from the training data using a sparse vectorizer")
     t0 = time()

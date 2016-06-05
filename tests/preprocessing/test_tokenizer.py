@@ -110,10 +110,11 @@ class TestTokenizer(unittest.TestCase):
         self.assert_tokens("hello 1234", [], ["hello", "1234"])
 
     def assert_tokens(self, body, tag_names, expected_tokens):
-        post = Post(1, "title", body, set([]), 1)
+        post = Post(1, "title ! - :-)", body, set([]), 1)
 
         tokenizer.tokenize_posts([post], tag_names=tag_names)
-        self.assertEqual(expected_tokens, post.tokens)
+        self.assertEqual(["title"], post.title_tokens)
+        self.assertEqual(expected_tokens, post.body_tokens)
 
 
 if __name__ == '__main__':

@@ -7,11 +7,13 @@ class TestStemmer(unittest.TestCase):
     def test_porter_stemmer(self):
         post = Post(1, "", "", set([]), 1)
 
-        post.tokens = ["house"]
+        post.title_tokens = ["writing"]
+        post.body_tokens = ["house"]
         stemmer.porter_stemmer([post])
-        self.assertEqual(["hous"], post.tokens)
+        self.assertEqual(["write"], post.title_tokens)
+        self.assertEqual(["hous"], post.body_tokens)
 
-        post.tokens = ["asp.net", "c++", "c#", "c", "So", "sixth", "abundantly", "had", "great", "yielding", "cattle", "together", "it", "him", "whales",
+        post.body_tokens = ["asp.net", "c++", "c#", "c", "So", "sixth", "abundantly", "had", "great", "yielding", "cattle", "together", "it", "him", "whales",
                        "rule", "air", "i", "lights", "yielding", "our", "green", "set", "forth", "years", "so",
                        "gathering", "land", "over"]
         expected_tokens = ["asp.net", "c++", "c#", "c", "So", "sixth", "abundantli", "had", "great", "yield", "cattl", "togeth", "it", "him", "whale",
@@ -19,7 +21,7 @@ class TestStemmer(unittest.TestCase):
                            "gather", "land", "over"]
 
         stemmer.porter_stemmer([post])
-        self.assertEqual(expected_tokens, post.tokens)
+        self.assertEqual(expected_tokens, post. body_tokens)
 
 if __name__ == '__main__':
     unittest.main()

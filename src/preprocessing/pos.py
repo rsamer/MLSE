@@ -13,6 +13,7 @@ nltk.data.path = [os.path.join(helper.APP_PATH, "corpora", "nltk_data")]
 
 _logger = logging.getLogger(__name__)
 
+
 # TODO: Stanford POS-tagging
 def pos_tagging(posts):
     '''
@@ -73,20 +74,29 @@ def pos_tagging(posts):
     removed_stanford_tokens = set()
     # Note: "-mx30g" sets java's max memory size to 30 GB RAM
     #       Please change when experiencing OS-related problems!
+    english_postagger = StanfordPOSTagger(pos_tagger_data_path, pos_tagger_jar_path, java_options='-mx30g')
+
     for post in posts:
-        english_postagger = StanfordPOSTagger(pos_tagger_data_path, pos_tagger_jar_path, java_options='-mx30g')
-        pos_tagged_tokens = english_postagger.tag(post.tokens)
-        tagged_tokens = filter(lambda t: t[1] not in pos_tags_black_list, pos_tagged_tokens)
-        post.tokens = map(lambda t: t[0], tagged_tokens)
-        post.tokens_pos_tags = map(lambda t: t[1], tagged_tokens)
-        removed_stanford_tokens |= set(filter(lambda t: t[1] in pos_tags_black_list, pos_tagged_tokens))
-        existing_stanford_pos_tags |= set(map(lambda t: t[1], pos_tagged_tokens))
+        pos_tagged_body_tokens = english_postagger.tag(post.body_tokens)
+        tagged_tokens = filter(lambda t: t[1] not in pos_tags_black_list, pos_tagged_body_tokens)
+        post.body_tokens = map(lambda t: t[0], tagged_tokens)
+        post.body_tokens_pos_tags = map(lambda t: t, tagged_tokens)
+        removed_stanford_tokens |= set(filter(lambda t: t[1] in pos_tags_black_list, pos_tagged_body_tokens))
+        existing_stanford_pos_tags |= set(map(lambda t: t[1], pos_tagged_body_tokens))
+
+        pos_tagged_title_tokens = english_postagger.tag(post.title_tokens)
+        tagged_tokens = filter(lambda t: t[1] not in pos_tags_black_list, pos_tagged_title_tokens)
+        post.title_tokens = map(lambda t: t[0], tagged_tokens)
+        post.title_tokens_pos_tags = map(lambda t: t, tagged_tokens)
+        removed_stanford_tokens |= set(filter(lambda t: t[1] in pos_tags_black_list, pos_tagged_title_tokens))
+        existing_stanford_pos_tags |= set(map(lambda t: t[1], pos_tagged_title_tokens))
         progress_bar.update()
+
     print existing_stanford_pos_tags
     for t in removed_stanford_tokens:
         print t
-    print len(posts)
-    print len(removed_stanford_tokens)
+    #print len(posts)
+    #print len(removed_stanford_tokens)
     print "=" * 80 + "\n\n"
     progress_bar.finish()
     return

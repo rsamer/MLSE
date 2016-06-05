@@ -43,7 +43,6 @@ def preprocess_posts(posts, tag_list, filter_posts=True):
         posts = filters.filter_less_relevant_posts(posts, 0)
         posts = tags.strip_invalid_tags_from_posts_and_remove_untagged_posts(posts, tag_list)
 
-    selection.add_title_to_body(posts, 3)
     selection.add_accepted_answer_text_to_body(posts)
 
     filters.to_lower_case(posts)
@@ -54,16 +53,19 @@ def preprocess_posts(posts, tag_list, filter_posts=True):
     tags.replace_adjacent_tag_occurences(posts, tag_names)
 
     tokenizer.tokenize_posts(posts, tag_names)
-    n_tokens = reduce(lambda x,y: x + y, map(lambda t: len(t.tokens), posts))
+    n_tokens = reduce(lambda x,y: x + y, map(lambda t: len(t.body_tokens) + len(t.title_tokens), posts))
     filters.filter_tokens(posts, tag_names)
 
     stopwords.remove_stopwords(posts)
     #pos.pos_tagging(posts)
 
-    n_filtered_tokens = n_tokens - reduce(lambda x,y: x + y, map(lambda t: len(t.tokens), posts))
+    # lemmatizer.word_net_lemmatizer(posts) #it does not makes sense to use both lemmatization and stemming
+    # lemmatizer requires pos_tagging beforehand
+    stemmer.porter_stemmer(posts)
+
+    n_filtered_tokens = n_tokens - reduce(lambda x,y: x + y, map(lambda t: len(t.body_tokens) + len(t.title_tokens), posts))
     if n_tokens > 0:
         _logger.info("Removed {} ({}%) of {} tokens (altogether)".format(n_filtered_tokens,
                         round(float(n_filtered_tokens) / n_tokens * 100.0, 2), n_tokens))
-    #lemmatizer.word_net_lemmatizer(posts) # it does not makes sense to use both lemmatization and stemming
-    stemmer.porter_stemmer(posts)
+
     return posts
