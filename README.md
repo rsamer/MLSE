@@ -1,9 +1,4 @@
 # MLSE
-Usage:
-```sh
-cd src/
-python -m main ../data/example
-```
 
 Setup for Ubuntu 16.04 LTS:
 ```sh
@@ -18,4 +13,10 @@ sudo pip install nltk
 sudo pip install -U scikit-learn
 sudo pip install scipy
 sudo pip install beautifulsoup4
+```
+
+Usage:
+```sh
+cd src/
+python -m main ../data/example
 ```
