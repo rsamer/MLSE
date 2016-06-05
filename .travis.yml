@@ -12,8 +12,8 @@ install:
   - pip install numpy
   - pip install nltk
   - pip install matplotlib
-  - pip install -U scikit-learn
   - pip install scipy
+  - pip install -U scikit-learn
   - pip install beautifulsoup4
 
 before_script:
