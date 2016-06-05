@@ -3,16 +3,30 @@ language: python
 python:
   - "2.7"
 
+before_install:
+  - wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
+  - chmod +x miniconda.sh
+  - ./miniconda.sh -b
+  - export PATH=/home/travis/miniconda/bin:$PATH
+  - conda update --yes conda
+  # The next couple lines fix a crash with multiprocessing on Travis and are not specific to using Miniconda
+  - sudo rm -rf /dev/shm
+  - sudo ln -s /run/shm /dev/shm
+
 install:
+  - conda install --yes python=$TRAVIS_PYTHON_VERSION atlas numpy scipy matplotlib# nose dateutil pandas statsmodels
+  #- conda install --yes -c dan_blanchard python-coveralls nose-cov
+  - python setup.py install
 #  - sudo apt-get install python-minimal
 #  - sudo apt-get install python-pip
 #  - sudo apt-get install libfreetype6-dev libpng-dev
 #  - sudo apt-get install python-dev
 #  - sudo apt-get install python-matplotlib
-  - pip install numpy
+  - sudo apt-get install python-numpy python-scipy python-matplotlib ipython ipython-notebook python-pandas python-sympy python-nose
+#  - pip install numpy
   - pip install nltk
-  - pip install matplotlib
-  - pip install scipy
+#  - pip install matplotlib
+#  - pip install scipy
   - pip install -U scikit-learn
   - pip install beautifulsoup4
 
@@ -21,8 +35,6 @@ before_script:
   - python --version
   - uname -a
   - ls -li .
-#  - mkdir -p ./config
-#  - ls -li ./config
 
 script: python -m main ../data/example
 
