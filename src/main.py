@@ -192,7 +192,7 @@ def main():
     #       included in our Post-instances, therefore the 2nd argument passed
     #       to the function is irrelevant (list of zeros!)
 
-    X = map(lambda p: ' '.join(p.tokens), posts)
+    X = map(lambda p: ' '.join(p.tokens()), posts)
     y = map(lambda p: tuple(map(lambda t: t.name, p.tag_set)), posts)
     assert len(X) == len(y)
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=42)
