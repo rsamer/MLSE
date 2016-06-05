@@ -199,11 +199,11 @@ def main():
 #    kmeans.kmeans(len(tags), train_posts, test_posts)
 #    evaluation.print_evaluation_results(test_posts)
 # 
-#   _logger.info("-"*80)
-#   _logger.info("HAC...")
-#   helper.clear_tag_predictions_for_posts(test_posts)
-#   hac.hac(len(tags), train_posts, test_posts)
-#   evaluation.print_evaluation_results(test_posts)
+#    _logger.info("-"*80)
+#    _logger.info("HAC...")
+#    helper.clear_tag_predictions_for_posts(test_posts)
+#    hac.hac(len(tags), train_posts, test_posts)
+#    evaluation.print_evaluation_results(test_posts)
     return ExitCode.SUCCESS
 
 
