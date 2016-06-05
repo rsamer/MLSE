@@ -1,0 +1,33 @@
+language: python
+
+python:
+  - "2.7"
+
+install:
+  - sudo apt-get install python2.7
+  - sudo apt-get install python-minimal
+  - sudo apt-get install python-pip
+  - sudo apt-get install libfreetype6-dev libpng-dev
+  - sudo apt-get install python-dev
+  - sudo apt-get install python-matplotlib
+  - sudo pip install numpy
+  - sudo pip install nltk
+  - sudo pip install -U scikit-learn
+  - sudo pip install scipy
+  - sudo pip install beautifulsoup4
+
+before_script:
+  - cd src
+  - python --version
+  - uname -a
+  - ls -li .
+#  - mkdir -p ./config
+#  - ls -li ./config
+
+script: python -m main ../data/example
+
+# Notify the mailing list
+notifications:
+  email:
+    on_success: change
+    on_failure: always
