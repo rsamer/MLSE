@@ -6,8 +6,8 @@ python:
 install:
 #  - sudo apt-get install python-minimal
 #  - sudo apt-get install python-pip
-  - sudo apt-get install libfreetype6-dev libpng-dev
-  - sudo apt-get install python-dev
+#  - sudo apt-get install libfreetype6-dev libpng-dev
+#  - sudo apt-get install python-dev
 #  - sudo apt-get install python-matplotlib
   - pip install numpy
   - pip install nltk
