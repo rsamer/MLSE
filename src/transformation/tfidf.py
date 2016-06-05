@@ -13,7 +13,7 @@ def tfidf(train_posts, test_posts, max_features=None, min_df=1):
     _logger.info("TFIDF-Vectorizer (Transformation)")
     #vectorizer = TfidfVectorizer(sublinear_tf=True, max_df=0.5, stop_words='english')
     vectorizer = TfidfVectorizer(stop_words=None,
-                                 ngram_range=(1, 3),#(1, 1),
+                                 #ngram_range=(1, 3), #ngram_range has no impact when using our own tokenizer/preprocessor/analyzer
                                  preprocessor=extract_tokens,
                                  analyzer=extract_tokens,
                                  tokenizer=extract_tokens,
