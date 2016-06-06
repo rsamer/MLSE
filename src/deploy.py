@@ -121,7 +121,9 @@ if __name__ == "__main__":
     print "Deployment finished!"
 
     # TODO: execute job!
-    _, stdout, stderr = ssh_client.exec_command('cd MLSE/src/ && python -m main ../data/example')
+    data_set = "example"
+    #_, stdout, stderr = ssh_client.exec_command('cd MLSE/src/ && python -m main ../data/example')
+    _, stdout, stderr = ssh_client.exec_command('cd MLSE/src/ && screen -dmS MLSE.%s python -m main ../data/%s' % data_set)
     for line in stdout:
         if line is not None and len(line) > 0:
             print line
