@@ -53,7 +53,6 @@ from evaluation import evaluation
 from util import helper
 from util.docopt import docopt
 from util.helper import ExitCode
-from statsmodels.sandbox.nonparametric.tests.ex_smoothers import y_predw
 
 __version__ = 1.0
 _logger = logging.getLogger(__name__)
@@ -307,7 +306,7 @@ def main():
     # [ 1  |  2 |  x | TEST  ]
     # [ 1  |  x |  3 | TEST  ]
     # [ x  |  2 |  3 | TEST  ]
-    classifier = GridSearchCV(classifier, parameters, n_jobs=-1, cv=3, verbose=0)
+    #classifier = GridSearchCV(classifier, parameters, n_jobs=-1, cv=3, verbose=0)
 
 
     classifier.fit(np.array(X_train), y_train_mlb)
