@@ -10,6 +10,15 @@ Requirements:
 - scikit-learn
 - beautifulsoup4
 
+Tested with:
+- Python 2.7
+- numpy 1.9.2
+- scipy 0.15.1
+- matplotlib 1.4.3
+- nltk 3.0.3
+- sklearn 0.16.1
+- beautifulsoup 4.3.2
+
 Setup for Ubuntu 16.04 LTS:
 ```sh
 sudo apt-get install python2.7
