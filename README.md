@@ -2,7 +2,6 @@
 [![Build Status](https://travis-ci.com/rsamer/MLSE.svg?token=FAdLEvwwnf8nbptujfqf&branch=master)](https://travis-ci.com/rsamer/MLSE)
 
 Requirements:
-```sh
 - Python 2.7
 - numpy
 - scipy
@@ -10,7 +9,6 @@ Requirements:
 - nltk
 - scikit-learn
 - beautifulsoup4
-```
 
 Setup for Ubuntu 16.04 LTS:
 ```sh
