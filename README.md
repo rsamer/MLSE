@@ -1,5 +1,5 @@
-# MLSE
 [![Build Status](https://travis-ci.com/rsamer/MLSE.svg?token=FAdLEvwwnf8nbptujfqf&branch=master)](https://travis-ci.com/rsamer/MLSE)
+# MLSE
 
 Setup for Ubuntu 16.04 LTS:
 ```sh
