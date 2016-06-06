@@ -31,10 +31,9 @@ install:
   - pip install beautifulsoup4
 
 before_script:
-  - cd src
   - python --version
   - uname -a
-  - ls -li .
+  - ls -li
 
 script: nosetests
 
