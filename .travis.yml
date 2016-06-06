@@ -17,13 +17,12 @@ before_install:
 install:
   - conda install --yes atlas numpy scipy matplotlib #nose dateutil pandas statsmodels
   #- conda install --yes -c dan_blanchard python-coveralls nose-cov
-  - python setup.py install
+#  - python setup.py install
 #  - sudo apt-get install python-minimal
 #  - sudo apt-get install python-pip
 #  - sudo apt-get install libfreetype6-dev libpng-dev
 #  - sudo apt-get install python-dev
 #  - sudo apt-get install python-matplotlib
-  - sudo apt-get install python-numpy python-scipy python-matplotlib ipython ipython-notebook python-pandas python-sympy python-nose
 #  - pip install numpy
   - pip install nltk
 #  - pip install matplotlib
