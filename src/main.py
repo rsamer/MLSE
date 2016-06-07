@@ -155,7 +155,6 @@ class MyNaiveBayes(MultinomialNB):
         print "HELLO!"
         sys.exit()
 
-
 def main():
     kwargs = usage()
     data_set_path = kwargs['data_set_path']
@@ -361,13 +360,18 @@ def main():
     print "  REPORT FOR FIXED TAG SIZE = %d" % n_suggested_tags
     print "="*80
     from sklearn import metrics
-    print "Precision micro: %.3f" % metrics.precision_score(y_test_mlb, y_predicted_fixed_size, average="micro")
-    print "Precision macro: %.3f" % metrics.precision_score(y_test_mlb, y_predicted_fixed_size, average="macro")
-    print "Recall micro: %.3f" % metrics.recall_score(y_test_mlb, y_predicted_fixed_size, average="micro")
-    print "Recall macro: %.3f" % metrics.recall_score(y_test_mlb, y_predicted_fixed_size, average="macro")
-    print "F1 micro: %.3f" % metrics.f1_score(y_test_mlb, y_predicted_fixed_size, average="micro")
-    print "F1 macro: %.3f" % metrics.f1_score(y_test_mlb, y_predicted_fixed_size, average="macro")
+
+    precision_micro, recall_micro, f1_micro, _ = metrics.precision_recall_fscore_support(y_test_mlb, y_predicted_fixed_size, average="micro", warn_for=())
+    precision_macro, recall_macro, f1_macro, _ = metrics.precision_recall_fscore_support(y_test_mlb, y_predicted_fixed_size, average="macro", warn_for=())
+
+    print "Precision micro: %.3f" % precision_micro
+    print "Precision macro: %.3f" % precision_macro
+    print "Recall micro: %.3f" % recall_micro
+    print "Recall macro: %.3f" % recall_macro
+    print "F1 micro: %.3f" % f1_micro
+    print "F1 macro: %.3f" % f1_macro
     print classification_report(y_test_mlb, y_predicted_fixed_size, target_names=list(mlb.classes_))
+
 
 
 #     for clf in classifiers:
