@@ -370,8 +370,9 @@ def main():
     print "Recall macro: %.3f" % recall_macro
     print "F1 micro: %.3f" % f1_micro
     print "F1 macro: %.3f" % f1_macro
-    print classification_report(y_test_mlb, y_predicted_fixed_size, target_names=list(mlb.classes_))
 
+    from evaluation.classification import custom_classification_report
+    print custom_classification_report(y_test_mlb, y_predicted_fixed_size, target_names=list(mlb.classes_))
 
 
 #     for clf in classifiers:
