@@ -80,8 +80,8 @@ def filter_tokens(posts, tag_names):
 
     regex_hex_numbers = re.compile(r'^0?x[0-9a-fA-F]+$', re.IGNORECASE)
     regex_number = re.compile(r'^#\d+$', re.IGNORECASE)
-    regex_color_code = re.compile(r'^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$', re.IGNORECASE)
     regex_float_number = re.compile(r'^\d+\.\d+$', re.IGNORECASE)
+    regex_color_code = re.compile(r'^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$', re.IGNORECASE)
     regex_long_number_in_separated_format = re.compile(r'^\d+,\d+(,\d+)?$', re.IGNORECASE)
 
     with open(emoticons_data_file) as emoticons_file:
@@ -105,7 +105,13 @@ def filter_tokens(posts, tag_names):
 
         new_tokens = []
         for t in tokens:
+            # allow tag names
             if t in tag_names:
+                new_tokens.append([t])
+                continue
+
+            # allow numbers
+            if t.replace(".", "", 1).replace(",", "", 1).isdigit():
                 new_tokens.append([t])
                 continue
 
@@ -124,13 +130,12 @@ def filter_tokens(posts, tag_names):
                 if parts[1] in KNOWN_FILE_EXTENSIONS_MAP:
                     new_tokens.append(KNOWN_FILE_EXTENSIONS_MAP[parts[1]])
                     continue
-                    #                 else:
-                    #                     print parts[1]
+
             new_tokens.append(parts)
         tokens = [t for sub_tokens in new_tokens for t in sub_tokens]
 
         # remove empty tokens, numbers and those single-character words that are no letters
-        tokens = filter(lambda t: len(t) > 0 and not t.isdigit() and len(single_character_tokens_re.findall(t)) == 0,
+        tokens = filter(lambda t: len(t) > 0 and len(single_character_tokens_re.findall(t)) == 0,
                         tokens)
 
         # remove single- and dual-character words that are not part of our tag list
@@ -157,18 +162,18 @@ def filter_tokens(posts, tag_names):
         # remove words ending with "n't" at the end (e.g. isn't)
         tokens = filter(lambda t: not t.endswith("n't"), tokens)
 
-        # also remove numbers starting with #
-        tokens = [word for word in tokens if regex_number.match(word) is None]
+        # remove hexadecimal color_codes
+        tokens = [word for word in tokens if regex_color_code.match(word) is None]
 
         # remove hexadecimal numbers
         tokens = [word for word in tokens if regex_hex_numbers.match(word) is None]
 
-        # remove hexadecimal color_codes
-        tokens = [word for word in tokens if regex_color_code.match(word) is None]
+        # also remove numbers starting with #
+        tokens = [word for word in tokens if regex_number.match(word) is None]
 
         # remove . and , separated numbers and enumerations!
-        tokens = filter(lambda t: regex_float_number.match(t) is None, tokens)
-        tokens = filter(lambda t: regex_long_number_in_separated_format.match(t) is None, tokens)
+        #tokens = filter(lambda t: regex_float_number.match(t) is None, tokens)
+        #tokens = filter(lambda t: regex_long_number_in_separated_format.match(t) is None, tokens)
 
         # remove @-mentions
         tokens = filter(lambda t: not t.startswith("@"), tokens)

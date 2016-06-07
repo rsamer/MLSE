@@ -48,7 +48,7 @@ class TestFilters(unittest.TestCase):
         filters.strip_html_tags([post])
         self.assertEqual("this is   a test", post.body)
 
-    def test_tokens(self):
+    def test_filter_tokens(self):
         post = Post(1, "", "", set([]), 1)
 
         post.title_tokens = ["www.tugraz.at", "title"]
@@ -76,9 +76,9 @@ class TestFilters(unittest.TestCase):
         filters.filter_tokens([post], [])
         self.assertEqual(["he", "planet", "you", "we"], post.body_tokens)
 
-        post.body_tokens = ["#123", "#124.2", "123,45", "123.45", "#FF0000", "#ff0000", "test"]
+        post.body_tokens = ["#123", "#124.2", "123,45", "123.45", "1,234.56", "#FF0000", "#ff0000", "test"]
         filters.filter_tokens([post], [])
-        self.assertEqual(["test"], post.body_tokens)
+        self.assertEqual(["123,45", "123.45", "1,234.56", "test"], post.body_tokens)
 
     def test_filter_less_relevant_posts(self):
         post1 = Post(1, "", "", set([]), 10)
