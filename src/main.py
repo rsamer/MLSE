@@ -49,7 +49,7 @@ from sklearn.multiclass import OneVsRestClassifier
 from sklearn.cross_validation import StratifiedKFold
 from supervised import classification
 from unsupervised import kmeans, hac
-from evaluation import evaluation
+from evaluation import metrics
 from util import helper
 from util.docopt import docopt
 from util.helper import ExitCode

@@ -21,7 +21,7 @@ class TestTransformation(unittest.TestCase):
         train_posts = [post1, post2]
         test_posts = [post3]
 
-        X_train, X_test = tfidf.tfidf(train_posts, test_posts, max_features=None, min_df=1)
+        X_train, X_test = tfidf.tfidf(train_posts, test_posts, max_features=None, min_df=1, norm=None)
         n_docs = float(len(train_posts))
 
         # train data
@@ -74,7 +74,7 @@ class TestTransformation(unittest.TestCase):
         train_posts = [post1, post2]
         test_posts = [post3]
 
-        X_train, X_test = tfidf.tfidf(train_posts, test_posts, max_features=None, min_df=1)
+        X_train, X_test = tfidf.tfidf(train_posts, test_posts, max_features=None, min_df=1, norm=None)
         n_docs = float(len(train_posts))
 
         # train data
@@ -121,7 +121,7 @@ class TestTransformation(unittest.TestCase):
         train_posts = [post1, post2]
         test_posts = [post3]
 
-        X_train, X_test = tfidf.tfidf(train_posts, test_posts, max_features=None, min_df=2)
+        X_train, X_test = tfidf.tfidf(train_posts, test_posts, max_features=None, min_df=2, norm=None)
         n_docs = float(len(train_posts))
 
         # train data
@@ -162,7 +162,7 @@ class TestTransformation(unittest.TestCase):
         train_posts = [post1, post2]
         test_posts = [post3]
 
-        X_train, X_test = tfidf.tfidf(train_posts, test_posts, max_features=1, min_df=1)
+        X_train, X_test = tfidf.tfidf(train_posts, test_posts, max_features=1, min_df=1, norm=None)
         n_docs = float(len(train_posts))
 
         # train data
@@ -189,7 +189,7 @@ class TestTransformation(unittest.TestCase):
         # instead of tf * idf. The effect of this is that terms with zero idf, i.e.
         # that occur in all documents of a training set, will not be entirely ignored.
         # see text.py of sklearn
-        self.assertEqual(tf_idf, term_frequency_in_doc * (log(n_docs / n_docs_with_term, e) + 1.0))
+        self.assertEqual(tf_idf, term_frequency_in_doc * (log((n_docs + 1) / (n_docs_with_term + 1), e) + 1.0))
 
 
 if __name__ == '__main__':

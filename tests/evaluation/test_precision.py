@@ -2,7 +2,7 @@ import unittest
 
 from entities.post import Post
 from entities.tag import Tag
-from evaluation import evaluation
+from evaluation import metrics
 
 
 class TestPrecision(unittest.TestCase):
@@ -13,7 +13,7 @@ class TestPrecision(unittest.TestCase):
         post = Post(1, "title", "body", set([tag1, tag2]), 1)
         post.tag_set_prediction = set([tag1])
 
-        precision = evaluation.precision([post])
+        precision = metrics.precision([post])
         self.assertEqual(1.0 / (1.0 + 0.0), precision)
 
     def test_precision_no_positives(self):
@@ -23,7 +23,7 @@ class TestPrecision(unittest.TestCase):
         post = Post(1, "title", "body", set([tag1, tag2]), 1)
         post.tag_set_prediction = set()
 
-        precision = evaluation.precision([post])
+        precision = metrics.precision([post])
         self.assertEqual(0.0, precision)
 
     def test_precision_no_true_positives(self):
@@ -33,7 +33,7 @@ class TestPrecision(unittest.TestCase):
         post = Post(1, "title", "body", set([tag1]), 1)
         post.tag_set_prediction = set([tag2])
 
-        precision = evaluation.precision([post])
+        precision = metrics.precision([post])
         self.assertEqual(0.0, precision)
 
     def test_precision(self):
@@ -45,7 +45,7 @@ class TestPrecision(unittest.TestCase):
         post = Post(1, "title", "body", set([tag1, tag2]), 1)
         post.tag_set_prediction = set([tag2, tag3, tag4])
 
-        precision = evaluation.precision([post])
+        precision = metrics.precision([post])
         self.assertEqual(1.0 / (1.0 + 2.0), precision)
 
 

@@ -11,7 +11,7 @@ def extract_tokens(post):
     return post.tokens()
 
 
-def tfidf(train_posts, test_posts, max_features=None, min_df=1, max_df=1.0):
+def tfidf(train_posts, test_posts, max_features=None, min_df=1, max_df=1.0, norm="l2"):
     _logger.info("TFIDF-Vectorizer (Transformation)")
     #vectorizer = TfidfVectorizer(sublinear_tf=True, max_df=0.5, stop_words='english')
     vectorizer = TfidfVectorizer(stop_words=None,
@@ -25,7 +25,7 @@ def tfidf(train_posts, test_posts, max_features=None, min_df=1, max_df=1.0):
                                  use_idf=True,
                                  sublinear_tf=False,
                                  smooth_idf=True,
-                                 norm="l2",
+                                 norm=norm,
                                  max_features=max_features)
 
     _logger.debug("Extracting features from the training data using a sparse vectorizer")
@@ -58,7 +58,7 @@ def tfidf(train_posts, test_posts, max_features=None, min_df=1, max_df=1.0):
         tokens = []
         for i in d.indices:
             tokens += [features[i]]
-        for expected_token in train_posts[idx].tokens:
+        for expected_token in train_posts[idx].tokens():
             #assert expected_token in tokens
             if expected_token not in tokens:
                 removed_features.add(expected_token)

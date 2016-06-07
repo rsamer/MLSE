@@ -2,7 +2,7 @@ import unittest
 
 from entities.post import Post
 from entities.tag import Tag
-from evaluation import evaluation
+from evaluation import metrics
 
 
 class TestRecall(unittest.TestCase):
@@ -13,7 +13,7 @@ class TestRecall(unittest.TestCase):
         post = Post(1, "title", "body", set([tag1, tag2]), 1)
         post.tag_set_prediction = set([tag1, tag2])
 
-        recall = evaluation.recall([post])
+        recall = metrics.recall([post])
         self.assertEqual(1.0 / (1.0 + 0.0), recall)
 
     def test_recall_no_positives(self):
@@ -24,7 +24,7 @@ class TestRecall(unittest.TestCase):
         post = Post(1, "title", "body", set([tag1, tag2]), 1)
         post.tag_set_prediction = set([tag3])
 
-        recall = evaluation.recall([post])
+        recall = metrics.recall([post])
         self.assertEqual(0.0 / (0.0 + 2.0), recall)
 
     def test_recall(self):
@@ -36,7 +36,7 @@ class TestRecall(unittest.TestCase):
         post = Post(1, "title", "body", set([tag1, tag2]), 1)
         post.tag_set_prediction = set([tag2, tag3, tag4])
 
-        recall = evaluation.recall([post])
+        recall = metrics.recall([post])
         self.assertEqual(1.0 / (1.0 + 1.0), recall)
 
 

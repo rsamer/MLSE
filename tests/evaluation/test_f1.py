@@ -2,7 +2,7 @@ import unittest
 
 from entities.post import Post
 from entities.tag import Tag
-from evaluation import evaluation
+from evaluation import metrics
 
 
 class TestF1(unittest.TestCase):
@@ -14,9 +14,9 @@ class TestF1(unittest.TestCase):
         post = Post(1, "title", "body", set([tag1, tag2]), 1)
         post.tag_set_prediction = set([tag1])
 
-        precision = evaluation.precision([post])
-        recall = evaluation.recall([post])
-        f1 = evaluation.f1([post])
+        precision = metrics.precision([post])
+        recall = metrics.recall([post])
+        f1 = metrics.f1([post])
         self.assertEqual(2.0 * precision * recall / (precision + recall), f1)
 
         expected_precision = 1.0
@@ -30,7 +30,7 @@ class TestF1(unittest.TestCase):
         post = Post(1, "title", "body", set([tag1, tag2]), 1)
         post.tag_set_prediction = set()
 
-        f1 = evaluation.f1([post])
+        f1 = metrics.f1([post])
         self.assertEqual(0.0, f1)
 
     def test_f1_no_true_positives(self):
@@ -40,7 +40,7 @@ class TestF1(unittest.TestCase):
         post = Post(1, "title", "body", set([tag1]), 1)
         post.tag_set_prediction = set([tag2])
 
-        f1 = evaluation.f1([post])
+        f1 = metrics.f1([post])
         self.assertEqual(0.0, f1)
 
     def test_f1(self):
@@ -52,7 +52,7 @@ class TestF1(unittest.TestCase):
         post = Post(1, "title", "body", set([tag1, tag2]), 1)
         post.tag_set_prediction = set([tag2, tag3, tag4])
 
-        f1 = evaluation.f1([post])
+        f1 = metrics.f1([post])
 
         expected_precision = 0.33
         expected_recall = 0.5
@@ -112,7 +112,7 @@ class TestF1(unittest.TestCase):
             post.tag_set_prediction = set(y_pred[idx])
             posts.append(post)
 
-        f1 = evaluation.f1(posts)
+        f1 = metrics.f1(posts)
         #self.assertAlmostEqual(0.53333333, f1, delta=0.01)
         self.assertAlmostEqual(0.571429, f1, delta=0.01)
 
