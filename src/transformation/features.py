@@ -73,7 +73,7 @@ def numeric_features(train_posts, test_posts, tag_list):
     for tag_token in tag_body_token_occurrence:
         p_tag_body_token[tag_token] = tag_body_token_occurrence[tag_token] / len(tag_body_token_occurrence)
 
-    assert len(p_tag) == len(tag_list)
+    #assert len(p_tag) == len(tag_list)
 
     def extract_features(post_list):
         X = []

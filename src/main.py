@@ -50,12 +50,15 @@ from sklearn.cross_validation import StratifiedKFold
 from supervised import classification
 from unsupervised import kmeans, hac
 from evaluation import metrics
+from transformation import features
 from util import helper
 from util.docopt import docopt
 from util.helper import ExitCode
 
 __version__ = 1.0
 _logger = logging.getLogger(__name__)
+
+USE_NUMERIC_FEATURES = False # TODO set as parameter
 
 
 def usage():
@@ -190,9 +193,15 @@ def main():
     #       included in our Post-instances, therefore the 2nd argument passed
     #       to the function is irrelevant (list of zeros!)
 
-    X = map(lambda p: ' '.join(p.tokens()), posts)
     y = map(lambda p: tuple(map(lambda t: t.name, p.tag_set)), posts)
-    assert len(X) == len(y)
+    if not USE_NUMERIC_FEATURES:
+        X = map(lambda p: ' '.join(p.tokens()), posts)
+        assert len(X) == len(y)
+    else:
+        X, _ = features.numeric_features(posts, [], tags)
+        assert X.shape[0] == len(y)
+
+
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=42)
     mlb = MultiLabelBinarizer()
     y_train_mlb = mlb.fit_transform(np.array(y_train))
@@ -290,13 +299,16 @@ def main():
     ]
 
     # TODO: remove single_classifier in classification.py -> http://stackoverflow.com/a/31586026
-    classifier = Pipeline([
-        ('vectorizer', CountVectorizer()),#min_df=2, max_features=None, ngram_range=(1, 3))),
-        ('tfidf', TfidfTransformer()),
-        #('clf', OneVsRestClassifier(SVC(kernel="linear", probability=True)))])
-        ('clf', OneVsRestClassifier(SVC(kernel="linear", C=0.025, probability=True)))])
-#        ('clf', OneVsRestClassifier(MultinomialNB(alpha=.03)))])
-
+    if not USE_NUMERIC_FEATURES:
+        classifier = Pipeline([
+            ('vectorizer', CountVectorizer()),#min_df=2, max_features=None, ngram_range=(1, 3))),
+            ('tfidf', TfidfTransformer()),
+            #('clf', OneVsRestClassifier(SVC(kernel="linear", probability=True)))])
+            ('clf', OneVsRestClassifier(SVC(kernel="linear", C=0.025, probability=True)))])
+    #        ('clf', OneVsRestClassifier(MultinomialNB(alpha=.03)))])
+    else:
+        classifier = Pipeline([
+            ('clf', OneVsRestClassifier(SVC(kernel="linear", C=0.025, probability=True)))])
 
     n_suggested_tags = 2 # FIXME: use this as GridSearchCV parameter!!
 
@@ -307,8 +319,7 @@ def main():
     # [ x  |  2 |  3 | TEST  ]
     #classifier = GridSearchCV(classifier, parameters, n_jobs=-1, cv=3, verbose=0)
 
-
-    classifier.fit(np.array(X_train), y_train_mlb)
+    classifier.fit(np.array(X_train) if not USE_NUMERIC_FEATURES else X_train, y_train_mlb)
 
 
 #     _logger.info("Best parameters set:")
@@ -316,9 +327,8 @@ def main():
 #     for param_name in sorted(parameters.keys()):
 #         _logger.info("\t%s: %r" % (param_name, best_parameters[param_name]))
 
-
-    y_predicted = classifier.predict(np.array(X_test))
-    y_predicted_probab = classifier.predict_proba(np.array(X_test))
+    y_predicted = classifier.predict(np.array(X_test) if not USE_NUMERIC_FEATURES else X_test)
+    y_predicted_probab = classifier.predict_proba(np.array(X_test) if not USE_NUMERIC_FEATURES else X_test)
     y_predicted_list = []
     y_predicted_label_list = []
     tag_names_in_labelized_order = list(mlb.classes_)
@@ -344,11 +354,12 @@ def main():
 #     for item, labels in zip(X_test, mlb.inverse_transform(y_predicted)):
 #         print '%s -> (%s)' % (item[:40], ', '.join(labels))
 
-    print ""
-    print ""
-    print "-"*80
-    for item, labels in zip(X_test, y_predicted_label_list):
-        print '%s -> (%s)' % (item[:40], ', '.join(labels))
+    if not USE_NUMERIC_FEATURES: # TODO fix for numeric features
+        print ""
+        print ""
+        print "-"*80
+        for item, labels in zip(X_test, y_predicted_label_list):
+            print '%s -> (%s)' % (item[:40], ', '.join(labels))
 
 #     print "="*80
 #     print "  REPORT FOR VARIABLE TAG SIZE"
