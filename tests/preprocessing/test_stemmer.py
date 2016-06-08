@@ -1,5 +1,6 @@
 import unittest
 from entities.post import Post
+from entities.tag import Tag
 from preprocessing import stemmer
 
 
@@ -22,6 +23,13 @@ class TestStemmer(unittest.TestCase):
 
         stemmer.porter_stemmer([post])
         self.assertEqual(expected_tokens, post. body_tokens)
+
+    def test_porter_stemmer_tags(self):
+        tag = Tag("writing", 1)
+
+        stemmer.porter_stemmer_tags([tag])
+        self.assertEqual("write", tag.preprocessed_tag_name)
+        self.assertEqual("writing", tag.name)
 
 if __name__ == '__main__':
     unittest.main()
