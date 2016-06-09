@@ -58,29 +58,30 @@ from util.helper import ExitCode
 __version__ = 1.0
 _logger = logging.getLogger(__name__)
 
-USE_NUMERIC_FEATURES = False # TODO set as parameter
-
 
 def usage():
     DEFAULT_TAG_FREQUENCY_THRESHOLD = 3
     DEFAULT_TEST_SIZE = 0.1
+    DEFAULT_USE_NUMERIC_FEATURES = False
     usage = '''
         Automatic Tag Suggestion for StackExchange posts
     
         Usage:
-          'main.py' <data-set-path> [--use-caching] [--tag-frequ-thr=<tf>] [--test-size=<ts>]
+          'main.py' <data-set-path> [--use-caching] [--use-numeric-features] [--tag-frequ-thr=<tf>] [--test-size=<ts>]
           'main.py' --version
     
         Options:
           -h --help                     Shows this screen.
           -v --version                  Shows version of this application.
           -c --use-caching              Enables caching in order to avoid redundant preprocessing.
+          -n --use-numeric-features     Enables numeric features (PMI) instead of TFxIDF
           -f=<tf> --tag-frequ-thr=<tf>  Sets tag frequency threshold -> appropriate value depends on which data set is used! (default=%d).
           -t=<ts> --test-size=<ts>      Sets test size (range: 0.01-0.5) (default=%f).
     ''' % (DEFAULT_TAG_FREQUENCY_THRESHOLD, DEFAULT_TEST_SIZE)
     arguments = docopt(usage)
     kwargs = {}
     kwargs['enable_caching'] = arguments["--use-caching"]
+    kwargs['numeric_features'] = arguments["--use-numeric-features"] if arguments["--use-numeric-features"] else DEFAULT_USE_NUMERIC_FEATURES
     kwargs['tag_frequency_threshold'] = int(arguments["--tag-frequ-thr"]) if arguments["--tag-frequ-thr"] else DEFAULT_TAG_FREQUENCY_THRESHOLD
     kwargs['test_size'] = max(0.01, min(0.5, float(arguments["--test-size"][0]))) if arguments["--test-size"] else DEFAULT_TEST_SIZE
     kwargs['data_set_path'] = arguments["<data-set-path>"]
@@ -162,6 +163,7 @@ def main():
     kwargs = usage()
     data_set_path = kwargs['data_set_path']
     enable_caching = kwargs['enable_caching']
+    use_numeric_features = kwargs['numeric_features']
     setup_logging(logging.INFO)
     helper.make_dir_if_not_exists(helper.CACHE_PATH)
     if enable_caching:
@@ -194,7 +196,7 @@ def main():
     #       to the function is irrelevant (list of zeros!)
 
     y = map(lambda p: tuple(map(lambda t: t.name, p.tag_set)), posts)
-    if not USE_NUMERIC_FEATURES:
+    if not use_numeric_features:
         X = map(lambda p: ' '.join(p.tokens()), posts)
         assert len(X) == len(y)
     else:
@@ -299,7 +301,7 @@ def main():
     ]
 
     # TODO: remove single_classifier in classification.py -> http://stackoverflow.com/a/31586026
-    if not USE_NUMERIC_FEATURES:
+    if not use_numeric_features:
         classifier = Pipeline([
             ('vectorizer', CountVectorizer()),#min_df=2, max_features=None, ngram_range=(1, 3))),
             ('tfidf', TfidfTransformer()),
@@ -319,7 +321,7 @@ def main():
     # [ x  |  2 |  3 | TEST  ]
     #classifier = GridSearchCV(classifier, parameters, n_jobs=-1, cv=3, verbose=0)
 
-    classifier.fit(np.array(X_train) if not USE_NUMERIC_FEATURES else X_train, y_train_mlb)
+    classifier.fit(np.array(X_train) if not use_numeric_features else X_train, y_train_mlb)
 
 
 #     _logger.info("Best parameters set:")
@@ -327,8 +329,8 @@ def main():
 #     for param_name in sorted(parameters.keys()):
 #         _logger.info("\t%s: %r" % (param_name, best_parameters[param_name]))
 
-    y_predicted = classifier.predict(np.array(X_test) if not USE_NUMERIC_FEATURES else X_test)
-    y_predicted_probab = classifier.predict_proba(np.array(X_test) if not USE_NUMERIC_FEATURES else X_test)
+    y_predicted = classifier.predict(np.array(X_test) if not use_numeric_features else X_test)
+    y_predicted_probab = classifier.predict_proba(np.array(X_test) if not use_numeric_features else X_test)
     y_predicted_list = []
     y_predicted_label_list = []
     tag_names_in_labelized_order = list(mlb.classes_)
@@ -354,7 +356,7 @@ def main():
 #     for item, labels in zip(X_test, mlb.inverse_transform(y_predicted)):
 #         print '%s -> (%s)' % (item[:40], ', '.join(labels))
 
-    if not USE_NUMERIC_FEATURES: # TODO fix for numeric features
+    if not use_numeric_features:
         print ""
         print ""
         print "-"*80
