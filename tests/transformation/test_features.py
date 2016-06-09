@@ -12,25 +12,32 @@ class TestFeatures(unittest.TestCase):
 
         post1 = Post(1, "", "", {tag1}, 1)
         post1.title_tokens = ["title1", "tag1"]
-        post1.body_tokens = ["body1", "ipsum", "lorem"]
+        post1.body_tokens = ["body1", "ipsum", "lorem", "lorem"]
 
         post2 = Post(2, "", "", set(), 1)
         post2.title_tokens = ["title2", "tag2"]
-        post2.body_tokens = ["body2", "ipsum", "lorem", "tag2"]
+        post2.body_tokens = ["body2", "ipsum", "lorem", "tag1"]
 
-        X_train, X_test = features.numeric_features([post1], [post2], [tag1])
+        train_posts = [post1]
+        test_posts = [post2]
+        tag_list = [tag1]
+        X_train, X_test = features.numeric_features(train_posts, test_posts, tag_list)
 
         # train data
         self.assertEqual(1, X_train.shape[0])
-        self.assertEqual(2, X_train.shape[1])
-        self.assertEqual(1, X_train[0, 0])
-        self.assertEqual(0, X_train[0, 1])
+        self.assertEqual(4, X_train.shape[1])
+        self.assertEqual(1, X_train[0, 0])  # title contains tag1
+        self.assertEqual(0, X_train[0, 1])  # body contains tag1
+        self.assertPmi(train_posts, tag_list, post1, tag1, X_train[0, 2], title=True)  # title PMI tag1
+        self.assertPmi(train_posts, tag_list, post1, tag1, X_train[0, 3])  # body PMI tag1
 
         # test data
         self.assertEqual(1, X_test.shape[0])
-        self.assertEqual(2, X_test.shape[1])
-        self.assertEqual(0, X_test[0, 0])
-        self.assertEqual(1, X_test[0, 1])
+        self.assertEqual(4, X_test.shape[1])
+        self.assertEqual(0, X_test[0, 0])  # title contains tag1
+        self.assertEqual(1, X_test[0, 1])  # body contains tag1
+        self.assertPmi(train_posts, tag_list, post2, tag1, X_test[0, 2], title=True)  # title PMI tag1
+        self.assertPmi(train_posts, tag_list, post2, tag1, X_test[0, 3])  # body PMI tag1
 
     def test_numeric_features_relaxed(self):
         tag1 = Tag("tag1", 1)
@@ -56,14 +63,14 @@ class TestFeatures(unittest.TestCase):
         self.assertEqual(10, X_train.shape[1])
 
         # post1
-        self.assertEqual(1, X_train[0, 0]) # title contains tag1
-        self.assertEqual(0, X_train[0, 1]) # body contains tag1
-        self.assertPmi(train_posts, tag_list, post1, tag1, X_train[0, 2], title=True) # title PMI tag1
+        self.assertEqual(1, X_train[0, 0])  # title contains tag1
+        self.assertEqual(0, X_train[0, 1])  # body contains tag1
+        self.assertPmi(train_posts, tag_list, post1, tag1, X_train[0, 2], title=True)  # title PMI tag1
         self.assertPmi(train_posts, tag_list, post1, tag1, X_train[0, 3])  # body PMI tag1
-        self.assertEqual(0, X_train[0, 4]) # title contains tag2
-        self.assertEqual(0, X_train[0, 5]) # body contains tag2
-        self.assertEqual(1, X_train[0, 6]) # title contains relaxed tag2
-        self.assertEqual(0, X_train[0, 7]) # body contains relaxed tag2
+        self.assertEqual(0, X_train[0, 4])  # title contains tag2
+        self.assertEqual(0, X_train[0, 5])  # body contains tag2
+        self.assertEqual(1, X_train[0, 6])  # title contains relaxed tag2
+        self.assertEqual(0, X_train[0, 7])  # body contains relaxed tag2
         self.assertPmi(train_posts, tag_list, post1, tag2, X_train[0, 8], title=True)  # title PMI tag2
         self.assertPmi(train_posts, tag_list, post1, tag2, X_train[0, 9])  # body PMI tag2
 
