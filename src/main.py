@@ -127,38 +127,6 @@ def preprocess_tags_and_posts(all_tags, all_posts, tag_frequency_threshold):
     Tag.update_tag_counts_according_to_posts(filtered_tags, posts)
     return filtered_tags, posts
 
-# TODO: check if this is still needed...
-def extract_tokens(tokens):
-    return tokens
-
-# class MultilabelClassifierWrapper(TransformerMixin):
-#     def __init__(self, clf):
-#         self.clf = clf()
-# 
-#     def transform(self, X, **transform_params):
-#         return self.clf.transform(X, transform_params)
-# 
-#     def fit(self, X, y=None, **fit_params):
-#         print len(X)
-#         sys.exit()
-#         return self.clf.fit(X, y, fit_params)
-# 
-#     def score(self, X, y, sample_weight=None):
-#         return self.clf.score(X, y, sample_weight)
-# 
-#     def get_params(self, deep=True):
-#         return self.clf.get_params(deep)
-# 
-#     def set_params(self, **params):
-#         return self.clf.set_params(params)
-
-class MyNaiveBayes(MultinomialNB):
-    def __init__(self, alpha=1.0, fit_prior=True, class_prior=None):
-        super(MyNaiveBayes, self).__init__(alpha, fit_prior, class_prior)
-    def fit(self, X, y, sample_weight=None):
-        print X
-        print "HELLO!"
-        sys.exit()
 
 def main():
     kwargs = usage()
@@ -258,7 +226,7 @@ def main():
 #         #'estimator__alpha': [0.2, 0.1, 0.06, 0.03, 0.01, 0.001, 0.0001],
 #     }
     parameters = {
-        'vectorizer__max_features': (None, 1000, 2000, 3000, 5000, 10000, 15000),
+        'vectorizer__max_features': (None, 1000, 2000, 3000, 5000, 10000),
         'vectorizer__max_df': (0.75, 0.8, 1.0),
         'vectorizer__min_df': (1, 2, 3, 4),
         'vectorizer__ngram_range': ((1, 1), (1, 2), (1, 3)), # unigrams, bigrams or trigrams
