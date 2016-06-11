@@ -31,26 +31,15 @@ import numpy as np
 from entities.tag import Tag
 from preprocessing import parser, preprocessing as prepr
 from sklearn.cross_validation import train_test_split
-from sklearn.pipeline import make_pipeline
+from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import MultiLabelBinarizer
-from sklearn.base import TransformerMixin
-from sklearn.naive_bayes import BernoulliNB, MultinomialNB
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.ensemble import AdaBoostClassifier
-from sklearn.tree import DecisionTreeClassifier
+from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
+# from sklearn.naive_bayes import MultinomialNB
 from sklearn.svm import SVC
-from sklearn.svm import LinearSVC
-from sklearn.dummy import DummyClassifier
-from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.grid_search import GridSearchCV
-from sklearn.metrics import classification_report
 from sklearn.multiclass import OneVsRestClassifier
-from sklearn.cross_validation import StratifiedKFold
-from supervised import classification
-from unsupervised import kmeans, hac
-from evaluation import metrics
-from sklearn.cluster import KMeans
+from sklearn import metrics
+# from unsupervised import kmeans, hac
 from transformation import features
 from util import helper
 from util.docopt import docopt
@@ -62,27 +51,30 @@ _logger = logging.getLogger(__name__)
 
 def usage():
     DEFAULT_TAG_FREQUENCY_THRESHOLD = 3
+    DEFAULT_N_SUGGESTED_TAGS = 2
     DEFAULT_TEST_SIZE = 0.1
     DEFAULT_USE_NUMERIC_FEATURES = False
     usage = '''
         Automatic Tag Suggestion for StackExchange posts
     
         Usage:
-          'main.py' <data-set-path> [--use-caching] [--use-numeric-features] [--tag-frequ-thr=<tf>] [--test-size=<ts>]
+          'main.py' <data-set-path> [--use-caching] [--use-numeric-features] [--num-suggested-tags=<nt>] [--tag-frequ-thr=<tf>] [--test-size=<ts>]
           'main.py' --version
     
         Options:
-          -h --help                     Shows this screen.
-          -v --version                  Shows version of this application.
-          -c --use-caching              Enables caching in order to avoid redundant preprocessing.
-          -n --use-numeric-features     Enables numeric features (PMI) instead of TFxIDF
-          -f=<tf> --tag-frequ-thr=<tf>  Sets tag frequency threshold -> appropriate value depends on which data set is used! (default=%d).
-          -t=<ts> --test-size=<ts>      Sets test size (range: 0.01-0.5) (default=%f).
-    ''' % (DEFAULT_TAG_FREQUENCY_THRESHOLD, DEFAULT_TEST_SIZE)
+          -h --help                         Shows this screen.
+          -v --version                      Shows version of this application.
+          -c --use-caching                  Enables caching in order to avoid redundant preprocessing.
+          -n --use-numeric-features         Enables numeric features (PMI) instead of TFxIDF
+          -s=<nt> --num-suggested-tags=<nt> Number of suggested tags (default=%d)
+          -f=<tf> --tag-frequ-thr=<tf>      Sets tag frequency threshold -> appropriate value depends on which data set is used! (default=%d)
+          -t=<ts> --test-size=<ts>          Sets test size (range: 0.01-0.5) (default=%f)
+    ''' % (DEFAULT_N_SUGGESTED_TAGS, DEFAULT_TAG_FREQUENCY_THRESHOLD, DEFAULT_TEST_SIZE)
     arguments = docopt(usage)
     kwargs = {}
     kwargs['enable_caching'] = arguments["--use-caching"]
     kwargs['numeric_features'] = arguments["--use-numeric-features"] if arguments["--use-numeric-features"] else DEFAULT_USE_NUMERIC_FEATURES
+    kwargs['n_suggested_tags'] = int(arguments["--num-suggested-tags"]) if arguments["--num-suggested-tags"] else DEFAULT_N_SUGGESTED_TAGS
     kwargs['tag_frequency_threshold'] = int(arguments["--tag-frequ-thr"]) if arguments["--tag-frequ-thr"] else DEFAULT_TAG_FREQUENCY_THRESHOLD
     kwargs['test_size'] = max(0.01, min(0.5, float(arguments["--test-size"][0]))) if arguments["--test-size"] else DEFAULT_TEST_SIZE
     kwargs['data_set_path'] = arguments["<data-set-path>"]
@@ -96,7 +88,6 @@ def usage():
 
 def setup_logging(log_level):
     import platform
-    #import os
     logging.basicConfig(
         filename=None, #os.path.join(helper.LOG_PATH, "automatic_tagger.log"),
         level=log_level,
@@ -105,22 +96,17 @@ def setup_logging(log_level):
     )
     # based on: http://stackoverflow.com/a/1336640
     if platform.system() == 'Windows':
-        # Windows does not support ANSI escapes and we are using API calls to set the console color
         logging.StreamHandler.emit = helper.add_coloring_to_emit_windows(logging.StreamHandler.emit)
     else:
-        # all non-Windows platforms are supporting ANSI escapes so we use them
         logging.StreamHandler.emit = helper.add_coloring_to_emit_ansi(logging.StreamHandler.emit)
-        #log = logging.getLogger()
-        #log.addFilter(log_filter())
-        #//hdlr = logging.StreamHandler()
-        #//hdlr.setFormatter(formatter())
 
 
 def preprocess_tags_and_posts(all_tags, all_posts, tag_frequency_threshold):
     from preprocessing import tags
     # FIXME: figure out why this fails on academia dataset!
     #filtered_tags = all_tags # f1=0.349
-    filtered_tags, all_posts = tags.replace_tag_synonyms(all_tags, all_posts) # f1=0.368, f1=0.352
+    # f1=0.368, f1=0.352
+    filtered_tags, all_posts = tags.replace_tag_synonyms(all_tags, all_posts)
     filtered_tags = prepr.filter_tags_and_sort_by_frequency(filtered_tags, tag_frequency_threshold)
     prepr.preprocess_tags(filtered_tags)
     posts = prepr.preprocess_posts(all_posts, filtered_tags, filter_posts=True)
@@ -133,6 +119,7 @@ def main():
     data_set_path = kwargs['data_set_path']
     enable_caching = kwargs['enable_caching']
     use_numeric_features = kwargs['numeric_features']
+    n_suggested_tags = kwargs['n_suggested_tags']
     setup_logging(logging.INFO)
     helper.make_dir_if_not_exists(helper.CACHE_PATH)
     if enable_caching:
@@ -172,102 +159,17 @@ def main():
         X, _ = features.numeric_features(posts, [], tags)
         assert X.shape[0] == len(y)
 
-
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=42)
     mlb = MultiLabelBinarizer()
     y_train_mlb = mlb.fit_transform(np.array(y_train))
     y_test_mlb = mlb.transform(np.array(y_test))
 
-    # transformation
-#     _logger.info("-" * 80)
-#     _logger.info("Transformation...")
-#     n_features = 20000 #2500  # 2200 # 2500 for KNN
-#     from transformation import tfidf, features
-#     X_train, X_test = tfidf.tfidf(train_posts, test_posts, max_features=None, min_df=2)
-    #X_train, X_test = features.numeric_features(train_posts, test_posts, tags)
-
-    # 3) learning
+    # 3) vectorization, transformation and learning
     _logger.info("Learning...")
 
     # supervised
     _logger.info("-"*80)
     _logger.info("Supervised - Classification...")
-    t0 = time()
-
-    from sklearn.pipeline import Pipeline
-    from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
-    pipeline = Pipeline([
-        ('vectorizer', CountVectorizer()),
-        ('tfidf', TfidfTransformer()),
-        ('clf', OneVsRestClassifier(LinearSVC()))])
-
-#     pipeline = make_pipeline(
-#         TfidfVectorizer(
-#             stop_words=None,
-#             preprocessor=extract_tokens,
-#             analyzer=extract_tokens,
-#             tokenizer=extract_tokens,
-#             #token_pattern=r'.*',
-#             smooth_idf=False,
-#             sublinear_tf=False,
-#             norm=None
-#         ),
-# #         MultilabelClassifierWrapper(MultinomialNB(alpha=0.1))
-# #        OneVsRestClassifier(MyNaiveBayes(alpha=0.1))
-#         OneVsRestClassifier(SVC(kernel="linear", C=0.025))
-#     )
-#     parameters = {
-#         'tfidfvectorizer__max_df': (0.75, 0.8, 1.0),
-#         'tfidfvectorizer__ngram_range': ((1, 1), (1, 2), (1, 3)), # unigrams, bigrams or trigrams
-#         'tfidfvectorizer__use_idf': (True, False),
-#         #'tfidfvectorizer__norm': ('l1', 'l2'),
-#         'tfidfvectorizer__min_df': (1, 2, 3, 4),
-#         'tfidfvectorizer__max_features': (None, 1000, 2000, 3000, 5000, 10000, 15000),
-#         #'estimator__alpha': [0.2, 0.1, 0.06, 0.03, 0.01, 0.001, 0.0001],
-#     }
-    parameters = {
-        'vectorizer__max_features': (None, 1000, 2000, 3000, 5000, 10000),
-        'vectorizer__max_df': (0.75, 0.8, 1.0),
-        'vectorizer__min_df': (1, 2, 3, 4),
-        'vectorizer__ngram_range': ((1, 1), (1, 2), (1, 3)), # unigrams, bigrams or trigrams
-        'tfidf__use_idf': (True, False),
-        #'tfidf__norm': ('l1', 'l2'),
-        #'estimator__alpha': [0.2, 0.1, 0.06, 0.03, 0.01, 0.001, 0.0001],
-    }
-#     #scores = ['precision', 'recall']
-#     #for score in scores:
-#     #_logger.info("# Tuning hyper-parameters for %s", score)
-#     clf = GridSearchCV(pipeline, parameters, n_jobs=1,#-1,
-#                                cv=3,#StratifiedKFold(y=y_train_mlb, n_folds=3),
-#                                verbose=1)#, scoring='%s_weighted' % score)
-#     _logger.info("Parameters: %s", parameters)
-#     clf.fit(X_train, y_train_mlb)
-#     _logger.info("Done in %0.3fs" % (time() - t0))
-# 
-#     _logger.info("Best score: %0.3f", clf.best_score_)
-#     _logger.info("Best parameters set:")
-#     best_parameters = clf.best_estimator_.get_params()
-#     for param_name in sorted(parameters.keys()):
-#         _logger.info("\t%s: %r" % (param_name, best_parameters[param_name]))
-# 
-#     y_pred_mlb = clf.predict(X_test)
-#     print classification_report(mlb.transform(y_test), y_pred_mlb)
-#     print mlb.inverse_transform(mlb.transform(y_pred_mlb))
-#     #print classification_report(y_test, y_pred_mlb)
-#     sys.exit()
-
-    classifiers = [
-#         DummyClassifier("most_frequent"), # very primitive/simple baseline!
-#        AdaBoostClassifier(DecisionTreeClassifier(max_depth=2), n_estimators=200, learning_rate=1.5, algorithm="SAMME"),
-#        SVC(kernel="linear", C=0.4, probability=True),
-        #KNeighborsClassifier(n_neighbors=10), # f1 = 0.386 (features=2900)
-        #RandomForestClassifier(n_estimators=200, max_depth=None, n_jobs=-1),  # f1=0.390
-        MultinomialNB(alpha=.03), # <-- lidstone smoothing (1.0 would be laplace smoothing!)
-        #BernoulliNB(alpha=.01)
-        SVC(kernel="linear", C=0.025, probability=True),
-        SVC(kernel="rbf", C=0.025, probability=True), # penalty = "l2" #"l1"
-        #LinearSVC(loss='l2', penalty="l2", dual=False, tol=1e-3),
-    ]
 
     # TODO: remove single_classifier in classification.py -> http://stackoverflow.com/a/31586026
     if not use_numeric_features:
@@ -275,8 +177,19 @@ def main():
             ('vectorizer', CountVectorizer()),#min_df=2, max_features=None, ngram_range=(1, 3))),
             ('tfidf', TfidfTransformer()),
             #('clf', OneVsRestClassifier(SVC(kernel="linear", probability=True)))])
+            #('clf', OneVsRestClassifier(LinearSVC()))])
             ('clf', OneVsRestClassifier(SVC(kernel="linear", C=0.025, probability=True)))
             #('clf', OneVsRestClassifier(MultinomialNB(alpha=.03)))
+#             DummyClassifier("most_frequent"), # very primitive/simple baseline!
+#             AdaBoostClassifier(DecisionTreeClassifier(max_depth=2), n_estimators=200, learning_rate=1.5, algorithm="SAMME"),
+#             SVC(kernel="linear", C=0.4, probability=True),
+#             KNeighborsClassifier(n_neighbors=10), # f1 = 0.386 (features=2900)
+#             RandomForestClassifier(n_estimators=200, max_depth=None, n_jobs=-1),  # f1=0.390
+#             MultinomialNB(alpha=.03), # <-- lidstone smoothing (1.0 would be laplace smoothing!)
+#             BernoulliNB(alpha=.01),
+#             SVC(kernel="linear", C=0.025, probability=True),
+#             SVC(kernel="rbf", C=0.025, probability=True), # penalty = "l2" #"l1"
+#             LinearSVC(loss='l2', penalty="l2", dual=False, tol=1e-3),
         ])
     else:
         classifier = Pipeline([
@@ -284,23 +197,31 @@ def main():
             ('clf', OneVsRestClassifier(SVC(kernel="linear", C=0.025, probability=True)))
         ])
 
-    n_suggested_tags = 2  # FIXME: use this as GridSearchCV parameter!!
+    parameters = {
+        'vectorizer__max_features': (None, 1000, 2000, 3000, 5000, 10000),
+        'vectorizer__max_df': (0.75, 0.8, 1.0),
+        'vectorizer__min_df': (1, 2, 3, 4),
+#         'vectorizer__norm': ('l1', 'l2'),
+        'vectorizer__ngram_range': ((1, 1), (1, 2), (1, 3)), # unigrams, bigrams or trigrams
+        'tfidf__use_idf': (True, False),
+#         'tfidf__norm': ('l1', 'l2'),
+#         'estimator__alpha': [0.2, 0.1, 0.06, 0.03, 0.01, 0.001, 0.0001],
+    }
 
-    # [  TRAINING    | TEST  ]
-    # [ 1  |  2 |  3 | TEST  ]
-    # [ 1  |  2 |  x | TEST  ]
-    # [ 1  |  x |  3 | TEST  ]
-    # [ x  |  2 |  3 | TEST  ]
-    #classifier = GridSearchCV(classifier, parameters, n_jobs=-1, cv=3, verbose=0)
-
+#     for score in ['precision', 'recall']:
+#     _logger.info("# Tuning hyper-parameters for %s", score)
+    classifier = GridSearchCV(classifier, parameters, n_jobs=-1, cv=3, verbose=0)#, scoring='%s_weighted' % score)
+    _logger.info("Parameters: %s", parameters)
+    t0 = time()
     classifier.fit(np.array(X_train) if not use_numeric_features else X_train, y_train_mlb)
+    _logger.info("Done in %0.3fs" % (time() - t0))
+    _logger.info("Best parameters set:")
+    _logger.info("Best score: %0.3f", classifier.best_score_)
+    best_parameters = classifier.best_estimator_.get_params()
+    for param_name in sorted(parameters.keys()):
+        _logger.info("\t%s: %r" % (param_name, best_parameters[param_name]))
 
-
-#     _logger.info("Best parameters set:")
-#     best_parameters = classifier.best_estimator_.get_params()
-#     for param_name in sorted(parameters.keys()):
-#         _logger.info("\t%s: %r" % (param_name, best_parameters[param_name]))
-
+    _logger.info("Number of suggested tags: %d" % n_suggested_tags)
     y_predicted = classifier.predict(np.array(X_test) if not use_numeric_features else X_test)
     y_predicted_probab = classifier.predict_proba(np.array(X_test) if not use_numeric_features else X_test)
     y_predicted_list = []
@@ -340,11 +261,9 @@ def main():
 #     print "="*80
 #     print classification_report(y_test_mlb, y_predicted)
 
-
     print "="*80
     print "  REPORT FOR FIXED TAG SIZE = %d" % n_suggested_tags
     print "="*80
-    from sklearn import metrics
 
     precision_micro, recall_micro, f1_micro, _ = metrics.precision_recall_fscore_support(y_test_mlb, y_predicted_fixed_size, average="micro", warn_for=())
     precision_macro, recall_macro, f1_macro, _ = metrics.precision_recall_fscore_support(y_test_mlb, y_predicted_fixed_size, average="macro", warn_for=())
@@ -359,34 +278,12 @@ def main():
     from evaluation.classification import custom_classification_report
     print custom_classification_report(y_test_mlb, y_predicted_fixed_size, target_names=list(mlb.classes_))
 
-
-#     for clf in classifiers:
-#         print y_train_mlb
-#         one_vs_rest_clf, _ = classification.one_vs_rest(clf, np.array(X_train), y_train_mlb)
-#         y_pred_mlb = one_vs_rest_clf.predict(np.array(X_test))
-#         print classification_report(mlb.transform(y_test), y_pred_mlb)
-
-#         classification.classification(classifier, X_train, X_test, train_posts, test_posts, tags)
-#         #classification.single_classifier(train_posts, test_posts, tags)
-#         evaluation.print_evaluation_results(test_posts)
-
-#         # sanity checks!
-#         assert classifier.classes_[0] == False
-#         assert classifier.classes_[1] == True
-#         for p1, p2 in prediction_probabilities_list:
-#             assert abs(1.0 - (p1+p2)) < 0.001
-
-#         classification.single_classifier(classifier, X_train, X_test, train_posts, test_posts, tags)
-        #classification.single_classifier(train_posts, test_posts, tags)
-#         print "With features: %d" % n_features
-#         evaluation.print_evaluation_results(test_posts)
-
     #unsupervised
     _logger.info("-"*80)
     _logger.info("Unsupervised - Clustering...")
     from unsupervised import clustering
     clustering.cluster(X_train, y_train_mlb, X_test, y_test_mlb, tags, n_suggested_tags, use_numeric_features)
-#
+
 #    _logger.info("-"*80)
 #    _logger.info("HAC...")
 #    helper.clear_tag_predictions_for_posts(test_posts)
@@ -394,8 +291,23 @@ def main():
 #    evaluation.print_evaluation_results(test_posts)
     return ExitCode.SUCCESS
 
-    # Suggest most frequent tags (baseline)
-    # TODO: Random Classifier as baseline => see: http://stats.stackexchange.com/questions/43102/good-f1-score-for-anomaly-detection
+# legacy code:
+# for clf in classifiers:
+#     print y_train_mlb
+#     one_vs_rest_clf, _ = classification.one_vs_rest(clf, np.array(X_train), y_train_mlb)
+#     y_pred_mlb = one_vs_rest_clf.predict(np.array(X_test))
+#     print classification_report(mlb.transform(y_test), y_pred_mlb)
+#     classification.classification(classifier, X_train, X_test, train_posts, test_posts, tags)
+#     evaluation.print_evaluation_results(test_posts)
+# 
+#     # sanity checks!
+#     assert classifier.classes_[0] == False
+#     assert classifier.classes_[1] == True
+#     for p1, p2 in prediction_probabilities_list:
+#         assert abs(1.0 - (p1+p2)) < 0.001
+#
+# Suggest most frequent tags
+# Random Classifier
 #     _logger.info("-"*80)
 #     _logger.info("Randomly suggest 2 most frequent tags...")
 #     helper.suggest_random_tags(2, test_posts, tags)

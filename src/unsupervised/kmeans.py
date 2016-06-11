@@ -30,7 +30,8 @@ class CustomKMeans(KMeans):
             n_tag_assignments = 0
 
             for idx, tag_assignments in enumerate(y):
-                if tag_assignments > 1 and tag_assignments in largest_values and n_tag_assignments < self.n_suggested_tags:
+                if tag_assignments > 1 and tag_assignments in largest_values \
+                and n_tag_assignments < self.n_suggested_tags:
                     y[idx] = 1
                     n_tag_assignments += 1
                 else:
@@ -38,8 +39,7 @@ class CustomKMeans(KMeans):
 
             #assert sum(y) == n_tags
             y_predicted_classes.append(y.tolist())
-        y_predicted_classes = np.array(y_predicted_classes)
-        return y_predicted_classes
+        return np.array(y_predicted_classes)
 
 
     def fit(self, X, y=None):

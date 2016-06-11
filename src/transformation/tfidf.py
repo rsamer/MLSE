@@ -11,6 +11,13 @@ def extract_tokens(post):
     return post.tokens()
 
 
+#     _logger.info("-" * 80)
+#     _logger.info("Transformation...")
+#     n_features = 20000 #2500  # 2200 # 2500 for KNN
+#     from transformation import tfidf, features
+#     X_train, X_test = tfidf.tfidf(train_posts, test_posts, max_features=None, min_df=2)
+#X_train, X_test = features.numeric_features(train_posts, test_posts, tags)
+
 def tfidf(train_posts, test_posts, max_features=None, min_df=1, max_df=1.0, norm="l2"):
     _logger.info("TFIDF-Vectorizer (Transformation)")
     #vectorizer = TfidfVectorizer(sublinear_tf=True, max_df=0.5, stop_words='english')
