@@ -1,0 +1,6 @@
+sudo pip install numpy
+sudo pip install nltk
+sudo pip install -U scikit-learn
+sudo pip install scipy
+sudo pip install beautifulsoup4
+sudo apt-get install python-matplotlib
