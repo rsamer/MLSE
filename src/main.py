@@ -50,6 +50,7 @@ from sklearn.cross_validation import StratifiedKFold
 from supervised import classification
 from unsupervised import kmeans, hac
 from evaluation import metrics
+from sklearn.cluster import KMeans
 from transformation import features
 from util import helper
 from util.docopt import docopt
@@ -306,13 +307,16 @@ def main():
             ('vectorizer', CountVectorizer()),#min_df=2, max_features=None, ngram_range=(1, 3))),
             ('tfidf', TfidfTransformer()),
             #('clf', OneVsRestClassifier(SVC(kernel="linear", probability=True)))])
-            ('clf', OneVsRestClassifier(SVC(kernel="linear", C=0.025, probability=True)))])
-    #        ('clf', OneVsRestClassifier(MultinomialNB(alpha=.03)))])
+            ('clf', OneVsRestClassifier(SVC(kernel="linear", C=0.025, probability=True)))
+            #('clf', OneVsRestClassifier(MultinomialNB(alpha=.03)))
+        ])
     else:
         classifier = Pipeline([
-            ('clf', OneVsRestClassifier(SVC(kernel="linear", C=0.025, probability=True)))])
+            #('kmeans', KMeans())
+            ('clf', OneVsRestClassifier(SVC(kernel="linear", C=0.025, probability=True)))
+        ])
 
-    n_suggested_tags = 2 # FIXME: use this as GridSearchCV parameter!!
+    n_suggested_tags = 2  # FIXME: use this as GridSearchCV parameter!!
 
     # [  TRAINING    | TEST  ]
     # [ 1  |  2 |  3 | TEST  ]
@@ -410,11 +414,11 @@ def main():
 #         evaluation.print_evaluation_results(test_posts)
 
     #unsupervised
-#    _logger.info("-"*80)
-#    _logger.info("k-Means...")
-#    kmeans.kmeans(len(tags), train_posts, test_posts)
-#    evaluation.print_evaluation_results(test_posts)
-# 
+    _logger.info("-"*80)
+    _logger.info("Unsupervised - Clustering...")
+    from unsupervised import clustering
+    clustering.cluster(X_train, y_train_mlb, X_test, y_test_mlb, tags, n_suggested_tags, use_numeric_features)
+#
 #    _logger.info("-"*80)
 #    _logger.info("HAC...")
 #    helper.clear_tag_predictions_for_posts(test_posts)
