@@ -28,7 +28,7 @@ def cluster(X_train, y_train, X_test, y_test, tags, n_suggested_tags, use_numeri
         pipeline = Pipeline([
             ('vectorizer', CountVectorizer()),
             ('tfidf', TfidfTransformer()),
-            ('kmeans', kmeans.CustomKMeans(n_clusters=len(tags), init='k-means++', verbose=True, n_jobs=-1))
+            ('kmeans', kmeans.CustomKMeans(init='k-means++', verbose=True, n_jobs=-1))
         ])
     else:
         pipeline = Pipeline([
