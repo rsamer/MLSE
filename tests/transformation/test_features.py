@@ -28,6 +28,9 @@ class TestFeatures(unittest.TestCase):
         self.assertEqual(4, X_train.shape[1])
         self.assertEqual(1, X_train[0, 0])  # title contains tag1
         self.assertEqual(0, X_train[0, 1])  # body contains tag1
+        
+        
+        
         self.assertPmi(train_posts, tag_list, post1, tag1, X_train[0, 2], title=True)  # title PMI tag1
         self.assertPmi(train_posts, tag_list, post1, tag1, X_train[0, 3])  # body PMI tag1
 
@@ -87,14 +90,23 @@ class TestFeatures(unittest.TestCase):
         self.assertPmi(train_posts, tag_list, post2, tag2, X_train[1, 9])  # body PMI tag2
 
     def assertPmi(self, train_posts, tag_list, post, tag, pmi, title=False):
+        
+        ##############
+        #######         TODO: FIX THIS!!
+        #######           COMPUTE EXPECTED VALUES BY HAND OTHERWISE THIS TEST MAKES NO SENSE.
+        ################
+        
         expected_pmi = 0.0
         p_tag = 0.0
         p_token_tag = {}
         p_token = {}
         tag_token_assignment = {}
 
+        n_total_tag_occurences = 0.0
+        n_total_tag_token_occurences = 0.0
         for p in train_posts:
             for t in p.tag_set:
+                n_total_tag_occurences += 1.0
                 if t.name == tag.name:
                     p_tag += 1.0
 
@@ -104,6 +116,7 @@ class TestFeatures(unittest.TestCase):
                 p_token[t] += 1.0
 
                 for ta in p.tag_set:
+                    n_total_tag_token_occurences += 1.0
                     tag_token_assignment["_".join([ta.name, t])] = True
 
                 if tag in p.tag_set:
@@ -111,7 +124,7 @@ class TestFeatures(unittest.TestCase):
                         p_token_tag[t] = 0.0
                     p_token_tag[t] += 1.0
 
-        p_tag /= len(tag_list)
+        p_tag /= n_total_tag_occurences
 
         for p_tt in p_token_tag:
             p_token_tag[p_tt] /= len(tag_token_assignment)
