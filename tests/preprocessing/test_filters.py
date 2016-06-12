@@ -1,7 +1,10 @@
 import unittest
+import os
+import main
 from entities.post import Post
 from entities.post import Answer
-from preprocessing import filters
+from preprocessing import filters, parser, tags, preprocessing
+from util.helper import APP_PATH
 
 
 class TestFilters(unittest.TestCase):
@@ -104,6 +107,21 @@ class TestFilters(unittest.TestCase):
         posts = [post1, post2]
         posts = filters.filter_less_relevant_posts(posts, 0)
         self.assertEqual([post1, post2], posts)
+
+    def test_make_sure_tokens_that_are_tag_names_are_never_removed(self):
+        # read in all tags
+        all_tags, _, _ = parser.parse_tags_and_posts(os.path.join(APP_PATH, "data", "example"))
+
+        filtered_tags, _ = tags.replace_tag_synonyms(all_tags, [])
+        all_sorted_tag_names = sorted(map(lambda t: t.name, filtered_tags), reverse=True)
+        text = ' '.join(all_sorted_tag_names)
+        self.assertEqual(text.split(), all_sorted_tag_names)
+        my_posts = [Post(1, text, text, set(filtered_tags[:2]), 10)]
+        _, posts = main.preprocess_tags_and_posts(all_tags, my_posts, 0, enable_stemming=False,
+                                                  replace_adjacent_tag_occurences=False)
+        self.assertEqual(len(posts), 1)
+        for idx, token in enumerate(posts[0].title_tokens):
+            self.assertEqual(token, all_sorted_tag_names[idx])
 
 if __name__ == '__main__':
     unittest.main()

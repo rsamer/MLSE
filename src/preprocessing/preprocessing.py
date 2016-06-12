@@ -29,11 +29,12 @@ def filter_tags_and_sort_by_frequency(tags, frequency_threshold):
     return list(itertools.takewhile(lambda t: t.count >= frequency_threshold, iter(reverse_sorted_tags)))
 
 
-def preprocess_tags(tags):
+def stem_tags(tags):
     stemmer.porter_stemmer_tags(tags)
 
 
-def preprocess_posts(posts, tag_list, filter_posts=True):
+def preprocess_posts(posts, tag_list, filter_posts=True, enable_stemming=True,
+                     replace_adjacent_tag_occurences=True):
     _logger.info("Preprocessing posts")
     assert isinstance(posts, list)
 
@@ -49,13 +50,14 @@ def preprocess_posts(posts, tag_list, filter_posts=True):
     filters.strip_html_tags(posts)
 
     tag_names = map(lambda t: t.name.lower(), tag_list)
-    tags.replace_adjacent_tag_occurences(posts, tag_names)
+    if replace_adjacent_tag_occurences:
+        tags.replace_adjacent_tag_occurences(posts, tag_names)
 
     tokenizer.tokenize_posts(posts, tag_names)
     n_tokens = reduce(lambda x,y: x + y, map(lambda t: len(t.title_tokens) + len(t.body_tokens), posts))
     filters.filter_tokens(posts, tag_names)
 
-    stopwords.remove_stopwords(posts)
+    stopwords.remove_stopwords(posts, tag_names)
     #pos.pos_tagging(posts)
 
     #-----------------------------------------------------------------------------------------------
@@ -64,7 +66,8 @@ def preprocess_posts(posts, tag_list, filter_posts=True):
     # lemmatizer.word_net_lemmatizer(posts)
     #-----------------------------------------------------------------------------------------------
 
-    stemmer.porter_stemmer(posts)
+    if enable_stemming is True:
+        stemmer.porter_stemmer(posts)
 
     n_filtered_tokens = n_tokens - reduce(lambda x,y: x + y, map(lambda t: len(t.title_tokens) + len(t.body_tokens), posts))
     if n_tokens > 0:

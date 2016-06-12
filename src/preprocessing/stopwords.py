@@ -10,7 +10,7 @@ _logger = logging.getLogger(__name__)
 nltk.data.path = [os.path.join(helper.APP_PATH, "corpora", "nltk_data")]
 
 
-def remove_stopwords(posts):
+def remove_stopwords(posts, tag_names):
     _logger.info("Removing stop-words from posts' tokens")
     stop_words_file_path = os.path.join(helper.APP_PATH, 'corpora', 'stopwords')
     data_set_stop_words = set()
@@ -22,7 +22,7 @@ def remove_stopwords(posts):
 
     progress_bar = helper.ProgressBar(len(posts))
     for post in posts:
-        post.title_tokens = filter(lambda t: t not in stop_words, post.title_tokens)
-        post.body_tokens = filter(lambda t: t not in stop_words, post.body_tokens)
+        post.title_tokens = filter(lambda t: t not in stop_words or t in tag_names, post.title_tokens)
+        post.body_tokens = filter(lambda t: t not in stop_words or t in tag_names, post.body_tokens)
         progress_bar.update()
     progress_bar.finish()

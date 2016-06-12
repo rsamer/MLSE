@@ -156,13 +156,13 @@ def filter_tokens(posts, tag_names):
         tokens = filter(lambda t: not t.endswith("n't"), tokens)
 
         # remove hexadecimal color_codes
-        tokens = [word for word in tokens if regex_color_code.match(word) is None]
+        tokens = filter(lambda t: regex_color_code.match(t) is None or t in tag_names, tokens)
 
         # remove hexadecimal numbers
-        tokens = [word for word in tokens if regex_hex_numbers.match(word) is None]
+        tokens = filter(lambda t: regex_hex_numbers.match(t) is None or t in tag_names, tokens)
 
         # also remove numbers starting with #
-        tokens = [word for word in tokens if regex_number.match(word) is None]
+        tokens = filter(lambda t: regex_number.match(t) is None or t in tag_names, tokens)
 
         #-------------------------------------------------------------------------------------------
         # Note: We figured out not removing numbers slightly increases the performance of our models

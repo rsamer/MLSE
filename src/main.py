@@ -33,7 +33,7 @@ from sklearn.cross_validation import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import MultiLabelBinarizer
 from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
-# from sklearn.naive_bayes import MultinomialNB
+from sklearn.naive_bayes import MultinomialNB
 from sklearn.svm import SVC
 from sklearn.grid_search import GridSearchCV
 from sklearn.multiclass import OneVsRestClassifier
@@ -43,6 +43,7 @@ from transformation import features
 from util import helper
 from util.docopt import docopt
 from util.helper import ExitCode
+from preprocessing.tags import replace_adjacent_tag_occurences
 
 __version__ = 1.0
 _logger = logging.getLogger(__name__)
@@ -101,15 +102,18 @@ def setup_logging(log_level):
         logging.StreamHandler.emit = helper.add_coloring_to_emit_ansi(logging.StreamHandler.emit)
 
 
-def preprocess_tags_and_posts(all_tags, all_posts, tag_frequency_threshold):
+def preprocess_tags_and_posts(all_tags, all_posts, tag_frequency_threshold, enable_stemming=True,
+                              replace_adjacent_tag_occurences=True):
     from preprocessing import tags
     #filtered_tags = all_tags # f1=0.349
     # f1=0.368, f1=0.352
     # FIXME: figure out why this fails on academia dataset!
     filtered_tags, all_posts = tags.replace_tag_synonyms(all_tags, all_posts)
     filtered_tags = prepr.filter_tags_and_sort_by_frequency(filtered_tags, tag_frequency_threshold)
-    prepr.preprocess_tags(filtered_tags)
-    posts = prepr.preprocess_posts(all_posts, filtered_tags, filter_posts=True)
+    if enable_stemming is True:
+        prepr.stem_tags(filtered_tags)
+    posts = prepr.preprocess_posts(all_posts, filtered_tags, True, enable_stemming,
+                                   replace_adjacent_tag_occurences)
     Tag.update_tag_counts_according_to_posts(filtered_tags, posts)
     return filtered_tags, posts
 
@@ -135,7 +139,7 @@ def main():
     # 2) Preprocessing
     _logger.info("Preprocessing...")
     if not enable_caching or not helper.cache_exists_for_preprocessed_tags_and_posts(cache_file_name_prefix):
-        tags, posts = preprocess_tags_and_posts(all_tags, all_posts, tag_frequency_threshold)
+        tags, posts = preprocess_tags_and_posts(all_tags, all_posts, tag_frequency_threshold, enable_stemming=True)
         helper.write_preprocessed_tags_and_posts_to_cache(cache_file_name_prefix, tags, posts)
     else:
         _logger.info("Cache hit!")
@@ -183,9 +187,9 @@ def main():
         classifier = Pipeline([
             ('vectorizer', CountVectorizer()),
             ('tfidf', TfidfTransformer()),
-            ('clf', OneVsRestClassifier(SVC(kernel="linear", C=0.025, probability=True)))
+            #('clf', OneVsRestClassifier(SVC(kernel="linear", C=0.025, probability=True)))
             #('clf', OneVsRestClassifier(LinearSVC()))])
-            #('clf', OneVsRestClassifier(MultinomialNB(alpha=.03))) # <-- lidstone smoothing (1.0 would be laplace smoothing!)
+            ('clf', OneVsRestClassifier(MultinomialNB(alpha=.03))) # <-- lidstone smoothing (1.0 would be laplace smoothing!)
             #('clf', OneVsRestClassifier(RandomForestClassifier(n_estimators=200, max_depth=None)))
 #             AdaBoostClassifier(DecisionTreeClassifier(max_depth=2), n_estimators=200, learning_rate=1.5, algorithm="SAMME"),
 #             KNeighborsClassifier(n_neighbors=10), # f1 = 0.386 (features=2900)
@@ -205,15 +209,15 @@ def main():
 
 #     for score in ['precision', 'recall']:
 #     _logger.info("# Tuning hyper-parameters for %s", score)
-    classifier = GridSearchCV(classifier, parameters, n_jobs=-1, cv=3, verbose=1)#, scoring='%s_weighted' % score)
+    #classifier = GridSearchCV(classifier, parameters, n_jobs=-1, cv=3, verbose=1)#, scoring='%s_weighted' % score)
     _logger.info("Parameters: %s", parameters)
     t0 = time()
     classifier.fit(np.array(X_train) if not use_numeric_features else X_train, y_train_mlb)
     _logger.info("Done in %0.3fs" % (time() - t0))
     _logger.info("Best parameters set:")
-    best_parameters = classifier.best_estimator_.get_params()
-    for param_name in sorted(parameters.keys()):
-        _logger.info("\t%s: %r" % (param_name, best_parameters[param_name]))
+#     best_parameters = classifier.best_estimator_.get_params()
+#     for param_name in sorted(parameters.keys()):
+#         _logger.info("\t%s: %r" % (param_name, best_parameters[param_name]))
 
     _logger.info("Number of suggested tags: %d" % n_suggested_tags)
     y_predicted = classifier.predict(np.array(X_test) if not use_numeric_features else X_test)
@@ -263,6 +267,7 @@ def main():
 
     from evaluation.classification import custom_classification_report
     print custom_classification_report(y_test_mlb, y_predicted_fixed_size, target_names=list(mlb.classes_))
+    sys.exit()
 
     #unsupervised
     _logger.info("-"*80)
