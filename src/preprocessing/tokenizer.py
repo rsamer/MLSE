@@ -70,7 +70,7 @@ def tokenize_posts(posts, tag_names):
 
         # remove simple emoticons (Note: the complexer ones are removed after tokenization later on!)
         s = re.sub(tokens_remove_emoticons_re, ' ', s)
-        # TODO: fix additional smilies in regex...
+        # TODO: detect additional smilies via regex...
         s = s.replace(':d', '')
         s = s.replace(':p', '')
         s = s.replace(':-d', '')
@@ -85,8 +85,6 @@ def tokenize_posts(posts, tag_names):
         # remove whitespaces before and after
         tokens = map(lambda t: t.strip(), tokens)
 
-        # remove simple emoticons! (Note: complex ones are removed in filters.py)
-
         # remove tailing punctuation characters (if present)
         tokens = map(remove_all_tailing_punctuation_characters, tokens)
 
@@ -95,8 +93,8 @@ def tokenize_posts(posts, tag_names):
 
     progress_bar = helper.ProgressBar(len(posts))
     for post in posts:
-        post.body_tokens = _tokenize_text(post.body, tag_names)
         post.title_tokens = _tokenize_text(post.title, tag_names)
+        post.body_tokens = _tokenize_text(post.body, tag_names)
         progress_bar.update()
 
     progress_bar.finish()

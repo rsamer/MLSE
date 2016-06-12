@@ -26,9 +26,7 @@ def filter_tags_and_sort_by_frequency(tags, frequency_threshold):
     if frequency_threshold <= 1:
         return reverse_sorted_tags
 
-    # TODO: (end-term) look for similar tag names and merge them together, e.g. "java", "java programming"??
-    #       for this we should simply download the synonym list from StackExchange as mentioned in the paper!
-    return list(itertools.takewhile(lambda tag: tag.count >= frequency_threshold, iter(reverse_sorted_tags)))
+    return list(itertools.takewhile(lambda t: t.count >= frequency_threshold, iter(reverse_sorted_tags)))
 
 
 def preprocess_tags(tags):
@@ -39,11 +37,12 @@ def preprocess_posts(posts, tag_list, filter_posts=True):
     _logger.info("Preprocessing posts")
     assert isinstance(posts, list)
 
-    if filter_posts:
+    if filter_posts is True:
         posts = filters.filter_less_relevant_posts(posts, 0)
         posts = tags.strip_invalid_tags_from_posts_and_remove_untagged_posts(posts, tag_list)
 
-    selection.add_accepted_answer_text_to_body(posts)
+    # TODO: why is this module named selection??!
+    selection.append_accepted_answer_text_to_body(posts)
 
     filters.to_lower_case(posts)
     filters.strip_code_segments(posts)
@@ -53,19 +52,22 @@ def preprocess_posts(posts, tag_list, filter_posts=True):
     tags.replace_adjacent_tag_occurences(posts, tag_names)
 
     tokenizer.tokenize_posts(posts, tag_names)
-    n_tokens = reduce(lambda x,y: x + y, map(lambda t: len(t.body_tokens) + len(t.title_tokens), posts))
+    n_tokens = reduce(lambda x,y: x + y, map(lambda t: len(t.title_tokens) + len(t.body_tokens), posts))
     filters.filter_tokens(posts, tag_names)
 
     stopwords.remove_stopwords(posts)
     #pos.pos_tagging(posts)
 
-    # lemmatizer.word_net_lemmatizer(posts) #it does not makes sense to use both lemmatization and stemming
-    # lemmatizer requires pos_tagging beforehand
+    #-----------------------------------------------------------------------------------------------
+    # NOTE: it does not makes sense to use both lemmatization and stemming
+    #       lemmatizer also requires pos_tagging beforehand!
+    # lemmatizer.word_net_lemmatizer(posts)
+    #-----------------------------------------------------------------------------------------------
+
     stemmer.porter_stemmer(posts)
 
-    n_filtered_tokens = n_tokens - reduce(lambda x,y: x + y, map(lambda t: len(t.body_tokens) + len(t.title_tokens), posts))
+    n_filtered_tokens = n_tokens - reduce(lambda x,y: x + y, map(lambda t: len(t.title_tokens) + len(t.body_tokens), posts))
     if n_tokens > 0:
         _logger.info("Removed {} ({}%) of {} tokens (altogether)".format(n_filtered_tokens,
                         round(float(n_filtered_tokens) / n_tokens * 100.0, 2), n_tokens))
-
     return posts

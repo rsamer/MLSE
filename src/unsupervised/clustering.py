@@ -12,7 +12,7 @@ _logger = logging.getLogger(__name__)
 
 def cluster(X_train, y_train, X_test, y_test, tags, n_suggested_tags, use_numeric_features):
     parameters = {
-        'kmeans__n_clusters': (len(tags), int(len(tags) / 2)),
+        'kmeans__n_clusters': (len(tags), int(len(tags) / 2.0), int(len(tags) / 4.0)),
         'kmeans__max_iter': (100,),
         'kmeans__n_init': (10,),
 #         'kmeans__tol': (0.00004, 0.001),

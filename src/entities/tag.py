@@ -27,13 +27,15 @@ class Tag(object):
 
     @staticmethod
     def update_tag_counts_according_to_posts(tags, posts):
+        # reset count
         for tag in tags:
             tag.count = 0
+        # recount
         for post in posts:
             for tag in post.tag_set:
                 tag.count += 1
 
     @staticmethod
     def sort_tags_by_frequency(tags, reverse=True):
-        return sorted(tags, key=lambda x: x.count, reverse=True)
+        return sorted(tags, key=lambda x: x.count, reverse=reverse)
 

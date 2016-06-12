@@ -105,11 +105,11 @@ class Post(object):
         accepted_answers = filter(lambda a: self.accepted_answer_id == a.pid, self.answers)
         assert len(accepted_answers) <= 1, "There must be one accepted answer!"
         if len(accepted_answers) == 0:
-            return None # TODO: rempve from example dataset...
+            return None
         return accepted_answers[0]
 
     def tokens(self, title_weight=3):
-        return self.title_tokens * title_weight + self.body_tokens
+        return (self.title_tokens * title_weight) + self.body_tokens
 
     @staticmethod
     def copied_new_counted_tags_for_posts(posts):

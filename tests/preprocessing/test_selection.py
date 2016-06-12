@@ -23,28 +23,28 @@ class TestSelection(unittest.TestCase):
         post.accepted_answer_id = accepted_answer.pid
         post.answers = [accepted_answer]
 
-        selection.add_accepted_answer_text_to_body([post])
+        selection.append_accepted_answer_text_to_body([post])
         self.assertEqual("title", post.title)
         self.assertEqual("body answer", post.body)
 
         post.body = "body"
         accepted_answer.score = 0
-        selection.add_accepted_answer_text_to_body([post])
+        selection.append_accepted_answer_text_to_body([post])
         self.assertEqual("body answer", post.body)
 
         post.body = "body"
         accepted_answer.score = -1
-        selection.add_accepted_answer_text_to_body([post])
+        selection.append_accepted_answer_text_to_body([post])
         self.assertEqual("body", post.body)
 
         post.body = "body"
         post.accepted_answer_id = None
-        selection.add_accepted_answer_text_to_body([post])
+        selection.append_accepted_answer_text_to_body([post])
         self.assertEqual("body", post.body)
 
         post.body = "body"
         post.accepted_answer_id = 1000
-        selection.add_accepted_answer_text_to_body([post])
+        selection.append_accepted_answer_text_to_body([post])
         self.assertEqual("body", post.body)
 
 if __name__ == '__main__':

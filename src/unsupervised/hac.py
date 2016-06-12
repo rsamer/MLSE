@@ -19,7 +19,7 @@ def _posts_for_cluster(model, cluster_number, posts):
 
 def hac(number_of_clusters, train_posts, test_posts):
 
-    #documents = [" ".join(post.tokens()) for post in posts + new_posts]
+    #documents = [" ".join(post.tokens(title_weight=3)) for post in posts + new_posts]
     #vectorizer = TfidfVectorizer(stop_words=None)
     #X = vectorizer.fit_transform(documents)
 

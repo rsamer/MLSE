@@ -14,7 +14,6 @@ nltk.data.path = [os.path.join(helper.APP_PATH, "corpora", "nltk_data")]
 _logger = logging.getLogger(__name__)
 
 
-# TODO: Stanford POS-tagging
 def pos_tagging(posts):
     '''
         POS-Tagging via Stanford POS tagger
@@ -101,6 +100,7 @@ def pos_tagging(posts):
     progress_bar.finish()
     return
 
+# Old Solution:
 #     '''
 #         --------------------------------------------------------------------------------------------
 #         Tag    Meaning    English Examples
