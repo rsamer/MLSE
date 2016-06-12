@@ -3,21 +3,15 @@
 import logging
 from sklearn.pipeline import Pipeline
 from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
-from unsupervised import kmeans
+from unsupervised import kmeans, hac
 import numpy as np
+from sklearn import metrics
 from sklearn.grid_search import GridSearchCV
 
 _logger = logging.getLogger(__name__)
 
 
-def cluster(X_train, y_train, X_test, y_test, tags, n_suggested_tags, use_numeric_features):
-    parameters = {
-        'kmeans__n_clusters': (len(tags), len(tags) / 2),
-        'kmeans__max_iter': (100, ),
-        'kmeans__n_init': (10, ),
-        'kmeans__tol': (0.0025, 0.5, 2.0)
-    }
-
+def _grid_search_cluster(model, parameters, X_train, y_train, X_test, y_test, tags, n_suggested_tags, use_numeric_features):
     if not use_numeric_features:
         parameters['vectorizer__max_features'] = (None, 1000, 5000)
         parameters['vectorizer__max_df'] = (0.8, 1.0)
@@ -28,14 +22,14 @@ def cluster(X_train, y_train, X_test, y_test, tags, n_suggested_tags, use_numeri
         pipeline = Pipeline([
             ('vectorizer', CountVectorizer()),
             ('tfidf', TfidfTransformer()),
-            ('kmeans', kmeans.CustomKMeans( init='k-means++', verbose=False))
+            model
         ])
     else:
         pipeline = Pipeline([
-            ('kmeans', kmeans.CustomKMeans(init='k-means++', verbose=False))
+            model
         ])
 
-    pipeline = GridSearchCV(pipeline, parameters, n_jobs=-1, cv=3, verbose=0)
+    pipeline = GridSearchCV(pipeline, parameters, n_jobs=-1, cv=3, verbose=0, scoring='f1_micro')
 
     pipeline.fit(np.array(X_train) if not use_numeric_features else X_train, y_train)
 
@@ -44,12 +38,11 @@ def cluster(X_train, y_train, X_test, y_test, tags, n_suggested_tags, use_numeri
     for param_name in sorted(parameters.keys()):
         _logger.info("\t%s: %r" % (param_name, best_parameters[param_name]))
 
-    y_predicted = pipeline.predict(np.array(X_test) if not use_numeric_features else X_test)
+    y_predicted = pipeline.predict(X_test)
 
     print "=" * 80
     print "  REPORT FOR FIXED TAG SIZE = %d" % n_suggested_tags
     print "=" * 80
-    from sklearn import metrics
 
     precision_micro, recall_micro, f1_micro, _ = metrics.precision_recall_fscore_support(y_test,
                                                                                          y_predicted,
@@ -64,3 +57,33 @@ def cluster(X_train, y_train, X_test, y_test, tags, n_suggested_tags, use_numeri
     print "Recall macro: %.3f" % recall_macro
     print "F1 micro: %.3f" % f1_micro
     print "F1 macro: %.3f" % f1_macro
+
+
+def cluster(X_train, y_train, X_test, y_test, tags, n_suggested_tags, use_numeric_features):
+    _logger.info("-" * 80)
+    _logger.info("kMeans...")
+
+    params = {
+        'kmeans__n_clusters': (len(tags), len(tags) / 2),
+        'kmeans__max_iter': (100, ),
+        'kmeans__n_init': (10, ),
+        'kmeans__tol': (0.0025, 0.5, 2.0)
+    }
+
+    model = ('kmeans', kmeans.CustomKMeans(n_suggested_tags=n_suggested_tags, n_clusters=len(tags) / 2,
+                                           init='k-means++', verbose=False))
+    _grid_search_cluster(model, params, X_train, y_train, X_test, y_test, tags, n_suggested_tags, use_numeric_features)
+
+    _logger.info("-" * 80)
+    _logger.info("Agglomerative Clustering...")
+
+    params = {
+        'hac__n_clusters': (len(tags), len(tags) / 2),
+        'hac__linkage': ('ward', 'complete', 'average'),
+        'hac__affinity': ('euclidean', )
+    }
+
+    model = ('hac', hac.CustomHAC(n_suggested_tags=n_suggested_tags, n_clusters=len(tags) / 2))
+    _grid_search_cluster(model, params, X_train, y_train, X_test, y_test, tags, n_suggested_tags, use_numeric_features)
+
+

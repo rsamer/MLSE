@@ -200,7 +200,7 @@ def main():
         parameters['vectorizer__max_df'] = (0.8, 1.0)
         parameters['vectorizer__min_df'] = (2, 4)
         parameters['vectorizer__ngram_range'] = ((1, 1), (1, 2), (1, 3))  # unigrams, bigrams or trigrams
-        parameters['tfidf__use_idf'] = (True)
+        parameters['tfidf__use_idf'] = (True, )
     else:
         classifier = Pipeline([
             ('clf', OneVsRestClassifier(SVC(kernel="linear", C=2.0, probability=True)))
