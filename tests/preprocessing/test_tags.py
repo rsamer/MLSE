@@ -8,11 +8,14 @@ class TestTags(unittest.TestCase):
     def test_replace_adjacent_tag_occurences(self):
         post = Post(1, "", "", set([]), 1)
 
-        post.title = "test ing design patterns ."
+        post.title = "test ing design patterns object oriented-design."
         post.body = "programming languages test and so forth"
-        tags.replace_adjacent_tag_occurences([post], ["programming-language", "design-patterns"])
-        self.assertEqual("test ing design-patterns .", post.title)
-        self.assertEqual("programming-languages test and so forth", post.body)
+        tag_names = ["programming-language", "design-patterns", "object-oriented"]
+        tags.replace_adjacent_tag_occurences([post], tag_names)
+        from preprocessing import tokenizer
+        tokenizer.tokenize_posts([post], tag_names)
+        self.assertEqual("test ing  design-patterns   object-oriented -design.", post.title)
+        self.assertEqual(" programming-language s test and so forth", post.body)
 
     def test_strip_invalid_tags_from_posts_and_remove_untagged_posts(self):
         post1 = Post(1, "", "", set([]), 1)

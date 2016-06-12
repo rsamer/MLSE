@@ -69,14 +69,11 @@ def replace_adjacent_tag_occurences(posts, tag_names):
         if "-" not in tag_name:
             continue
 
-        # pre- and append whitespace character to ensure that only full words will be detected!
-        splitted_tag_name = ' %s ' % tag_name.replace("-", " ")
+        splitted_tag_name = tag_name.replace("-", " ")
         for post in posts:
             assert isinstance(post, Post)
-            post.title = ' %s ' % post.title # pre- and append whitespace character to title as well
-            post.body = ' %s ' % post.body   # do same for body!
-            post.title = post.title.replace(splitted_tag_name, tag_name) # now we can safely replace
-            post.body = post.body.replace(splitted_tag_name, tag_name)   # now we can safely replace
+            post.title = post.title.replace(splitted_tag_name, ' %s ' % tag_name)
+            post.body = post.body.replace(splitted_tag_name, ' %s ' % tag_name)
 
 
 def strip_invalid_tags_from_posts_and_remove_untagged_posts(posts, tags):
