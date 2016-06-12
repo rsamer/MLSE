@@ -156,7 +156,7 @@ def main():
         X = map(lambda p: ' '.join(p.tokens()), posts)
         assert len(X) == len(y)
     else:
-        X, _ = features.numeric_features(posts, [], tags)
+        X, _ = features.numeric_features(posts, [], tags, True)
         assert X.shape[0] == len(y)
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=42)
@@ -170,6 +170,10 @@ def main():
     # supervised
     _logger.info("-"*80)
     _logger.info("Supervised - Classification...")
+
+    parameters = {
+        #'estimator__alpha': [0.2, 0.1, 0.06, 0.03, 0.01, 0.001, 0.0001],
+    }
 
     # TODO: remove single_classifier in classification.py -> http://stackoverflow.com/a/31586026
     if not use_numeric_features:
@@ -191,22 +195,16 @@ def main():
 #             SVC(kernel="rbf", C=0.025, probability=True), # penalty = "l2" #"l1"
 #             LinearSVC(loss='l2', penalty="l2", dual=False, tol=1e-3),
         ])
+
+        parameters['vectorizer__max_features'] = (None, 1000, 5000)
+        parameters['vectorizer__max_df'] = (0.8, 1.0)
+        parameters['vectorizer__min_df'] = (2, 4)
+        parameters['vectorizer__ngram_range'] = ((1, 1), (1, 2), (1, 3))  # unigrams, bigrams or trigrams
+        parameters['tfidf__use_idf'] = (True)
     else:
         classifier = Pipeline([
-            #('kmeans', KMeans())
-            ('clf', OneVsRestClassifier(SVC(kernel="linear", C=0.025, probability=True)))
+            ('clf', OneVsRestClassifier(SVC(kernel="linear", C=2.0, probability=True)))
         ])
-
-    parameters = {
-        'vectorizer__max_features': (None, 1000, 2000, 3000, 5000, 10000),
-        'vectorizer__max_df': (0.75, 0.8, 1.0),
-        'vectorizer__min_df': (1, 2, 3, 4),
-#         'vectorizer__norm': ('l1', 'l2'),
-        'vectorizer__ngram_range': ((1, 1), (1, 2), (1, 3)), # unigrams, bigrams or trigrams
-        'tfidf__use_idf': (True, False),
-#         'tfidf__norm': ('l1', 'l2'),
-#         'estimator__alpha': [0.2, 0.1, 0.06, 0.03, 0.01, 0.001, 0.0001],
-    }
 
 #     for score in ['precision', 'recall']:
 #     _logger.info("# Tuning hyper-parameters for %s", score)

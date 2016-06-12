@@ -76,7 +76,7 @@ def numeric_features(train_posts, test_posts, tag_list, normalize=False):
 
     #assert len(p_tag) == len(tag_list)
 
-    def normalize_features(X_data):
+    def _normalize_features(X_data):
         minimum = None
         maximum = None
 
@@ -93,7 +93,7 @@ def numeric_features(train_posts, test_posts, tag_list, normalize=False):
 
         return X_data
 
-    def extract_features(post_list):
+    def _extract_features(post_list):
         X = []
         for post in post_list:
             feature_list = []
@@ -132,14 +132,14 @@ def numeric_features(train_posts, test_posts, tag_list, normalize=False):
 
         return X
 
-    X_train = extract_features(train_posts)
+    X_train = _extract_features(train_posts)
     if normalize:
-        X_train = normalize_features(X_train)
+        X_train = _normalize_features(X_train)
     X_train = sparse.csr_matrix(X_train)
 
-    X_test = extract_features(test_posts)
+    X_test = _extract_features(test_posts)
     if normalize:
-        X_test = normalize_features(X_test)
+        X_test = _normalize_features(X_test)
     X_test = sparse.csr_matrix(X_test)
 
     return X_train, X_test
