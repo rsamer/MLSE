@@ -8,11 +8,12 @@ import numpy as np
 from scipy import sparse
 from math import log
 from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import MinMaxScaler
 
 _logger = logging.getLogger(__name__)
 
 
-def numeric_features(train_posts, test_posts, tag_list):
+def numeric_features(train_posts, test_posts, tag_list, normalize=False):
     _logger.info("Numeric features (Transformation)")
     assert isinstance(train_posts, list)
     assert isinstance(test_posts, list)
@@ -75,6 +76,23 @@ def numeric_features(train_posts, test_posts, tag_list):
 
     #assert len(p_tag) == len(tag_list)
 
+    def normalize_features(X_data):
+        minimum = None
+        maximum = None
+
+        for X_post in X_data:
+            for X in X_post:
+                if minimum is None or X < minimum:
+                    minimum = X
+                if maximum is None or X > maximum:
+                    maximum = X
+
+        for idx_row, X_post in enumerate(X_data):
+            for idx_col, X in enumerate(X_post):
+                X_data[idx_row][idx_col] = (X_data[idx_row][idx_col] - minimum) / (maximum - minimum)
+
+        return X_data
+
     def extract_features(post_list):
         X = []
         for post in post_list:
@@ -110,12 +128,18 @@ def numeric_features(train_posts, test_posts, tag_list):
                         body_pmi += log(p_tag_body_token[tag_token] / (p_tag[tag_name] * p_body_token[token]))
                 feature_list += [body_pmi]
 
-            X += [np.array(feature_list)]
+            X += [feature_list]
 
-        # TODO: X = StandardScaler().fit_transform(X)
-        return sparse.csr_matrix(X)
+        return X
 
     X_train = extract_features(train_posts)
+    if normalize:
+        X_train = normalize_features(X_train)
+    X_train = sparse.csr_matrix(X_train)
+
     X_test = extract_features(test_posts)
+    if normalize:
+        X_test = normalize_features(X_test)
+    X_test = sparse.csr_matrix(X_test)
 
     return X_train, X_test
