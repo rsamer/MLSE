@@ -5,27 +5,26 @@
     
     main is a function in this module that performs all steps of the entire pipeline
     (preprocessing, training, testing and evaluation)
-    
-    Note: You may have to install the following libraries first:
-    * numpy
-    * matplotlib
-    TODO: update this list!
-    
+
     usage:
     python -m main ../data/example/
-    
+
+    -----------------------------------------------------------------------------
+    NOTE: Please have a look at Requirements.txt first!
+    -----------------------------------------------------------------------------
+
     -----------------------------------------------------------------------------
     NOTE: the data set located in ../data/example/ is NOT a representative subset
           of the entire "programmers.stackexchange.com" data set
     -----------------------------------------------------------------------------
-    
+
     @author:     Michael Herold, Ralph Samer
-    @copyright:  2016 organization_name. All rights reserved.
     @license:    MIT license
 '''
 
 import logging
 import sys
+import warnings
 from time import time
 import numpy as np
 from entities.tag import Tag
@@ -38,7 +37,7 @@ from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 from sklearn.svm import SVC
 from sklearn.grid_search import GridSearchCV
 from sklearn.multiclass import OneVsRestClassifier
-from sklearn import metrics
+from sklearn.metrics import precision_recall_fscore_support
 # from unsupervised import kmeans, hac
 from transformation import features
 from util import helper
@@ -48,12 +47,14 @@ from util.helper import ExitCode
 __version__ = 1.0
 _logger = logging.getLogger(__name__)
 
+# default values
+DEFAULT_TAG_FREQUENCY_THRESHOLD = 3
+DEFAULT_N_SUGGESTED_TAGS = 2
+DEFAULT_TEST_SIZE = 0.1
+DEFAULT_USE_NUMERIC_FEATURES = False
+
 
 def usage():
-    DEFAULT_TAG_FREQUENCY_THRESHOLD = 3
-    DEFAULT_N_SUGGESTED_TAGS = 2
-    DEFAULT_TEST_SIZE = 0.1
-    DEFAULT_USE_NUMERIC_FEATURES = False
     usage = '''
         Automatic Tag Suggestion for StackExchange posts
     
@@ -82,7 +83,6 @@ def usage():
     if show_version_only:
         print("Automatic Tag Suggestion for StackExchange posts\nVersion: {}".format(__version__))
         sys.exit(ExitCode.SUCCESS)
-    # TODO: introduce CLI arguments for selecting desired pipeline and determine which algorithms to use...
     return kwargs
 
 
@@ -103,9 +103,9 @@ def setup_logging(log_level):
 
 def preprocess_tags_and_posts(all_tags, all_posts, tag_frequency_threshold):
     from preprocessing import tags
-    # FIXME: figure out why this fails on academia dataset!
     #filtered_tags = all_tags # f1=0.349
     # f1=0.368, f1=0.352
+    # FIXME: figure out why this fails on academia dataset!
     filtered_tags, all_posts = tags.replace_tag_synonyms(all_tags, all_posts)
     filtered_tags = prepr.filter_tags_and_sort_by_frequency(filtered_tags, tag_frequency_threshold)
     prepr.preprocess_tags(filtered_tags)
@@ -147,49 +147,46 @@ def main():
     # 3) Split data set
     test_size = kwargs["test_size"]
     _logger.info("Splitting data set -> Training: {}%, Test: {}%".format((1-test_size)*100, test_size*100))
-    # NOTE: last 2 return values are omitted since y-values are already
-    #       included in our Post-instances, therefore the 2nd argument passed
-    #       to the function is irrelevant (list of zeros!)
 
     y = map(lambda p: tuple(map(lambda t: t.name, p.tag_set)), posts)
     if not use_numeric_features:
-        X = map(lambda p: ' '.join(p.tokens()), posts)
+        X = map(lambda p: ' '.join(p.tokens(title_weight=3)), posts)
         assert len(X) == len(y)
     else:
         X, _ = features.numeric_features(posts, [], tags)
         assert X.shape[0] == len(y)
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=42)
+
+#     _logger.info("-" * 80)
+#     _logger.info("Transformation...")
+#     n_features = None#20000
+#     from transformation import tfidf
+#     X_train, X_test = tfidf.tfidf(X_train, X_test, max_features=None, min_df=1, max_df=0.05)
+
     mlb = MultiLabelBinarizer()
     y_train_mlb = mlb.fit_transform(np.array(y_train))
     y_test_mlb = mlb.transform(np.array(y_test))
+    warnings.filterwarnings('ignore')
 
     # 3) vectorization, transformation and learning
-    _logger.info("Learning...")
 
     # supervised
     _logger.info("-"*80)
     _logger.info("Supervised - Classification...")
 
-    # TODO: remove single_classifier in classification.py -> http://stackoverflow.com/a/31586026
     if not use_numeric_features:
         classifier = Pipeline([
-            ('vectorizer', CountVectorizer()),#min_df=2, max_features=None, ngram_range=(1, 3))),
+            ('vectorizer', CountVectorizer()),
             ('tfidf', TfidfTransformer()),
-            #('clf', OneVsRestClassifier(SVC(kernel="linear", probability=True)))])
-            #('clf', OneVsRestClassifier(LinearSVC()))])
             ('clf', OneVsRestClassifier(SVC(kernel="linear", C=0.025, probability=True)))
-            #('clf', OneVsRestClassifier(MultinomialNB(alpha=.03)))
-#             DummyClassifier("most_frequent"), # very primitive/simple baseline!
+            #('clf', OneVsRestClassifier(LinearSVC()))])
+            #('clf', OneVsRestClassifier(MultinomialNB(alpha=.03))) # <-- lidstone smoothing (1.0 would be laplace smoothing!)
+            #('clf', OneVsRestClassifier(RandomForestClassifier(n_estimators=200, max_depth=None)))
 #             AdaBoostClassifier(DecisionTreeClassifier(max_depth=2), n_estimators=200, learning_rate=1.5, algorithm="SAMME"),
-#             SVC(kernel="linear", C=0.4, probability=True),
 #             KNeighborsClassifier(n_neighbors=10), # f1 = 0.386 (features=2900)
-#             RandomForestClassifier(n_estimators=200, max_depth=None, n_jobs=-1),  # f1=0.390
-#             MultinomialNB(alpha=.03), # <-- lidstone smoothing (1.0 would be laplace smoothing!)
-#             BernoulliNB(alpha=.01),
-#             SVC(kernel="linear", C=0.025, probability=True),
-#             SVC(kernel="rbf", C=0.025, probability=True), # penalty = "l2" #"l1"
-#             LinearSVC(loss='l2', penalty="l2", dual=False, tol=1e-3),
+#             SVC(kernel="rbf", C=0.025, probability=True),
+#             DummyClassifier("most_frequent"), # very primitive/simple baseline!
         ])
     else:
         classifier = Pipeline([
@@ -198,25 +195,24 @@ def main():
         ])
 
     parameters = {
-        'vectorizer__max_features': (None, 1000, 2000, 3000, 5000, 10000),
-        'vectorizer__max_df': (0.75, 0.8, 1.0),
-        'vectorizer__min_df': (1, 2, 3, 4),
+        'vectorizer__max_features': (None, 1000, 2000,), # 4000, 10000),
+        'vectorizer__max_df': (0.85, 1.0),
+        'vectorizer__min_df': (2, 4),
 #         'vectorizer__norm': ('l1', 'l2'),
         'vectorizer__ngram_range': ((1, 1), (1, 2), (1, 3)), # unigrams, bigrams or trigrams
-        'tfidf__use_idf': (True, False),
+        'tfidf__use_idf': (True,),
 #         'tfidf__norm': ('l1', 'l2'),
 #         'estimator__alpha': [0.2, 0.1, 0.06, 0.03, 0.01, 0.001, 0.0001],
     }
 
 #     for score in ['precision', 'recall']:
 #     _logger.info("# Tuning hyper-parameters for %s", score)
-    classifier = GridSearchCV(classifier, parameters, n_jobs=-1, cv=3, verbose=0)#, scoring='%s_weighted' % score)
+    classifier = GridSearchCV(classifier, parameters, n_jobs=-1, cv=3, verbose=1)#, scoring='%s_weighted' % score)
     _logger.info("Parameters: %s", parameters)
     t0 = time()
     classifier.fit(np.array(X_train) if not use_numeric_features else X_train, y_train_mlb)
     _logger.info("Done in %0.3fs" % (time() - t0))
     _logger.info("Best parameters set:")
-    _logger.info("Best score: %0.3f", classifier.best_score_)
     best_parameters = classifier.best_estimator_.get_params()
     for param_name in sorted(parameters.keys()):
         _logger.info("\t%s: %r" % (param_name, best_parameters[param_name]))
@@ -239,19 +235,11 @@ def main():
     for idx, predicted_tag_names_for_post in enumerate(mlb.inverse_transform(y_predicted_fixed_size)):
         assert set(predicted_tag_names_for_post) == set(y_predicted_label_list[idx])
 
-    import warnings
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-
-#     print ""
-#     print ""
 #     print "-"*80
 #     for item, labels in zip(X_test, mlb.inverse_transform(y_predicted)):
 #         print '%s -> (%s)' % (item[:40], ', '.join(labels))
 
     if not use_numeric_features:
-        print ""
-        print ""
         print "-"*80
         for item, labels in zip(X_test, y_predicted_label_list):
             print '%s -> (%s)' % (item[:40], ', '.join(labels))
@@ -265,13 +253,13 @@ def main():
     print "  REPORT FOR FIXED TAG SIZE = %d" % n_suggested_tags
     print "="*80
 
-    precision_micro, recall_micro, f1_micro, _ = metrics.precision_recall_fscore_support(y_test_mlb, y_predicted_fixed_size, average="micro", warn_for=())
-    precision_macro, recall_macro, f1_macro, _ = metrics.precision_recall_fscore_support(y_test_mlb, y_predicted_fixed_size, average="macro", warn_for=())
+    p_micro, r_micro, f1_micro, _ = precision_recall_fscore_support(y_test_mlb, y_predicted_fixed_size, average="micro", warn_for=())
+    p_macro, r_macro, f1_macro, _ = precision_recall_fscore_support(y_test_mlb, y_predicted_fixed_size, average="macro", warn_for=())
 
-    print "Precision micro: %.3f" % precision_micro
-    print "Precision macro: %.3f" % precision_macro
-    print "Recall micro: %.3f" % recall_micro
-    print "Recall macro: %.3f" % recall_macro
+    print "Precision micro: %.3f" % p_micro
+    print "Precision macro: %.3f" % p_macro
+    print "Recall micro: %.3f" % r_micro
+    print "Recall macro: %.3f" % r_macro
     print "F1 micro: %.3f" % f1_micro
     print "F1 macro: %.3f" % f1_macro
 
