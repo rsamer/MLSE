@@ -70,7 +70,17 @@ def load_preprocessed_tags_and_posts_from_cache(cache_file_name_prefix):
         cached_preprocessed_tags = pickle.load(fp)
     with open(cache_posts_file_path, 'r') as fp:
         cached_preprocessed_posts = pickle.load(fp)
-    # TODO: FIXME RELINK!! tag instances have other id() than those within posts...!!
+
+    def relink_preprocessed_posts_and_tags(tags, posts):
+        # tag instances are not same as those assigned to the posts after deserialization!
+        tag_name_tag_map = dict(map(lambda t: (t.name, t), tags))
+        for p in posts:
+            n_tags = len(p.tag_set)
+            p.tag_set = set(map(lambda t: tag_name_tag_map[t.name], p.tag_set))
+            print n_tags == len(p.tag_set)
+            assert n_tags == len(p.tag_set)
+
+    relink_preprocessed_posts_and_tags(cached_preprocessed_tags, cached_preprocessed_posts)
     return cached_preprocessed_tags, cached_preprocessed_posts
 
 
