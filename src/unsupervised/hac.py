@@ -1,44 +1,59 @@
 # -*- coding: utf-8 -*-
 
-#from sklearn.metrics.pairwise import cosine_similarity
+import heapq
+import numpy as np
+from scipy.sparse import vstack
+from sklearn.externals.joblib import Memory
 from sklearn.cluster import AgglomerativeClustering
-from entities.tag import Tag
-from entities.post import Post
-from transformation import tfidf
 
 
-def _posts_for_cluster(model, cluster_number, posts):
-    cluster_posts = []
+class CustomHAC(AgglomerativeClustering):
+    x_train = None
+    y_train = None
 
-    for idx in range(len(posts) - 1):
-        if model.labels_[idx] == cluster_number:
-            cluster_posts += [posts[idx]]
+    def __init__(self, n_suggested_tags, n_clusters=2, affinity="euclidean",
+                 memory=Memory(cachedir=None, verbose=0),
+                 connectivity=None, n_components=None,
+                 compute_full_tree='auto', linkage='ward',
+                 pooling_func=np.mean, ):
+        super(CustomHAC, self).__init__(n_clusters=n_clusters, affinity=affinity, memory=memory,
+                                        connectivity=connectivity, n_components=n_components,
+                                        compute_full_tree=compute_full_tree, linkage=linkage,
+                                        pooling_func=pooling_func)
 
-    return cluster_posts
+        self.n_suggested_tags = n_suggested_tags
 
+    def predict(self, X=None):
+        X_complete = vstack([self.x_train, X])
+        super(CustomHAC, self).fit(X_complete.toarray())
 
-def hac(number_of_clusters, train_posts, test_posts):
+        assert len(self.labels_) == X_complete.shape[0]
 
-    #documents = [" ".join(post.tokens(title_weight=3)) for post in posts + new_posts]
-    #vectorizer = TfidfVectorizer(stop_words=None)
-    #X = vectorizer.fit_transform(documents)
+        y_predicted_clusters = self.labels_[self.x_train.shape[0]:]
+        y_predicted_classes = []
 
-    X, _ = tfidf.tfidf(train_posts + test_posts, test_posts, max_features=None)
+        assert len(y_predicted_clusters) == X.shape[0]
 
-    #C = 1 - cosine_similarity(X.T)
-    model = AgglomerativeClustering(n_clusters=number_of_clusters, linkage='ward', affinity='euclidean')
-    model.fit(X.toarray())
+        for y_predicted_cluster in y_predicted_clusters:
+            y = np.array([0] * self.y_train.shape[1])
+            for idx, y_train_data in enumerate(self.y_train):
+                if self.labels_[idx] == y_predicted_cluster:
+                    y += y_train_data
+            largest_values = heapq.nlargest(self.n_suggested_tags, y)
+            n_tag_assignments = 0
 
-    posts_tag_recommendations = []
-    # TODO: REVIEW THIS!!!
-    for i in range(len(test_posts))[::-1]:  # reverse order
-        new_post_cluster = model.labels_[-(i + 1)]
-        posts_of_cluster = _posts_for_cluster(model, new_post_cluster, train_posts)
-        tags_of_cluster = Post.copied_new_counted_tags_for_posts(posts_of_cluster)
-        tags_of_cluster_sorted = Tag.sort_tags_by_frequency(tags_of_cluster)
-        print "Tags for new post = " + str(tags_of_cluster_sorted[0:10])
-        posts_tag_recommendations += [tags_of_cluster_sorted[0:10]]
+            for idx, tag_data in enumerate(y):
+                if tag_data in largest_values and n_tag_assignments < self.n_suggested_tags:
+                    y[idx] = 1
+                    n_tag_assignments += 1
+                else:
+                    y[idx] = 0
 
-        post = test_posts[len(test_posts) - (i + 1)]
-        post.tag_set_prediction = tags_of_cluster_sorted[0:2]
-    return posts_tag_recommendations
+            assert sum(y) == self.n_suggested_tags
+            y_predicted_classes.append(y)
+        return np.array(y_predicted_classes)
+
+    def fit(self, X, y=None):
+        self.x_train = X
+        self.y_train = y
+        return self

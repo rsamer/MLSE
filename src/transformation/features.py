@@ -6,11 +6,12 @@ from scipy import sparse
 import math
 from math import log, exp
 from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import MinMaxScaler
 
 _logger = logging.getLogger(__name__)
 
 
-def numeric_features(train_posts, test_posts, tag_list):
+def numeric_features(train_posts, test_posts, tag_list, normalize=False):
     _logger.info("Numeric features (Transformation)")
     assert isinstance(train_posts, list)
     assert isinstance(test_posts, list)
@@ -91,7 +92,24 @@ def numeric_features(train_posts, test_posts, tag_list):
 
     #assert len(p_tag) == len(tag_list)
 
-    def extract_features(post_list):
+    def _normalize_features(X_data):
+        minimum = None
+        maximum = None
+
+        for X_post in X_data:
+            for X in X_post:
+                if minimum is None or X < minimum:
+                    minimum = X
+                if maximum is None or X > maximum:
+                    maximum = X
+
+        for idx_row, X_post in enumerate(X_data):
+            for idx_col, X in enumerate(X_post):
+                X_data[idx_row][idx_col] = (X_data[idx_row][idx_col] - minimum) / (maximum - minimum)
+
+        return X_data
+
+    def _extract_features(post_list):
         X = []
         for post in post_list:
             feature_list = []
@@ -132,11 +150,17 @@ def numeric_features(train_posts, test_posts, tag_list):
                 assert exp(body_pmi) <= 1.0
                 feature_list += [body_pmi]
 
-            X += [np.array(feature_list)]
+            X += [feature_list]
 
-        # TODO: X = StandardScaler().fit_transform(X)
-        return sparse.csr_matrix(X)
+        return X
 
-    X_train = extract_features(train_posts)
-    X_test = extract_features(test_posts)
+    X_train = _extract_features(train_posts)
+    if normalize:
+        X_train = _normalize_features(X_train)
+    X_train = sparse.csr_matrix(X_train)
+
+    X_test = _extract_features(test_posts)
+    if normalize:
+        X_test = _normalize_features(X_test)
+    X_test = sparse.csr_matrix(X_test)
     return X_train, X_test
