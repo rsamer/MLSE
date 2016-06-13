@@ -142,6 +142,10 @@ def print_posts_summary(all_posts, num_of_all_post_assignments, filtered_posts):
     print "Removed {}% of all tag assignments".format(round(float(num_of_all_post_assignments-new_posts_assignments)/num_of_all_post_assignments*100.0, 2))
     print "-"*80
 
+def print_tags_and_posts_summary(total_num_of_tags, num_filtered_tags, all_posts,
+                                 num_of_all_post_assignments, filtered_posts):
+    print_tags_summary(total_num_of_tags, num_filtered_tags)
+    print_posts_summary(all_posts, num_of_all_post_assignments, filtered_posts)
 
 def compute_hash_of_file(file_path):
     hash_md5 = hashlib.md5()

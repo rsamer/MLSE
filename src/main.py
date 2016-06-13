@@ -18,30 +18,27 @@
     @license:    MIT license
 '''
 
-import logging, sys, warnings
-import numpy as np
+import logging, sys, warnings, numpy as np
 from entities.tag import Tag
-from preprocessing import parser, preprocessing as prepr
-from sklearn.cross_validation import train_test_split
+from preprocessing import tags, parser, preprocessing as prepr
 from sklearn.preprocessing import MultiLabelBinarizer
+from sklearn.cross_validation import train_test_split
 from transformation import features
+from supervised import classification
+from unsupervised import clustering
 from util import helper
 from util.docopt import docopt
 from util.helper import ExitCode
-from supervised import classification
 
 __version__ = 1.0
 _logger = logging.getLogger(__name__)
 
 # default values
-DEFAULT_TAG_FREQUENCY_THRESHOLD = 3
-DEFAULT_N_SUGGESTED_TAGS = 2
-DEFAULT_TEST_SIZE = 0.1
+DEFAULT_TAG_FREQUENCY_THRESHOLD, DEFAULT_N_SUGGESTED_TAGS, DEFAULT_TEST_SIZE = (3, 2, 0.1)
 
 
 def preprocess_tags_and_posts(all_tags, all_posts, tag_frequency_threshold, enable_stemming=True,
                               replace_adjacent_tag_occurences=True):
-    from preprocessing import tags
     # FIXME: figure out why this fails on academia dataset!
     #filtered_tags = all_tags # f1=0.349
     filtered_tags, all_posts = tags.replace_tag_synonyms(all_tags, all_posts)
@@ -59,8 +56,7 @@ def main(data_set_path, enable_caching, use_numeric_features, n_suggested_tags,
 
     helper.setup_logging(logging.INFO)
     helper.make_dir_if_not_exists(helper.CACHE_PATH)
-    if enable_caching:
-        _logger.info("Caching enabled!")
+    _logger.info("Caching ON!" if enable_caching else "Caching OFF!")
 
     #===============================================================================================
     # 1) Parsing
@@ -79,11 +75,10 @@ def main(data_set_path, enable_caching, use_numeric_features, n_suggested_tags,
         tags, posts = preprocess_tags_and_posts(all_tags, all_posts, tag_frequency_threshold, enable_stemming=True)
         helper.write_preprocessed_tags_and_posts_to_cache(cache_file_name_prefix, tags, posts)
     else:
-        _logger.info("Cache hit!")
+        _logger.info("CACHE HIT!")
         tags, posts = helper.load_preprocessed_tags_and_posts_from_cache(cache_file_name_prefix)
 
-    helper.print_tags_summary(len(all_tags), len(tags))
-    helper.print_posts_summary(all_posts, all_posts_assignments, posts)
+    helper.print_tags_and_posts_summary(len(all_tags), len(tags), all_posts, all_posts_assignments, posts)
 
     #===============================================================================================
     # 3) Split training and test data
@@ -111,9 +106,7 @@ def main(data_set_path, enable_caching, use_numeric_features, n_suggested_tags,
     # check if should test with training data (default: False)
     if test_with_training_data is True:
         _logger.warn("-"*80)
-        _logger.warn("")
         _logger.warn("   !!! Testing with training data !!!")
-        _logger.warn("")
         _logger.warn("-"*80)
         X_test, y_test, y_test_mlb = X_train, y_train, y_train_mlb
 
@@ -132,7 +125,6 @@ def main(data_set_path, enable_caching, use_numeric_features, n_suggested_tags,
 
     _logger.info("-"*80)
     _logger.info("Unsupervised - Clustering...")
-    from unsupervised import clustering
     clustering.clustering(X_train, y_train_mlb, X_test, y_test_mlb, tags, n_suggested_tags,
                           use_numeric_features)
     return ExitCode.SUCCESS
@@ -167,8 +159,7 @@ def usage():
     kwargs['tag_frequency_threshold'] = int(arguments["--tag-frequ-thr"][0]) if arguments["--tag-frequ-thr"] else DEFAULT_TAG_FREQUENCY_THRESHOLD
     kwargs['test_size'] = max(0.01, min(0.5, float(arguments["--test-size"][0]))) if arguments["--test-size"] else DEFAULT_TEST_SIZE
     kwargs['data_set_path'] = arguments["<data-set-path>"]
-    show_version_only = arguments["--version"]
-    if show_version_only:
+    if arguments["--version"]:
         print("Automatic Tag Suggestion for StackExchange posts\nVersion: {}".format(__version__))
         sys.exit(ExitCode.SUCCESS)
     return kwargs
