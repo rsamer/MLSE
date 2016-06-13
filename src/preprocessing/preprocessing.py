@@ -42,6 +42,8 @@ def preprocess_posts(posts, tag_list, filter_posts=True, enable_stemming=True,
         posts = filters.filter_less_relevant_posts(posts, 0)
         posts = tags.strip_invalid_tags_from_posts_and_remove_untagged_posts(posts, tag_list)
 
+    assert len(posts) > 0, "No posts given. All posts have been filtered out. Please check your parameters!"
+
     # TODO: why is this module named selection??!
     selection.append_accepted_answer_text_to_body(posts)
 

@@ -3,6 +3,7 @@
 import re
 import logging
 from util import helper
+import unicodedata
 
 _logger = logging.getLogger(__name__)
 tokens_punctuation_re = re.compile(r"(\.|,|'|-|!|:|;|\"|\?|/|\(|\)|~)$")
@@ -122,7 +123,10 @@ def tokenize_posts(posts, tag_names):
 
         # pre- and append single whitespace character before and at the end of the string
         # This really makes the regular expressions a bit less complex
-        s = ' ' + s.lower() + ' ' # also lower case all letters
+        s = unicode(' %s ' % s.lower()) # also lower case all letters
+
+        # remove unicode characters
+        s = unicodedata.normalize('NFKD', s).encode('ascii','ignore')
 
         # remove URLs
         s = re.sub(tokens_remove_url_re, ' ', s)

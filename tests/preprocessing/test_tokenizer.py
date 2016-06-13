@@ -41,7 +41,8 @@ class TestTokenizer(unittest.TestCase):
 
         # known tags: ['c#', 'c++']
         self.assert_tokens(u"object-oriented-design compared to C#. AT&T Asp.Net C++!!", ["c#", "c++"],
-                           ["object-oriented-design", "compared", "to", "c#", "at&t", "asp.net", "c++"])
+                           ["object-oriented-design", "compared", "to", "c#", "at&t",
+                            "asp.net", "c++"])
 
         # known tags: []
         self.assert_tokens(u"RT @marcobonzanini: just, an example! http://example.com/what?q=test #NLP", [],
@@ -49,21 +50,23 @@ class TestTokenizer(unittest.TestCase):
 
         # known tags: ['c++', 'f#']
         self.assert_tokens(u"0x2AF3 #143152 A b C d e f g h i j k f# u# and C++ is a test hehe ", ["c++", "f#"],
-                           ["0", "x2af3", "#143152", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k",
-                            "f#", "u", "#", "and", "c++", "is", "a", "test", "hehe"])
+                           ["0", "x2af3", "#143152", "a", "b", "c", "d", "e", "f", "g", "h", "i",
+                            "j", "k", "f#", "u", "#", "and", "c++", "is", "a", "test", "hehe"])
 
         # known tags: []
         self.assert_tokens(u"wt iop wt-iop wt*iop ip address complicated programming-languages object oriented", [],
-                           ["wt", "iop", "wt-iop", "wt", "*", "iop", "ip", "address", "complicated", "programming-languages", "object", "oriented"])
+                           ["wt", "iop", "wt-iop", "wt", "*", "iop", "ip", "address", "complicated",
+                            "programming-languages", "object", "oriented"])
 
         # known tags: ['C++']
         self.assert_tokens(u"C++~$§%) is a :=; := :D :-)) ;-)))) programming language!", ["C++"],
-                           ["c++", "$", u"§", "%", "is", "a", "=", "=", "programming", "language"])
+                           ["c++", "$", "%", "is", "a", "=", "=", "programming", "language"])
 
         # known tags: ['C#', 'C++']
         self.assert_tokens(u"Blue houses are... ~ hehe wt~iop complicated programming-language compared to C#. AT&T Asp.Net C++ #1234 1234!!", ["C#", "C++"],
-                           ["blue", "houses", "are", "hehe", "wt", "iop", "complicated", "programming-language", "compared", "to", "c#",
-                            "at&t", "asp.net", "c++", "#1234", "1234"])
+                           ["blue", "houses", "are", "hehe", "wt", "iop", "complicated",
+                            "programming-language", "compared", "to", "c#", "at&t", "asp.net",
+                            "c++", "#1234", "1234"])
 
 
     def test_tokenizer_smilies_within_text(self):

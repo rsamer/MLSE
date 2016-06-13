@@ -6,7 +6,7 @@ import main
 from entities.post import Post
 from entities.tag import Tag
 from entities.post import Answer
-from preprocessing import filters, parser, tags, preprocessing
+from preprocessing import filters, parser, tags, selection # @UnresolvedImport
 from util.helper import APP_PATH
 
 
@@ -37,7 +37,6 @@ class TestFilters(unittest.TestCase):
         _, all_posts, _ = parser.parse_tags_and_posts(os.path.join(APP_PATH, "resources", "test"))
 
         self.assertEqual(len(all_posts), 3)
-        from preprocessing import selection
         selection.append_accepted_answer_text_to_body(all_posts)
         filters.strip_code_segments(all_posts)
 
@@ -103,7 +102,6 @@ class TestFilters(unittest.TestCase):
         _, all_posts, _ = parser.parse_tags_and_posts(os.path.join(APP_PATH, "resources", "test"))
 
         self.assertEqual(len(all_posts), 3)
-        from preprocessing import selection
         selection.append_accepted_answer_text_to_body(all_posts)
         filters.strip_code_segments(all_posts)
         filters.strip_html_tags(all_posts)
@@ -218,9 +216,8 @@ class TestFilters(unittest.TestCase):
         _, posts = main.preprocess_tags_and_posts([tag1], my_posts, 0, enable_stemming=False,
                                                   replace_adjacent_tag_occurences=False)
         self.assertEqual(len(posts), 1)
-        print posts[0].title_tokens
         self.assertEqual(posts[0].title_tokens,
-            ['windows', 'server', '2008', 'costs', '1,000,000', '$', '1,000,000.00', '$', u'€',
+            ['windows', 'server', '2008', 'costs', '1,000,000', '$', '1,000,000.00', '$',
              '1,000,000', 'successor', 'web', '2.0', 'html', '5', 'apache', '2.2', 'popular',
              'iis', '7.0'])
 
@@ -247,12 +244,18 @@ class TestFilters(unittest.TestCase):
                 u'maintain', u'sync', u'comments', u'comments', u'rule', u'symptom', u'bad',
                 u'programming'
             ],
-            [u'guido', u'spaces', u'joel', u'spaces', u'atwood', u'spaces', u'zawinski', u'spaces', u'sort'],
-            [u'joel', u'spolsky', u'wrote', u'famous', u'blog', u'post', u'human', u'task', u'switches', u'harmful', u'agree', u'premise', u'sense', u'studies', u'white', u'papers', u'this', u'calculate', u'overhead', u'task', u'switches', u'evidence', u'merely', u'anecdotal']
+            [
+                u'guido', u'spaces', u'joel', u'spaces', u'atwood', u'spaces', u'zawinski',
+                u'spaces', u'sort'
+            ],
+            [
+                u'joel', u'spolsky', u'wrote', u'famous', u'blog', u'post', u'human', u'task',
+                u'switches', u'harmful', u'agree', u'premise', u'sense', u'studies', u'white',
+                u'papers', u'this', u'calculate', u'overhead', u'task', u'switches', u'evidence',
+                u'merely', u'anecdotal'
+            ]
         ]
         for idx, post in enumerate(posts):
-            print post.body_tokens
-            print '-'*80
             self.assertEqual(post.title_tokens, expected_title_tokens[idx])
             self.assertEqual(post.body_tokens, expected_body_tokens[idx])
 
