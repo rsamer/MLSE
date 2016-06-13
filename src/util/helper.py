@@ -20,6 +20,21 @@ class ExitCode(object):
     FAILED = 1
 
 
+def setup_logging(log_level):
+    import platform
+    logging.basicConfig(
+        filename=None, #os.path.join(helper.LOG_PATH, "automatic_tagger.log"),
+        level=log_level,
+        format='%(asctime)s: %(levelname)7s: [%(name)s]: %(message)s',
+        datefmt='%Y-%m-%d %H:%M:%S'
+    )
+    # based on: http://stackoverflow.com/a/1336640
+    if platform.system() == 'Windows':
+        logging.StreamHandler.emit = add_coloring_to_emit_windows(logging.StreamHandler.emit)
+    else:
+        logging.StreamHandler.emit = add_coloring_to_emit_ansi(logging.StreamHandler.emit)
+
+
 def make_dir_if_not_exists(path):
     paths = [path] if type(path) is not list else path
     for path in paths:
@@ -77,7 +92,6 @@ def load_preprocessed_tags_and_posts_from_cache(cache_file_name_prefix):
         for p in posts:
             n_tags = len(p.tag_set)
             p.tag_set = set(map(lambda t: tag_name_tag_map[t.name], p.tag_set))
-            print n_tags == len(p.tag_set)
             assert n_tags == len(p.tag_set)
 
     relink_preprocessed_posts_and_tags(cached_preprocessed_tags, cached_preprocessed_posts)

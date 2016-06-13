@@ -19,7 +19,7 @@ def filter_tags_and_sort_by_frequency(tags, frequency_threshold):
         Sorts tags by frequency and removes less frequent tags according to given threshold.
         Finally, unassigns removed tags from given post-list.
     '''
-    _logger.info("Filter tags and sort by frequency")
+    _logger.info("Filter tags and sort by frequency - Frequency-Threshold = %d", frequency_threshold)
     assert isinstance(tags, list)
     reverse_sorted_tags = Tag.sort_tags_by_frequency(tags, reverse=True) # descendent order
 

@@ -59,7 +59,7 @@ def _grid_search_cluster(model, parameters, X_train, y_train, X_test, y_test, ta
     print "F1 macro: %.3f" % f1_macro
 
 
-def cluster(X_train, y_train, X_test, y_test, tags, n_suggested_tags, use_numeric_features):
+def clustering(X_train, y_train, X_test, y_test, tags, n_suggested_tags, use_numeric_features):
     _logger.info("-" * 80)
     _logger.info("kMeans...")
 
@@ -86,4 +86,9 @@ def cluster(X_train, y_train, X_test, y_test, tags, n_suggested_tags, use_numeri
     model = ('hac', hac.CustomHAC(n_suggested_tags=n_suggested_tags, n_clusters=len(tags) / 2))
     _grid_search_cluster(model, params, X_train, y_train, X_test, y_test, tags, n_suggested_tags, use_numeric_features)
 
+#    _logger.info("-"*80)
+#    _logger.info("HAC...")
+#    helper.clear_tag_predictions_for_posts(test_posts)
+#    hac.hac(len(tags), train_posts, test_posts)
+#    evaluation.print_evaluation_results(test_posts)
 
