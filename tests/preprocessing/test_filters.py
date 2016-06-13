@@ -2,6 +2,7 @@ import unittest
 import os
 import main
 from entities.post import Post
+from entities.tag import Tag
 from entities.post import Answer
 from preprocessing import filters, parser, tags, preprocessing
 from util.helper import APP_PATH
@@ -19,6 +20,7 @@ class TestFilters(unittest.TestCase):
         self.assertEqual("this is a test", post.body)
         self.assertEqual("title", post.title)
 
+
     def test_strip_code_segments(self):
         post = Post(1, "title", "this is a <code>if else exit</code> test", set([]), 1)
         filters.strip_code_segments([post])
@@ -27,6 +29,7 @@ class TestFilters(unittest.TestCase):
         post = Post(1, "title", "this is a<code>if else exit</code>test", set([]), 1)
         filters.strip_code_segments([post])
         self.assertEqual("this is a test", post.body)
+
 
     def test_strip_html_tags(self):
         post = Post(1, "title &nbsp;", "this is a <strong>test</strong>", set([]), 1)
@@ -50,6 +53,7 @@ class TestFilters(unittest.TestCase):
         post = Post(1, "title", "this is &nbsp; a test", set([]), 1)
         filters.strip_html_tags([post])
         self.assertEqual("this is   a test", post.body)
+
 
     def test_filter_tokens(self):
         post = Post(1, "", "", set([]), 1)
@@ -83,6 +87,7 @@ class TestFilters(unittest.TestCase):
         filters.filter_tokens([post], [])
         self.assertEqual(["123,45", "123.45", "1,234.56", "test"], post.body_tokens)
 
+
     def test_filter_less_relevant_posts(self):
         post1 = Post(1, "", "", set([]), 10)
         post2 = Post(2, "", "", set([]), 11)
@@ -108,7 +113,8 @@ class TestFilters(unittest.TestCase):
         posts = filters.filter_less_relevant_posts(posts, 0)
         self.assertEqual([post1, post2], posts)
 
-    def test_make_sure_tokens_that_are_tag_names_are_never_removed(self):
+
+    def test_make_sure_tokens_that_are_tag_names_are_not_removed(self):
         # read in all tags
         all_tags, _, _ = parser.parse_tags_and_posts(os.path.join(APP_PATH, "data", "example"))
 
@@ -122,6 +128,18 @@ class TestFilters(unittest.TestCase):
         self.assertEqual(len(posts), 1)
         for idx, token in enumerate(posts[0].title_tokens):
             self.assertEqual(token, all_sorted_tag_names[idx])
+
+
+    def test_make_sure_number_tokens_are_not_removed(self):
+        text = 'Windows Server 2008 and then Web 2.0, but Apache 2.2 is more popular than IIS 7.0'
+        tag1 = Tag('tag1', 1)
+        my_posts = [Post(1, text, text, set([tag1]), 10)]
+        _, posts = main.preprocess_tags_and_posts([tag1], my_posts, 0, enable_stemming=False,
+                                                  replace_adjacent_tag_occurences=False)
+        self.assertEqual(len(posts), 1)
+        self.assertEqual(posts[0].title_tokens, ['windows', 'server', '2008', 'web', '2.0',
+                                                 'apache', '2.2', 'popular', 'iis', '7.0'])
+
 
 if __name__ == '__main__':
     unittest.main()
