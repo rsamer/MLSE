@@ -96,7 +96,7 @@ def main(data_set_path, enable_caching, use_numeric_features, n_suggested_tags,
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=42)
 
     #===============================================================================================
-    # 3) prepare, vectorize and transform
+    # 4) prepare, vectorize and transform
     #-----------------------------------------------------------------------------------------------
     mlb = MultiLabelBinarizer()
     y_train_mlb = mlb.fit_transform(np.array(y_train))
@@ -111,7 +111,7 @@ def main(data_set_path, enable_caching, use_numeric_features, n_suggested_tags,
         X_test, y_test, y_test_mlb = X_train, y_train, y_train_mlb
 
     #===============================================================================================
-    # 4) Supervised - Classification
+    # 5) Supervised - Classification
     #-----------------------------------------------------------------------------------------------
     _logger.info("-"*80)
     _logger.info("Supervised - Classification...")
@@ -120,9 +120,8 @@ def main(data_set_path, enable_caching, use_numeric_features, n_suggested_tags,
     sys.exit()
 
     #===============================================================================================
-    # 4) Unsupervised - Clustering
+    # 6) Unsupervised - Clustering
     #-----------------------------------------------------------------------------------------------
-
     _logger.info("-"*80)
     _logger.info("Unsupervised - Clustering...")
     clustering.clustering(X_train, y_train_mlb, X_test, y_test_mlb, tags, n_suggested_tags,
