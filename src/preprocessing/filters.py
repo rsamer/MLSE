@@ -9,7 +9,6 @@ _logger = logging.getLogger(__name__)
 emoticons_data_file = os.path.join(helper.APP_PATH, "corpora", "emoticons", "emoticons")
 
 tokens_punctuation_re = re.compile(r"(\.|!|\?|\(|\)|~)$")
-single_character_tokens_re = re.compile(r"^\W$")
 
 KNOWN_FILE_EXTENSIONS_MAP = {
     "exe": "windows",
@@ -34,7 +33,8 @@ def strip_code_segments(posts):
     _logger.info("Stripping code snippet from posts")
     for post in posts:
         assert isinstance(post, Post)
-        post.body = re.sub('\s*<code>.*?</code>\s*', ' ', post.body)
+#        post.body = re.sub(r'\s*<code>.*?</code>\s*', ' ', post.body) # fails for some cases...
+        post.body = re.sub('<code>(.|\n)*?</code>', ' ', post.body)
 
 
 def strip_html_tags(posts):
@@ -100,6 +100,10 @@ def filter_tokens(posts, tag_names):
 
         new_tokens = []
         for t in tokens:
+            if helper.is_int_or_float(t) or helper.is_int_or_float(t.replace(',', '')):
+                new_tokens.append([t])
+                continue
+
             # allow tag names
             if t in tag_names:
                 new_tokens.append([t])
@@ -129,12 +133,11 @@ def filter_tokens(posts, tag_names):
             new_tokens.append(parts)
         tokens = [t for sub_tokens in new_tokens for t in sub_tokens]
 
-        # remove empty tokens, numbers and those single-character words that are no letters
-        tokens = filter(lambda t: len(t) > 0 and len(single_character_tokens_re.findall(t)) == 0,
-                        tokens)
+        # remove empty tokens
+        tokens = filter(lambda t: len(t) > 0, tokens)
 
         # remove single- and dual-character words that are not part of our tag list
-        tokens = filter(lambda t: len(t) > 2 or t in tag_names, tokens)
+#         tokens = filter(lambda t: len(t) > 2 or t in tag_names, tokens)
 
         # remove "'s" at the end: not useful for us because it may only indicate the verb "be", "have"
         # (e.g. "He's got ..." or "It's ...")or may indicate a possessive nouns (e.g. His wife's shoes...)
@@ -145,9 +148,8 @@ def filter_tokens(posts, tag_names):
         tokens = map(lambda t: t[:-2] if t.endswith("s'") else t, tokens)
 
         # remove "'ve", "'ed" "'re", "'ll" at the end (e.g. we've got...)
-        tokens = map(
-            lambda t: t[:-3] if t.endswith("'ve") or t.endswith("'ed") or t.endswith("'re") or t.endswith("'ll") else t,
-            tokens)
+        tokens = map(lambda t: t[:-3] if t.endswith("'ve") or t.endswith("'ed")
+                                      or t.endswith("'re") or t.endswith("'ll") else t, tokens)
 
         # remove "'d" and "'m" at the end (e.g. we'd...)
         tokens = map(lambda t: t[:-2] if t.endswith("'d") or t.endswith("'m") else t, tokens)
@@ -161,8 +163,8 @@ def filter_tokens(posts, tag_names):
         # remove hexadecimal numbers
         tokens = filter(lambda t: regex_hex_numbers.match(t) is None or t in tag_names, tokens)
 
-        # also remove numbers starting with #
-        tokens = filter(lambda t: regex_number.match(t) is None or t in tag_names, tokens)
+#         # also remove numbers starting with #
+#         tokens = filter(lambda t: regex_number.match(t) is None or t in tag_names, tokens)
 
         #-------------------------------------------------------------------------------------------
         # Note: We figured out not removing numbers slightly increases the performance of our models
@@ -175,12 +177,14 @@ def filter_tokens(posts, tag_names):
         #tokens = filter(lambda t: regex_long_number_in_separated_format.match(t) is None, tokens)
         #-------------------------------------------------------------------------------------------
 
-        # remove twitter-like @-mentions (e.g. @peter, @all)
-        tokens = filter(lambda t: not t.startswith("@"), tokens)
+#         # remove twitter-like @-mentions (e.g. @peter, @all)
+#         tokens = filter(lambda t: not t.startswith("@"), tokens)
 
         # make sure that all tokens do not contain any whitespaces before and at the end
         tokens = map(lambda t: t.strip(), tokens)
-        return tokens
+
+        # remove empty tokens
+        return filter(lambda t: len(t) > 0, tokens)
 
     progress_bar = helper.ProgressBar(len(posts))
 

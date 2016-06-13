@@ -15,6 +15,23 @@ LOG_PATH = os.path.join(APP_PATH, "logs")
 CACHE_PATH = os.path.join(APP_PATH, "temp", "cache")
 
 
+def is_int_or_float(str_value):
+    value = int_or_float_from_string(str_value)
+    return value is not None and isinstance(value, (int, float))
+
+
+def int_or_float_from_string(str_value):
+    assert isinstance(str_value, (str, unicode))
+    try:
+        value = int(str_value)
+    except ValueError:
+        try:
+            value = float(str_value)
+        except ValueError:
+            value = None
+    return value
+
+
 class ExitCode(object):
     SUCCESS = 0
     FAILED = 1
