@@ -1,14 +1,29 @@
 # -*- coding: utf-8 -*-
 
 import logging
-import numpy as np
 from scipy import sparse
 import math
-from math import log, exp
-from sklearn.preprocessing import StandardScaler
-from sklearn.preprocessing import MinMaxScaler
+from math import log
 
 _logger = logging.getLogger(__name__)
+
+
+def _normalize_features(X_data):
+    minimum = None
+    maximum = None
+
+    for X_post in X_data:
+        for X in X_post:
+            if minimum is None or X < minimum:
+                minimum = X
+            if maximum is None or X > maximum:
+                maximum = X
+
+    for idx_row, X_post in enumerate(X_data):
+        for idx_col, X in enumerate(X_post):
+            X_data[idx_row][idx_col] = (X_data[idx_row][idx_col] - minimum) / (maximum - minimum)
+
+    return X_data
 
 
 def numeric_features(train_posts, test_posts, tag_list, normalize=False):
@@ -28,7 +43,7 @@ def numeric_features(train_posts, test_posts, tag_list, normalize=False):
     p_body_token = {}
     p_tag_body_token = {}
 
-    # compute occurences
+    # compute occurrences
     for post in train_posts:
         for tag in post.tag_set:
             tag_name = tag.preprocessed_tag_name
@@ -60,54 +75,34 @@ def numeric_features(train_posts, test_posts, tag_list, normalize=False):
 
 
     # compute probabilities
-    n_total_title_token_occurences = reduce(lambda x,y: x+y, title_token_occurrence.values())
-    # fixed bug! -> n_total_title_token_occurences = len(title_token_occurrence)
+    n_total_title_token_occurrences = reduce(lambda x, y: x+y, title_token_occurrence.values())
     for token, occurrence in title_token_occurrence.iteritems():
-        p_title_token[token] = occurrence / n_total_title_token_occurences
+        p_title_token[token] = occurrence / n_total_title_token_occurrences
         assert p_title_token[token] <= 1.0
+    assert abs(1.0 - reduce(lambda x, y: x + y, p_title_token.values())) < 0.001
 
-    n_total_body_token_occurences = reduce(lambda x,y: x+y, body_token_occurrence.values())
-    # fixed bug! -> n_total_body_token_occurences = len(body_token_occurrence)
+    n_total_body_token_occurrences = reduce(lambda x, y: x+y, body_token_occurrence.values())
     for token, occurrence in body_token_occurrence.iteritems():
-        p_body_token[token] = occurrence / n_total_body_token_occurences
+        p_body_token[token] = occurrence / n_total_body_token_occurrences
         assert p_body_token[token] <= 1.0
+    assert abs(1.0 - reduce(lambda x, y: x + y, p_body_token.values())) < 0.001
 
-    n_total_tag_occurences = reduce(lambda x,y: x+y, tag_occurrence.values())
-    # fixed bug! -> n_total_tag_occurences = len(tag_occurrence)
+    n_total_tag_occurrences = reduce(lambda x, y: x+y, tag_occurrence.values())
     for tag_name, occurrence in tag_occurrence.iteritems():
-        p_tag[tag_name] = occurrence / n_total_tag_occurences
+        p_tag[tag_name] = occurrence / n_total_tag_occurrences
         assert p_tag[tag_name] <= 1.0
 
-    n_total_tag_title_token_combinations = reduce(lambda x,y: x+y, tag_title_token_occurrence.values())
-    # fixed bug! -> n_total_tag_title_token_combinations = len(tag_title_token_occurrence)
+    n_total_tag_title_token_combinations = reduce(lambda x, y: x+y, tag_title_token_occurrence.values())
     for tag_token, occurrence in tag_title_token_occurrence.iteritems():
         p_tag_title_token[tag_token] = occurrence / n_total_tag_title_token_combinations
         assert p_tag_title_token[tag_token] <= 1.0
+    assert abs(1.0 - reduce(lambda x, y: x + y, p_tag_title_token.values())) < 0.001
 
-    n_total_tag_body_token_combinations = reduce(lambda x,y: x+y, tag_body_token_occurrence.values())
-    # fixed bug! -> n_total_tag_body_token_combinations = len(tag_body_token_occurrence)
+    n_total_tag_body_token_combinations = reduce(lambda x, y: x+y, tag_body_token_occurrence.values())
     for tag_token, occurrence in tag_body_token_occurrence.iteritems():
         p_tag_body_token[tag_token] = occurrence / n_total_tag_body_token_combinations
         assert p_tag_body_token[tag_token] <= 1.0
-
-    #assert len(p_tag) == len(tag_list)
-
-    def _normalize_features(X_data):
-        minimum = None
-        maximum = None
-
-        for X_post in X_data:
-            for X in X_post:
-                if minimum is None or X < minimum:
-                    minimum = X
-                if maximum is None or X > maximum:
-                    maximum = X
-
-        for idx_row, X_post in enumerate(X_data):
-            for idx_col, X in enumerate(X_post):
-                X_data[idx_row][idx_col] = (X_data[idx_row][idx_col] - minimum) / (maximum - minimum)
-
-        return X_data
+    assert abs(1.0 - reduce(lambda x, y: x + y, p_tag_body_token.values())) < 0.001
 
     def _extract_features(post_list):
         X = []
@@ -132,22 +127,22 @@ def numeric_features(train_posts, test_posts, tag_list, normalize=False):
 
                 # feature 5: title PMI
                 title_pmi = 0.0
-                for token in post.title_tokens:
+                for token in set(post.title_tokens):
                     tag_token = "_".join([tag_name, token])
                     if tag_token in p_tag_title_token:
                         title_pmi += log(p_tag_title_token[tag_token] / (p_tag[tag_name] * p_title_token[token]), math.e)
-                print "Title EXP: " + str(exp(title_pmi))
-                assert exp(title_pmi) <= 1.0
+                #print "Title EXP: " + str(exp(title_pmi))
+                #assert exp(title_pmi) <= 1.0  # TODO
                 feature_list += [title_pmi]
 
                 # feature 6: body PMI
                 body_pmi = 0.0
-                for token in post.body_tokens:
+                for token in set(post.body_tokens):
                     tag_token = "_".join([tag_name, token])
                     if tag_token in p_tag_body_token:
                         body_pmi += log(p_tag_body_token[tag_token] / (p_tag[tag_name] * p_body_token[token]), math.e)
-                print "Body EXP: " + str(exp(body_pmi))
-                assert exp(body_pmi) <= 1.0
+                #print "Body EXP: " + str(exp(body_pmi))
+                #assert exp(body_pmi) <= 1.0 # TODO
                 feature_list += [body_pmi]
 
             X += [feature_list]
