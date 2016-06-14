@@ -38,7 +38,7 @@ DEFAULT_TAG_FREQUENCY_THRESHOLD, DEFAULT_N_SUGGESTED_TAGS, DEFAULT_TEST_SIZE = (
 
 
 def preprocess_tags_and_posts(all_tags, all_posts, tag_frequency_threshold, enable_stemming=True,
-                              replace_adjacent_tag_occurences=True):
+                              replace_adjacent_tag_occurences=True, replace_token_synonyms=True):
     # FIXME: figure out why this fails on academia dataset!
     #filtered_tags = all_tags # f1=0.349
     filtered_tags, all_posts = tags.replace_tag_synonyms(all_tags, all_posts)
@@ -46,7 +46,7 @@ def preprocess_tags_and_posts(all_tags, all_posts, tag_frequency_threshold, enab
     if enable_stemming is True:
         prepr.stem_tags(filtered_tags)
     posts = prepr.preprocess_posts(all_posts, filtered_tags, True, enable_stemming,
-                                   replace_adjacent_tag_occurences)
+                                   replace_adjacent_tag_occurences, replace_token_synonyms)
     Tag.update_tag_counts_according_to_posts(filtered_tags, posts)
     return filtered_tags, posts
 
@@ -72,7 +72,9 @@ def main(data_set_path, enable_caching, use_numeric_features, n_suggested_tags,
     #-----------------------------------------------------------------------------------------------
     _logger.info("Preprocessing...")
     if not enable_caching or not helper.cache_exists_for_preprocessed_tags_and_posts(cache_file_name_prefix):
-        tags, posts = preprocess_tags_and_posts(all_tags, all_posts, tag_frequency_threshold, enable_stemming=True)
+        tags, posts = preprocess_tags_and_posts(all_tags, all_posts, tag_frequency_threshold,
+                                                enable_stemming=False, replace_adjacent_tag_occurences=True,
+                                                replace_token_synonyms=True)
         helper.write_preprocessed_tags_and_posts_to_cache(cache_file_name_prefix, tags, posts)
     else:
         _logger.info("CACHE HIT!")
@@ -95,9 +97,15 @@ def main(data_set_path, enable_caching, use_numeric_features, n_suggested_tags,
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=42)
 
+#     from transformation import tfidf#, features
+#     X_train, X_test = tfidf.tfidf(X_train, X_test, max_features=200, min_df=2)
+    #X_train, X_test = features.numeric_features(train_posts, test_posts, tags)
+
     #===============================================================================================
     # 4) prepare, vectorize and transform
     #-----------------------------------------------------------------------------------------------
+    _logger.info("-" * 80)
+    _logger.info("Vectorization and Transformation...")
     mlb = MultiLabelBinarizer()
     y_train_mlb = mlb.fit_transform(np.array(y_train))
     y_test_mlb = mlb.transform(np.array(y_test))
@@ -117,7 +125,14 @@ def main(data_set_path, enable_caching, use_numeric_features, n_suggested_tags,
     _logger.info("Supervised - Classification...")
     classification.classification(X_train, y_train_mlb, X_test, y_test_mlb, mlb, tags,
                                   n_suggested_tags, use_numeric_features)
+    
+    ####
+    ####
+    ####
     sys.exit()
+    ####
+    ####
+    ####
 
     #===============================================================================================
     # 6) Unsupervised - Clustering
