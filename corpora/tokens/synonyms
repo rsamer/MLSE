@@ -25,9 +25,15 @@ write code,writing code
 write code,wrote code
 write code,written code
 write test,write tests
+windows,win
 windows,win 32
-windows,win32
+windows,windows 7
 windows phone,windows phone 7
+windows,windows vista
+windows,windows xp
+windows,win32
+windows,win xp
+windows,winxp
 osx,os x
 osx,macos x
 osx,mac os x
@@ -83,6 +89,7 @@ functional language,functional languages
 functional language,functional-programming language
 gpl license,gpl licensed
 software license,software licenses
+software license,software licensing
 relational database,relational databases
 scripting language,scripting languages
 learn language,learning language
@@ -133,6 +140,7 @@ web page,web pages
 ,5 10
 ,% time
 ,10 minutes
+,1 st
 ,2 nd
 ,4 j
 ,6 months
@@ -188,6 +196,9 @@ web page,web pages
 ,starting point
 ,v c
 ,v c r
+,r d
 ,waste time
 ,wasting time
 ,worst case
+,tl dr
+,< >

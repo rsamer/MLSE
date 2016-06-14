@@ -147,9 +147,9 @@ class TestFilters(unittest.TestCase):
         filters.filter_tokens([post], [])
         self.assertEqual(["test"], post.body_tokens)
 
-        post.body_tokens = ["_test_", "a", "bc"]
+        post.body_tokens = ["_test_", "a", "bc", 'windows', 'xp']
         filters.filter_tokens([post], [])
-        self.assertEqual(['a', 'bc'], post.body_tokens)
+        self.assertEqual(['a', 'bc', 'windows', 'xp'], post.body_tokens)
 
         post.title_tokens = ["a", "test"]
         post.body_tokens = ["a", "bc"]
