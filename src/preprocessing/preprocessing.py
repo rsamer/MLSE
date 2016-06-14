@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
 
 import logging
+import os, csv
 from entities.tag import Tag
+from entities.post import Post
+from util import helper
 import tokenizer
 import filters
 import tags
@@ -33,10 +36,7 @@ def stem_tags(tags):
     stemmer.porter_stemmer_tags(tags)
 
 
-def replace_adjacent_and_non_adjacent_token_synonyms(posts):
-    from util import helper
-    import os, csv
-    from entities.post import Post
+def replace_adjacent_token_synonyms_and_remove_adjacent_stopwords(posts):
     synonyms_file_path = os.path.join(helper.APP_PATH, 'corpora', 'tokens', 'synonyms')
     token_replacement_map_unigram = {}
     token_replacement_map_bigram = {}
@@ -96,6 +96,8 @@ def replace_adjacent_and_non_adjacent_token_synonyms(posts):
         assert isinstance(tokens, list)
         tokens, n_replacements_bigram = _replace_token_list_synonyms(tokens, token_replacement_map_bigram, n_gram=2)
         tokens, n_replacements_unigram = _replace_token_list_synonyms(tokens, token_replacement_map_unigram, n_gram=1)
+        # adjacent stop words have been replaced with empty string! -> remove empty tokens now!
+        tokens = filter(lambda t: len(t) > 0, tokens)
         post.title_tokens = tokens
         n_replacements_total += n_replacements_trigram + n_replacements_bigram + n_replacements_unigram
 
@@ -104,14 +106,39 @@ def replace_adjacent_and_non_adjacent_token_synonyms(posts):
         tokens, n_replacements_trigram = _replace_token_list_synonyms(tokens, token_replacement_map_trigram, n_gram=3)
         tokens, n_replacements_bigram = _replace_token_list_synonyms(tokens, token_replacement_map_bigram, n_gram=2)
         tokens, n_replacements_unigram = _replace_token_list_synonyms(tokens, token_replacement_map_unigram, n_gram=1)
+        # adjacent stop words have been replaced with empty string! -> remove empty tokens now!
+        tokens = filter(lambda t: len(t) > 0, tokens)
         post.body_tokens = tokens
         n_replacements_total += n_replacements_trigram + n_replacements_bigram + n_replacements_unigram
 
     _logger.info("Found and replaced %s synonym tokens", n_replacements_total)
 
+def important_words_for_tokenization(tag_names):
+    '''
+        Collects important words that must NOT be destroyed by tokenization and filtering process.
+        Note: Since the synonym list also contains adjacent-stopwords (those that have
+              no target word in the list), only synonym-words (target and source) are included.
+
+              Synonyms are then replaced after tokenization.
+              (see: replace_adjacent_token_synonyms_and_remove_adjacent_stopwords()-method above)
+    '''
+    custom_important_words = []
+    synonyms_file_path = os.path.join(helper.APP_PATH, 'corpora', 'tokens', 'synonyms')
+    with open(synonyms_file_path, 'rb') as f:
+        reader = csv.reader(f)
+        for row in reader:
+            target_word, source_word = row[0].strip().lower(), row[1].strip().lower()
+            if len(target_word) > 0: # only add synonym words and not adjacent stopwords
+                custom_important_words += filter(lambda w: not helper.is_int_or_float(w),
+                                                 target_word.split() + source_word.split())
+
+    tag_names = map(lambda n: n.lower(), tag_names)
+    return list(set(tag_names + map(lambda w: w.lower(), custom_important_words)))
+
 
 def preprocess_posts(posts, tag_list, filter_posts=True, enable_stemming=True,
-                     replace_adjacent_tag_occurences=True, replace_token_synonyms=True):
+                     replace_adjacent_tag_occurences=True,
+                     replace_token_synonyms_and_remove_adjacent_stopwords=True):
     _logger.info("Preprocessing posts")
     assert isinstance(posts, list)
 
@@ -132,14 +159,16 @@ def preprocess_posts(posts, tag_list, filter_posts=True, enable_stemming=True,
     if replace_adjacent_tag_occurences:
         tags.replace_adjacent_tag_occurences(posts, tag_names)
 
-    tokenizer.tokenize_posts(posts, tag_names)
+    important_words = important_words_for_tokenization(tag_names)
+    _logger.info("Number of important words {} (altogether)".format(len(important_words)))
+    tokenizer.tokenize_posts(posts, important_words)
     n_tokens = reduce(lambda x,y: x + y, map(lambda t: len(t.title_tokens) + len(t.body_tokens), posts))
     filters.filter_tokens(posts, tag_names)
 
     stopwords.remove_stopwords(posts, tag_names)
 
-    if replace_token_synonyms is True:
-        replace_adjacent_and_non_adjacent_token_synonyms(posts)
+    if replace_token_synonyms_and_remove_adjacent_stopwords is True:
+        replace_adjacent_token_synonyms_and_remove_adjacent_stopwords(posts)
 
     #pos.pos_tagging(posts)
 

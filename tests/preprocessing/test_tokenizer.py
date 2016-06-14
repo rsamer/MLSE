@@ -1,14 +1,15 @@
 # -*- coding: utf-8 -*-
 import unittest
 from entities.post import Post
-from preprocessing import tokenizer
+from preprocessing import tokenizer, preprocessing as prepr # @UnresolvedImport
 
 
 class TestTokenizer(unittest.TestCase):
     def test_tokenizer_simple_testcases(self):
         self.assert_tokens("this is a test", [], ["this", "is", "a", "test"])
         self.assert_tokens("this, is a test", [], ["this", "is", "a", "test"])
-        self.assert_tokens("ASP.net is a programming-language", [], ["asp.net", "is", "a", "programming-language"])
+        self.assert_tokens("ASP.net is not a programming-language", [],
+                           ["asp.net", "is", "not", "a", "programming-language"])
         self.assert_tokens("C++", [], ["c", "+", "+"]) # split special characters when this word is NO tag!
         self.assert_tokens("C++", ["c++"], ["c++"]) # do not split special characters when this word is a tag!
         self.assert_tokens("C++", ["C++"], ["c++"]) # do not split special characters when this word is a tag!
@@ -28,6 +29,8 @@ class TestTokenizer(unittest.TestCase):
         self.assert_tokens("don't", [], ["don't"])
         self.assert_tokens("do not", [], ["do", "not"])
         self.assert_tokens("hello 1234", [], ["hello", "1234"])
+        #prepr.important_words_for_tokenization(tag_names)
+
 
     def test_tokenizer_complex_testcase(self):
         # known tags: []
@@ -144,10 +147,9 @@ class TestTokenizer(unittest.TestCase):
                             'html', 'java', 'code', 'separation'])
 
 
-    def assert_tokens(self, body, tag_names, expected_tokens):
+    def assert_tokens(self, body, important_words, expected_tokens):
         post = Post(1, "title ! - :-)", body, set([]), 1)
-
-        tokenizer.tokenize_posts([post], tag_names=tag_names)
+        tokenizer.tokenize_posts([post], important_words)
         self.assertEqual(["title"], post.title_tokens)
         self.assertEqual(expected_tokens, post.body_tokens)
 

@@ -19,6 +19,7 @@ class CustomKMeans(KMeans):
 
         self.n_suggested_tags = n_suggested_tags
 
+
     def predict(self, X=None):
         X_complete = vstack([self.x_train, X])
         super(CustomKMeans, self).fit(X_complete.toarray())

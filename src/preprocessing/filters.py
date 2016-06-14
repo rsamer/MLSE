@@ -163,8 +163,8 @@ def filter_tokens(posts, tag_names):
         # remove hexadecimal numbers
         tokens = filter(lambda t: regex_hex_numbers.match(t) is None or t in tag_names, tokens)
 
-#         # also remove numbers starting with #
-#         tokens = filter(lambda t: regex_number.match(t) is None or t in tag_names, tokens)
+        # also remove numbers starting with #
+        tokens = filter(lambda t: regex_number.match(t) is None or t in tag_names, tokens)
 
         #-------------------------------------------------------------------------------------------
         # Note: We figured out not removing numbers slightly increases the performance of our models

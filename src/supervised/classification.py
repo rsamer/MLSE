@@ -36,9 +36,17 @@ def _grid_search_classification(model, parameters, X_train, y_train, X_test, y_t
 
         classifier = Pipeline([
             ('vectorizer', CountVectorizer(
+                input='content',
                 tokenizer=extract_tokens,
                 preprocessor=None,
-                analyzer='word'
+                analyzer='word',
+                encoding='utf-8',
+                decode_error='strict',
+                strip_accents=None,
+                lowercase=True,
+                stop_words=None,
+                vocabulary=None,
+                binary=False
             )),
             ('tfidf', TfidfTransformer(
                 norm='l2',

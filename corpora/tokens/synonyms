@@ -1,22 +1,20 @@
 advantages disadvantages,pros cons
 asp.net mvc,asp.net mvc 3
+automated testing,automated tests
 agile development,agile methodology
+agile development,agile methodologies
 agile development,agile projects
 agile development,agile software
 code project,code base
 code project,software project
-co worker,co workers
-class method,class methods
-call method,call methods
 c,c11
 c,c 11
 c++,c++11
 c++,c++ 11
-language c,languages c
-database,data database
-database,database design
 work project,working project
 work project,project working
+work project,working projects
+work project,work projects
 company work,work company
 write code,code make
 write code,make code
@@ -24,16 +22,23 @@ write code,code write
 write code,code writing
 write code,code written
 write code,writing code
+write code,wrote code
+write code,written code
 write test,write tests
 windows,win 32
 windows,win32
+windows phone,windows phone 7
 osx,os x
 osx,macos x
 osx,mac os x
 .net,.net framework
 open-source software,open-source project
 open-source software,open-source projects
+desktop application,desktop applications
 mvc,model view controller
+mvc,model-view-controller
+mvp,model view presenter
+mvp,model-view-presenter
 piece software,piece code
 software development,software engineering
 software development,software craftsmanship
@@ -45,15 +50,22 @@ baseclass,base class
 web application,web app
 web application,web apps
 web site,web sites
+co worker,co workers
+class method,class methods
+class method,classes methods
+call method,call methods
+language c,languages c
 web api,rest api
 test driven,tdd
 test driven,test driven development
 css,css3
 css,css 3
 css,css-3
-spend time,spending time
 time learn, time learning
 team member,team members
+developer team,dev team
+developer work,developers work
+dynamic language,dynamic languages
 software developer,senior developer
 software developer,software engineer
 software developer,software engineers
@@ -62,11 +74,17 @@ version control,source control
 version control,version-control system
 version control,version control systems
 version control,version-control systems
+abstract-class,abstract-class es
 3rd party,third party
 3rd party,3 rd party
 integration test,integration tests
 error message,error messages
 functional language,functional languages
+functional language,functional-programming language
+gpl license,gpl licensed
+software license,software licenses
+relational database,relational databases
+scripting language,scripting languages
 learn language,learning language
 lines code,code line
 lines code,code lines
@@ -76,22 +94,101 @@ object-oriented,oop
 object-oriented,object oriented programming
 object-oriented,object-oriented programming
 time work,work time
-spend time,time spent
 unit test,unit tests
 write tests,tests write
+write tests,writing tests
+write tests,write test
+write unit test,writing unit test
 os,operating system
 os,operating-system
 gpl,agpl
+gpl,gplv 2
 gpl,gplv 3
 gpl,lgpl
-gpl,gpl license
 copyright,copyright notice
 exception,throw exception
 pseudo code,pseudocode
 pseudo code,pseudo-code
 fix bug,fix bugs
+fix bug,bug fix
+fix bug,bug fixes
 good programmer,good programmers
-code change,code changes
+code test,code tests
+change code,code change
+change code,code changes
 python,python 3
 python,python 2
 python,python 2.7
+web developer,web developers
+web page,web pages
+,# 1
+,# 2
+,1 1
+,1 2
+,2 3
+,2 4
+,3 4
+,3 5
+,4 5
+,5 10
+,% time
+,10 minutes
+,2 nd
+,4 j
+,6 months
+,100 %
+,90 %
+,80 %
+,75 %
+,70 %
+,60 %
+,50 %
+,40 %
+,30 %
+,25 %
+,20 %
+,10 %
+,10 x
+,30 minutes
+,2 weeks
+,4 weeks
+,vice versa
+,de facto
+,e g
+,things happen
+,time ago
+,time consuming
+,spend time
+,spending time
+,time spent
+,spend time
+,spent time
+,ad hoc
+,along lines
+,b c
+,b l
+,bad thing
+,bottom line
+,c #
+,c c
+,c r
+,c r p
+,e b
+,e b l
+,j v
+,j v c
+,greatly appreciated
+,less time
+,non trivial
+,months ago
+,point view
+,r p
+,rule thumb
+,save time
+,sort thing
+,starting point
+,v c
+,v c r
+,waste time
+,wasting time
+,worst case

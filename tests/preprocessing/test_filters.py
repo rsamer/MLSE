@@ -204,7 +204,7 @@ class TestFilters(unittest.TestCase):
         my_posts = [Post(1, text, text, set(filtered_tags[:2]), 10)]
         _, posts = main.preprocess_tags_and_posts(all_tags, my_posts, 0, enable_stemming=False,
                                                   replace_adjacent_tag_occurences=False,
-                                                  replace_token_synonyms=False)
+                                                  replace_token_synonyms_and_remove_adjacent_stopwords=False)
         self.assertEqual(len(posts), 1)
         for idx, token in enumerate(posts[0].title_tokens):
             self.assertEqual(token, all_sorted_tag_names[idx])
@@ -217,7 +217,7 @@ class TestFilters(unittest.TestCase):
         my_posts = [Post(1, text, text, set([tag1]), 10)]
         _, posts = main.preprocess_tags_and_posts([tag1], my_posts, 0, enable_stemming=False,
                                                   replace_adjacent_tag_occurences=False,
-                                                  replace_token_synonyms=False)
+                                                  replace_token_synonyms_and_remove_adjacent_stopwords=False)
         self.assertEqual(len(posts), 1)
         self.assertEqual(posts[0].title_tokens,
             ['windows', 'server', '2008', 'costs', '1,000,000', '$', '1,000,000.00', '$',
@@ -229,7 +229,7 @@ class TestFilters(unittest.TestCase):
         all_tags, all_posts, _ = parser.parse_tags_and_posts(os.path.join(APP_PATH, "resources", "test"))
         _, posts = main.preprocess_tags_and_posts(all_tags, all_posts, 0, enable_stemming=False,
                                                   replace_adjacent_tag_occurences=False,
-                                                  replace_token_synonyms=False)
+                                                  replace_token_synonyms_and_remove_adjacent_stopwords=False)
         self.assertEqual(len(all_posts), 3)
         self.assertEqual(len(posts), 3)
 
@@ -281,18 +281,17 @@ class TestFilters(unittest.TestCase):
             post = Post(1, source_token, source_token, set(all_tags[:3]), 1)
             _, [post] = main.preprocess_tags_and_posts(all_tags, [post], 0, enable_stemming=False,
                                                        replace_adjacent_tag_occurences=False,
-                                                       replace_token_synonyms=True)
+                                                       replace_token_synonyms_and_remove_adjacent_stopwords=True)
             self.assertEqual(post.title_tokens, all_target_token_parts[idx].split())
             self.assertEqual(post.body_tokens, all_target_token_parts[idx].split())
-
 
         # test all synonyms in one string
         post = Post(1, ' '.join(all_source_token_parts), ' '.join(all_source_token_parts), set(all_tags[:3]), 1)
         _, [post] = main.preprocess_tags_and_posts(all_tags, [post], 0, enable_stemming=False,
                                                    replace_adjacent_tag_occurences=False,
-                                                   replace_token_synonyms=True)
-        self.assertEqual(' '.join(post.title_tokens), ' '.join(all_target_token_parts))
-        self.assertEqual(' '.join(post.body_tokens), ' '.join(all_target_token_parts))
+                                                   replace_token_synonyms_and_remove_adjacent_stopwords=True)
+        self.assertEqual(' '.join(post.title_tokens), ' '.join(all_target_token_parts).strip())
+        self.assertEqual(' '.join(post.body_tokens), ' '.join(all_target_token_parts).strip())
 
 
 if __name__ == '__main__':

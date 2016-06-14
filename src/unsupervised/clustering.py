@@ -10,7 +10,6 @@ from sklearn.grid_search import GridSearchCV
 
 _logger = logging.getLogger(__name__)
 
-
 def _grid_search_cluster(model, parameters, X_train, y_train, X_test, y_test, tags, n_suggested_tags, use_numeric_features):
     if not use_numeric_features:
         parameters['vectorizer__max_features'] = (None, 1000, 5000)
