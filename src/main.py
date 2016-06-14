@@ -100,7 +100,7 @@ def main(data_set_path, enable_caching, use_numeric_features, n_suggested_tags,
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=42)
 
     from transformation import tfidf#, features
-    X_train, X_test = tfidf.tfidf(X_train, X_test, max_features=400, min_df=4)
+    X_train, X_test = tfidf.tfidf(X_train, X_test, max_features=1000, min_df=4)
     #X_train, X_test = features.numeric_features(train_posts, test_posts, tags)
 
     #===============================================================================================

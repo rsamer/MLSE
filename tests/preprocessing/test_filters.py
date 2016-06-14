@@ -7,7 +7,7 @@ import main
 from entities.post import Post
 from entities.tag import Tag
 from entities.post import Answer
-from preprocessing import filters, parser, tags, selection, preprocessing as preproc # @UnresolvedImport
+from preprocessing import filters, parser, tags, selection, stopwords, preprocessing as preproc # @UnresolvedImport
 from util.helper import APP_PATH
 
 
@@ -206,8 +206,12 @@ class TestFilters(unittest.TestCase):
                                                   replace_adjacent_tag_occurences=False,
                                                   replace_token_synonyms_and_remove_adjacent_stopwords=False)
         self.assertEqual(len(posts), 1)
+        idx_offset = 0
         for idx, token in enumerate(posts[0].title_tokens):
-            self.assertEqual(token, all_sorted_tag_names[idx])
+            if all_sorted_tag_names[idx + idx_offset] in stopwords.problematic_tag_names:
+                idx_offset += 1
+                continue
+            self.assertEqual(token, all_sorted_tag_names[idx + idx_offset])
 
 
     def test_make_sure_number_tokens_are_not_removed(self):
@@ -255,7 +259,7 @@ class TestFilters(unittest.TestCase):
             [
                 u'joel', u'spolsky', u'wrote', u'famous', u'blog', u'post', u'human', u'task',
                 u'switches', u'harmful', u'agree', u'premise', u'sense', u'studies', u'white',
-                u'papers', u'this', u'calculate', u'overhead', u'task', u'switches', u'evidence',
+                u'papers', u'calculate', u'overhead', u'task', u'switches', u'evidence',
                 u'merely', u'anecdotal'
             ]
         ]

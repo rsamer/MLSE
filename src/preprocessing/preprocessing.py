@@ -37,6 +37,26 @@ def stem_tags(tags):
 
 
 def replace_adjacent_token_synonyms_and_remove_adjacent_stopwords(posts):
+    '''
+        Looks for adjacent tokens in each post as defined in the synonym list
+        and replaces the synonyms according to the synonym list.
+
+        Note: Synonyms that are assigned to no/empty target word in the list are considered
+              as 2/3-gram stopwords and removed.
+
+        The synonym list mainly covers the most frequent 1-gram, 2-gram and 3-grams
+        of the whole 'programmers.stackexchange.com' dataset (after our tokenization,
+        stopword-removal, ...) as analyzed by using scikitlearn's Count-vectorizer.
+
+        --------------------------------------------------------------------------------------------
+        NOTE: Please keep in mind that this method is executed BEFORE stemming, so the list
+              may contain slightly different versions of the same synonym words (e.g. plurals, ...)
+              This is useful for some context-based words where stemming fails.
+
+              Doing the synonym replacement step before stemming makes the synonym list much more
+              readable.
+        --------------------------------------------------------------------------------------------
+    '''
     synonyms_file_path = os.path.join(helper.APP_PATH, 'corpora', 'tokens', 'synonyms')
     token_replacement_map_unigram = {}
     token_replacement_map_bigram = {}

@@ -27,6 +27,8 @@ write code,written code
 write test,write tests
 windows,win
 windows,win 32
+windows,windows 10
+windows,windows 8
 windows,windows 7
 windows phone,windows phone 7
 windows,windows vista
@@ -38,9 +40,11 @@ osx,os x
 osx,macos x
 osx,mac os x
 .net,.net framework
+c# .net,c# net
 open-source software,open-source project
 open-source software,open-source projects
 desktop application,desktop applications
+code comment,code comments
 mvc,model view controller
 mvc,model-view-controller
 mvp,model view presenter
@@ -59,6 +63,7 @@ web site,web sites
 co worker,co workers
 class method,class methods
 class method,classes methods
+class,classes
 call method,call methods
 language c,languages c
 web api,rest api
@@ -85,6 +90,9 @@ abstract-class,abstract-class es
 3rd party,3 rd party
 integration test,integration tests
 error message,error messages
+programming skill,programming skills
+programming skill,coding skills
+class name,class names
 functional language,functional languages
 functional language,functional-programming language
 gpl license,gpl licensed
@@ -117,6 +125,10 @@ exception,throw exception
 pseudo code,pseudocode
 pseudo code,pseudo-code
 fix bug,fix bugs
+fix bug,fixing bugs
+fix bug,fixing bug
+fix bug,fixed bugs
+fix bug,fixed bug
 fix bug,bug fix
 fix bug,bug fixes
 good programmer,good programmers
@@ -128,6 +140,8 @@ python,python 2
 python,python 2.7
 web developer,web developers
 web page,web pages
+android app,android apps
+syntax-highlight,syntax-highlight ing
 ,# 1
 ,# 2
 ,1 1
@@ -202,3 +216,28 @@ web page,web pages
 ,worst case
 ,tl dr
 ,< >
+,$ 100
+,0 x
+,1 3
+,100 k
+,2 d
+,2 x
+,3 d
+,3 months
+,5 6
+,5 minutes
+,among things
+,blah blah
+,^ 2
+,early stages
+,et al
+,due lack
+,c 0
+,c 0 x
+,n n
+,n 1
+,n ^
+,extra work
+,fairly easy
+,go ahead
+,invest time
