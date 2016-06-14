@@ -140,7 +140,7 @@ def tokenize_posts(posts, important_words):
 
         # remove simple emoticons (Note: the complexer ones are removed after tokenization later on!)
         s = re.sub(tokens_remove_emoticons_re, ' ', s)
-        # TODO: detect additional smilies via regex...
+        # manually replace those emoticons/smilies not handled by regex:
         s = s.replace(':d', '')
         s = s.replace(':p', '')
         s = s.replace(':-d', '')

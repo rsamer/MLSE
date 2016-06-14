@@ -64,7 +64,6 @@ def replace_adjacent_tag_occurences(posts, tag_names):
         -> should be converted to ["I", "love", "object-oriented", "code"]
         since "object-oriented" is a tag name in our tag list
     '''
-    # TODO: if body contains text as tag
     for tag_name in tag_names:
         if "-" not in tag_name:
             continue
