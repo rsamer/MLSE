@@ -75,7 +75,7 @@ def main(data_set_path, enable_caching, use_numeric_features, n_suggested_tags,
     _logger.info("Preprocessing...")
     if not enable_caching or not helper.cache_exists_for_preprocessed_tags_and_posts(cache_file_name_prefix):
         tags, posts = preprocess_tags_and_posts(all_tags, all_posts, tag_frequency_threshold,
-                                                enable_stemming=False, replace_adjacent_tag_occurences=True,
+                                                enable_stemming=True, replace_adjacent_tag_occurences=True,
                                                 replace_token_synonyms_and_remove_adjacent_stopwords=True)
         helper.write_preprocessed_tags_and_posts_to_cache(cache_file_name_prefix, tags, posts)
     else:
