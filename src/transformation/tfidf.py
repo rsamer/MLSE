@@ -3,13 +3,9 @@
 import logging
 from time import time
 from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 
 _logger = logging.getLogger(__name__)
-
-
-def extract_tokens(post):
-    return post.tokens(title_weight=3)
-
 
 #     _logger.info("-" * 80)
 #     _logger.info("Transformation...")
@@ -18,23 +14,25 @@ def extract_tokens(post):
 #     X_train, X_test = tfidf.tfidf(train_posts, test_posts, max_features=None, min_df=2)
 #X_train, X_test = features.numeric_features(train_posts, test_posts, tags)
 
+
 def tfidf(X_train, X_test, max_features=None, min_df=1, max_df=1.0, norm="l2"):
     _logger.info("TFIDF-Vectorizer (Transformation)")
-    #vectorizer = TfidfVectorizer(sublinear_tf=True, max_df=0.5, stop_words='english')
-    vectorizer = TfidfVectorizer(stop_words=None,
-                                 #ngram_range=(1, 3), # no impact when using our own tokenizer/preprocessor/analyzer
-#                                 preprocessor=extract_tokens,
-#                                 analyzer=extract_tokens,
-#                                 tokenizer=extract_tokens,
-                                 #token_pattern=r'.*',
-                                 min_df=min_df, # get rid of noise!
+    vectorizer = CountVectorizer(input='content',
+                                 encoding='utf-8',
+                                 decode_error='strict',
+                                 strip_accents=None,
+                                 lowercase=True,
+                                 preprocessor=None,
+                                 tokenizer=lambda text: text.split(),
+                                 stop_words=None,
+                                 #         token_pattern=r"(?u)\b\w\w+\b",
+                                 ngram_range=(2,3),
+                                 analyzer='word',
                                  max_df=max_df,
-                                 use_idf=True,
-                                 sublinear_tf=False,
-                                 smooth_idf=True,
-                                 norm=norm,
-                                 max_features=max_features)
-
+                                 min_df=min_df,
+                                 max_features=max_features,
+                                 vocabulary=None,
+                                 binary=False)
     _logger.debug("Extracting features from the training data using a sparse vectorizer")
     t0 = time()
     X_train_new = vectorizer.fit_transform(X_train)
@@ -57,6 +55,36 @@ def tfidf(X_train, X_test, max_features=None, min_df=1, max_df=1.0, norm="l2"):
     assert len(X_test) == X_test_new.shape[0]
     assert X_train_new.shape[1] == X_test_new.shape[1]
 
+    # TFIDF transformation
+    transformer = TfidfTransformer(use_idf=True, sublinear_tf=False, smooth_idf=True, norm=norm)
+    X_train_new = transformer.fit_transform(X_train_new)
+    X_test_new = transformer.transform(X_test_new)
+
+    ####
+    # PRINT TOP N FEATURES
+    print len(vectorizer.get_feature_names())
+    print len(set(vectorizer.get_feature_names()))
+    for f in vectorizer.get_feature_names():
+        print f
+    import sys;sys.exit()
+    from collections import defaultdict
+    features_by_gram = defaultdict(list)
+    for f, w in zip(transformer.get_feature_names(), transformer.idf_):
+        features_by_gram[len(f.split(' '))].append((f, w))
+    top_n = 100
+    for gram, features in features_by_gram.iteritems():
+        top_features = sorted(features, key=lambda x: x[1], reverse=True)[:top_n]
+        top_features = [f[0] for f in top_features]
+        print '{}-gram top:'.format(gram), top_features
+        print '-'*80
+    print '-----'
+    for f in transformer.get_feature_names()[-100:]:
+        print f
+    print '-----'
+    ####
+
+
+
     # SANITY CHECK {
     features = vectorizer.get_feature_names()
     assert len(features) == len(vectorizer.vocabulary_)
@@ -74,5 +102,4 @@ def tfidf(X_train, X_test, max_features=None, min_df=1, max_df=1.0, norm="l2"):
     print vectorizer.stop_words_
     _logger.info("Removed %d features by TfidfVectorizer", len(vectorizer.stop_words_))
     _logger.info("%d features used for training", len(vectorizer.vocabulary_))
-    import sys;sys.exit()
     return X_train_new, X_test_new

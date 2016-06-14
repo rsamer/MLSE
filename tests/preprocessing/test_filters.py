@@ -2,11 +2,12 @@
 
 import unittest
 import os
+import csv
 import main
 from entities.post import Post
 from entities.tag import Tag
 from entities.post import Answer
-from preprocessing import filters, parser, tags, selection # @UnresolvedImport
+from preprocessing import filters, parser, tags, selection, preprocessing as preproc # @UnresolvedImport
 from util.helper import APP_PATH
 
 
@@ -202,7 +203,8 @@ class TestFilters(unittest.TestCase):
         self.assertEqual(text.split(), all_sorted_tag_names)
         my_posts = [Post(1, text, text, set(filtered_tags[:2]), 10)]
         _, posts = main.preprocess_tags_and_posts(all_tags, my_posts, 0, enable_stemming=False,
-                                                  replace_adjacent_tag_occurences=False)
+                                                  replace_adjacent_tag_occurences=False,
+                                                  replace_token_synonyms=False)
         self.assertEqual(len(posts), 1)
         for idx, token in enumerate(posts[0].title_tokens):
             self.assertEqual(token, all_sorted_tag_names[idx])
@@ -214,7 +216,8 @@ class TestFilters(unittest.TestCase):
         tag1 = Tag('tag1', 1)
         my_posts = [Post(1, text, text, set([tag1]), 10)]
         _, posts = main.preprocess_tags_and_posts([tag1], my_posts, 0, enable_stemming=False,
-                                                  replace_adjacent_tag_occurences=False)
+                                                  replace_adjacent_tag_occurences=False,
+                                                  replace_token_synonyms=False)
         self.assertEqual(len(posts), 1)
         self.assertEqual(posts[0].title_tokens,
             ['windows', 'server', '2008', 'costs', '1,000,000', '$', '1,000,000.00', '$',
@@ -222,10 +225,11 @@ class TestFilters(unittest.TestCase):
              'iis', '7.0'])
 
 
-    def test_full_chain(self):
+    def test_full_preprocessing(self):
         all_tags, all_posts, _ = parser.parse_tags_and_posts(os.path.join(APP_PATH, "resources", "test"))
         _, posts = main.preprocess_tags_and_posts(all_tags, all_posts, 0, enable_stemming=False,
-                                                  replace_adjacent_tag_occurences=False)
+                                                  replace_adjacent_tag_occurences=False,
+                                                  replace_token_synonyms=False)
         self.assertEqual(len(all_posts), 3)
         self.assertEqual(len(posts), 3)
 
@@ -258,6 +262,37 @@ class TestFilters(unittest.TestCase):
         for idx, post in enumerate(posts):
             self.assertEqual(post.title_tokens, expected_title_tokens[idx])
             self.assertEqual(post.body_tokens, expected_body_tokens[idx])
+
+
+    def test_full_preprocessing_replacing_token_synonyms(self):
+        all_tags, _, _ = parser.parse_tags_and_posts(os.path.join(APP_PATH, "resources", "test"))
+        synonyms_file_path = os.path.join(APP_PATH, 'corpora', 'tokens', 'synonyms')
+        all_source_token_parts = []
+        all_target_token_parts = []
+        with open(synonyms_file_path, 'rb') as f:
+            reader = csv.reader(f)
+            for row in reader:
+                all_source_token_parts.append(row[1].strip())
+                all_target_token_parts.append(row[0].strip())
+        self.assertEqual(len(all_source_token_parts), len(all_target_token_parts))
+
+        # test single synonyms
+        for idx, source_token in enumerate(all_source_token_parts):
+            post = Post(1, source_token, source_token, set(all_tags[:3]), 1)
+            _, [post] = main.preprocess_tags_and_posts(all_tags, [post], 0, enable_stemming=False,
+                                                       replace_adjacent_tag_occurences=False,
+                                                       replace_token_synonyms=True)
+            self.assertEqual(post.title_tokens, all_target_token_parts[idx].split())
+            self.assertEqual(post.body_tokens, all_target_token_parts[idx].split())
+
+
+        # test all synonyms in one string
+        post = Post(1, ' '.join(all_source_token_parts), ' '.join(all_source_token_parts), set(all_tags[:3]), 1)
+        _, [post] = main.preprocess_tags_and_posts(all_tags, [post], 0, enable_stemming=False,
+                                                   replace_adjacent_tag_occurences=False,
+                                                   replace_token_synonyms=True)
+        self.assertEqual(' '.join(post.title_tokens), ' '.join(all_target_token_parts))
+        self.assertEqual(' '.join(post.body_tokens), ' '.join(all_target_token_parts))
 
 
 if __name__ == '__main__':

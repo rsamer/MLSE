@@ -33,8 +33,85 @@ def stem_tags(tags):
     stemmer.porter_stemmer_tags(tags)
 
 
+def replace_adjacent_and_non_adjacent_token_synonyms(posts):
+    from util import helper
+    import os, csv
+    from entities.post import Post
+    synonyms_file_path = os.path.join(helper.APP_PATH, 'corpora', 'tokens', 'synonyms')
+    token_replacement_map_unigram = {}
+    token_replacement_map_bigram = {}
+    token_replacement_map_trigram = {}
+    with open(synonyms_file_path, 'rb') as f:
+        reader = csv.reader(f)
+        for row in reader:
+            source_token_ngram = row[1].strip()
+            source_token_parts = source_token_ngram.split()
+            target_token_parts = row[0].strip().split()
+            if len(source_token_parts) == 1:
+                assert row[1] not in token_replacement_map_unigram, "Synonym entry %s is ambiguous." % row[1]
+                token_replacement_map_unigram[source_token_ngram] = target_token_parts
+            elif len(source_token_parts) == 2:
+                assert row[1] not in token_replacement_map_bigram, "Synonym entry %s is ambiguous." % row[1]
+                token_replacement_map_bigram[source_token_ngram] = target_token_parts
+            elif len(source_token_parts) == 3:
+                assert row[1] not in token_replacement_map_trigram, "Synonym entry %s is ambiguous." % row[1]
+                token_replacement_map_trigram[source_token_ngram] = target_token_parts
+            else:
+                assert False, "Invalid entry in synonyms list! Only supported: unigrams, bigrams, trigrams"
+
+    n_replacements_total = 0
+    for post in posts:
+        assert isinstance(post, Post)
+
+        def _replace_token_list_synonyms(tokens, token_replacement_map, n_gram=1):
+            assert isinstance(tokens, list)
+            n_replacements = 0
+            if len(tokens) < n_gram:
+                return (tokens, n_replacements)
+
+            new_tokens = []
+            skip_n_tokens = 0
+            for i in range(len(tokens)):
+                # simplify in order to avoid redundant loop iterations...
+                if skip_n_tokens > 0:
+                    skip_n_tokens -= 1
+                    continue
+
+                if i + n_gram > len(tokens):
+                    new_tokens += tokens[i:]
+                    break
+
+                n_gram_word = ' '.join(tokens[i:i+n_gram])
+                if n_gram_word in token_replacement_map:
+                    new_tokens += token_replacement_map[n_gram_word]
+                    skip_n_tokens = (n_gram - 1)
+                    n_replacements += 1
+                else:
+                    new_tokens += [tokens[i]]
+            return (new_tokens, n_replacements)
+
+        # title tokens
+        tokens = post.title_tokens
+        tokens, n_replacements_trigram = _replace_token_list_synonyms(tokens, token_replacement_map_trigram, n_gram=3)
+        assert isinstance(tokens, list)
+        tokens, n_replacements_bigram = _replace_token_list_synonyms(tokens, token_replacement_map_bigram, n_gram=2)
+        tokens, n_replacements_unigram = _replace_token_list_synonyms(tokens, token_replacement_map_unigram, n_gram=1)
+        post.title_tokens = tokens
+        n_replacements_total += n_replacements_trigram + n_replacements_bigram + n_replacements_unigram
+
+        # body tokens
+        tokens = post.body_tokens
+        tokens, n_replacements_trigram = _replace_token_list_synonyms(tokens, token_replacement_map_trigram, n_gram=3)
+        tokens, n_replacements_bigram = _replace_token_list_synonyms(tokens, token_replacement_map_bigram, n_gram=2)
+        tokens, n_replacements_unigram = _replace_token_list_synonyms(tokens, token_replacement_map_unigram, n_gram=1)
+        post.body_tokens = tokens
+        n_replacements_total += n_replacements_trigram + n_replacements_bigram + n_replacements_unigram
+
+    _logger.info("Found and replaced %s synonym tokens", n_replacements_total)
+
+
 def preprocess_posts(posts, tag_list, filter_posts=True, enable_stemming=True,
-                     replace_adjacent_tag_occurences=True):
+                     replace_adjacent_tag_occurences=True, replace_token_synonyms=True):
     _logger.info("Preprocessing posts")
     assert isinstance(posts, list)
 
@@ -60,6 +137,10 @@ def preprocess_posts(posts, tag_list, filter_posts=True, enable_stemming=True,
     filters.filter_tokens(posts, tag_names)
 
     stopwords.remove_stopwords(posts, tag_names)
+
+    if replace_token_synonyms is True:
+        replace_adjacent_and_non_adjacent_token_synonyms(posts)
+
     #pos.pos_tagging(posts)
 
     #-----------------------------------------------------------------------------------------------

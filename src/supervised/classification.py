@@ -19,21 +19,33 @@ from evaluation.classification import custom_classification_report
 _logger = logging.getLogger(__name__)
 
 
+def extract_tokens(text):
+    return text.split()
+
+
 def _grid_search_classification(model, parameters, X_train, y_train, X_test, y_test, mlb, tags,
                                 n_suggested_tags, use_numeric_features):
     #-----------------------------------------------------------------------------------------------
     # SETUP PARAMETERS & CLASSIFIERS
     #-----------------------------------------------------------------------------------------------
     if not use_numeric_features:
-        parameters['vectorizer__max_features'] = (None, 1000, 2000, 3000)
-        parameters['vectorizer__max_df'] = (0.85, 1.0)
-        parameters['vectorizer__min_df'] = (2, 4)
-        parameters['vectorizer__ngram_range'] = ((1, 1), (1, 2), (1, 3))  # unigrams, bigrams or trigrams
-        parameters['tfidf__use_idf'] = (True, )
+        parameters['vectorizer__max_features'] = (2000, 3000, 10000, 20000)
+        parameters['vectorizer__max_df'] = (0.85, )# 1.0)
+        parameters['vectorizer__min_df'] = (2, )#4)
+        parameters['vectorizer__ngram_range'] = ((1, 3), ) #((1, 2), (1, 3))  # unigrams, bigrams or trigrams
 
         classifier = Pipeline([
-            ('vectorizer', CountVectorizer()),
-            ('tfidf', TfidfTransformer()),
+            ('vectorizer', CountVectorizer(
+                tokenizer=extract_tokens,
+                preprocessor=None,
+                analyzer='word'
+            )),
+            ('tfidf', TfidfTransformer(
+                norm='l2',
+                sublinear_tf=False,
+                smooth_idf=True,
+                use_idf=True
+            )),
             model
         ])
     else:
@@ -125,11 +137,11 @@ def classification(X_train, y_train, X_test, y_test, mlb, tags, n_suggested_tags
     models = [
         # baseline
 #        ('clf', OneVsRestClassifier(DummyClassifier("most_frequent"))), # very primitive/simple baseline!
-        ('clf', OneVsRestClassifier(MultinomialNB(alpha=.03))), # <-- lidstone smoothing (1.0 would be laplace smoothing!)
+#        ('clf', OneVsRestClassifier(MultinomialNB(alpha=.03))), # <-- lidstone smoothing (1.0 would be laplace smoothing!)
 
 #         # "single" classifiers
-        ('clf', OneVsRestClassifier(KNeighborsClassifier(n_neighbors=10))),
-        ('clf', OneVsRestClassifier(SVC(kernel="linear", C=0.025, probability=True))),
+#         ('clf', OneVsRestClassifier(KNeighborsClassifier(n_neighbors=10))),
+         ('clf', OneVsRestClassifier(SVC(kernel="linear", C=0.025, probability=True))),
 #         ('clf', OneVsRestClassifier(SVC(kernel="linear", C=2.0, probability=True))),
 #         ('clf', OneVsRestClassifier(SVC(kernel="rbf", C=0.025, probability=True))),
 #         #('clf', OneVsRestClassifier(LinearSVC())),
