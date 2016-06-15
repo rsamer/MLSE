@@ -152,6 +152,21 @@ def important_words_for_tokenization(tag_names):
     return list(set(tag_names + map(lambda w: w.lower(), custom_important_words)))
 
 
+def preprocess_tags_and_posts(all_tags, all_posts, tag_frequency_threshold, enable_stemming=True,
+                                  replace_adjacent_tag_occurences=True,
+                                  replace_token_synonyms_and_remove_adjacent_stopwords=True):
+
+    filtered_tags, all_posts = tags.replace_tag_synonyms(all_tags, all_posts)
+    filtered_tags = filter_tags_and_sort_by_frequency(filtered_tags, tag_frequency_threshold)
+
+    preprocess_tags(filtered_tags, enable_stemming)
+    posts = preprocess_posts(all_posts, filtered_tags, True, enable_stemming,
+                                   replace_adjacent_tag_occurences,
+                                   replace_token_synonyms_and_remove_adjacent_stopwords)
+    Tag.update_tag_counts_according_to_posts(filtered_tags, posts)
+    return filtered_tags, posts
+
+
 def preprocess_tags(tag_list, enable_stemming=True):
     if enable_stemming:
         stemmer.porter_stemmer_tags(tag_list)

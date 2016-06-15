@@ -19,8 +19,7 @@
 '''
 
 import logging, sys, warnings, numpy as np
-from entities.tag import Tag
-from preprocessing import tags, parser, preprocessing as prepr
+from preprocessing import parser, preprocessing as prepr
 from sklearn.preprocessing import MultiLabelBinarizer
 from sklearn.cross_validation import train_test_split
 from transformation import features
@@ -35,20 +34,6 @@ _logger = logging.getLogger(__name__)
 
 # default values
 DEFAULT_TAG_FREQUENCY_THRESHOLD, DEFAULT_N_SUGGESTED_TAGS, DEFAULT_TEST_SIZE = (3, 2, 0.1)
-
-
-def preprocess_tags_and_posts(all_tags, all_posts, tag_frequency_threshold, enable_stemming=True,
-                              replace_adjacent_tag_occurences=True,
-                              replace_token_synonyms_and_remove_adjacent_stopwords=True):
-    filtered_tags, all_posts = tags.replace_tag_synonyms(all_tags, all_posts)
-    filtered_tags = prepr.filter_tags_and_sort_by_frequency(filtered_tags, tag_frequency_threshold)
-
-    prepr.preprocess_tags(filtered_tags, enable_stemming)
-    posts = prepr.preprocess_posts(all_posts, filtered_tags, True, enable_stemming,
-                                   replace_adjacent_tag_occurences,
-                                   replace_token_synonyms_and_remove_adjacent_stopwords)
-    Tag.update_tag_counts_according_to_posts(filtered_tags, posts)
-    return filtered_tags, posts
 
 
 def main(data_set_path, enable_caching, use_numeric_features, n_suggested_tags,
@@ -72,7 +57,7 @@ def main(data_set_path, enable_caching, use_numeric_features, n_suggested_tags,
     #-----------------------------------------------------------------------------------------------
     _logger.info("Preprocessing...")
     if not enable_caching or not helper.cache_exists_for_preprocessed_tags_and_posts(cache_file_name_prefix):
-        tags, posts = preprocess_tags_and_posts(all_tags, all_posts, tag_frequency_threshold,
+        tags, posts = prepr.preprocess_tags_and_posts(all_tags, all_posts, tag_frequency_threshold,
                                                 enable_stemming=True, replace_adjacent_tag_occurences=True,
                                                 replace_token_synonyms_and_remove_adjacent_stopwords=True)
         helper.write_preprocessed_tags_and_posts_to_cache(cache_file_name_prefix, tags, posts)
