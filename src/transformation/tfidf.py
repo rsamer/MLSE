@@ -2,17 +2,9 @@
 
 import logging
 from time import time
-from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 
 _logger = logging.getLogger(__name__)
-
-#     _logger.info("-" * 80)
-#     _logger.info("Transformation...")
-#     n_features = 20000 #2500  # 2200 # 2500 for KNN
-#     from transformation import tfidf, features
-#     X_train, X_test = tfidf.tfidf(train_posts, test_posts, max_features=None, min_df=2)
-#X_train, X_test = features.numeric_features(train_posts, test_posts, tags)
 
 
 def tfidf(X_train, X_test, max_features=None, min_df=1, max_df=1.0, norm="l2"):
@@ -25,7 +17,6 @@ def tfidf(X_train, X_test, max_features=None, min_df=1, max_df=1.0, norm="l2"):
                                  preprocessor=None,
                                  tokenizer=lambda text: text.split(),
                                  stop_words=None,
-                                 #         token_pattern=r"(?u)\b\w\w+\b",
                                  ngram_range=(2,3),
                                  analyzer='word',
                                  max_df=max_df,

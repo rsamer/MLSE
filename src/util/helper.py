@@ -13,6 +13,7 @@ SRC_PATH = os.path.join(os.path.realpath(os.path.dirname(__file__)), "..")
 APP_PATH = os.path.join(SRC_PATH, "..")
 LOG_PATH = os.path.join(APP_PATH, "logs")
 CACHE_PATH = os.path.join(APP_PATH, "temp", "cache")
+HAC_CACHE_PATH = os.path.join(APP_PATH, "temp", "hac")
 
 
 def is_int_or_float(str_value):
