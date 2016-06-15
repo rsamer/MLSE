@@ -168,7 +168,7 @@ def preprocess_posts(posts, tag_list, filter_posts=True, enable_stemming=True,
 
     assert len(posts) > 0, "No posts given. All posts have been filtered out. Please check your parameters!"
 
-    # TODO: why is this module named selection??!
+    # TODO: @Michael: why is this module named selection??!
     selection.append_accepted_answer_text_to_body(posts)
 
     filters.to_lower_case(posts)

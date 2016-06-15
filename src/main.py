@@ -40,8 +40,6 @@ DEFAULT_TAG_FREQUENCY_THRESHOLD, DEFAULT_N_SUGGESTED_TAGS, DEFAULT_TEST_SIZE = (
 def preprocess_tags_and_posts(all_tags, all_posts, tag_frequency_threshold, enable_stemming=True,
                               replace_adjacent_tag_occurences=True,
                               replace_token_synonyms_and_remove_adjacent_stopwords=True):
-    # FIXME: figure out why this fails on academia dataset!
-    #filtered_tags = all_tags # f1=0.349
     filtered_tags, all_posts = tags.replace_tag_synonyms(all_tags, all_posts)
     filtered_tags = prepr.filter_tags_and_sort_by_frequency(filtered_tags, tag_frequency_threshold)
     if enable_stemming is True:

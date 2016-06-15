@@ -15,12 +15,10 @@ def replace_tag_synonyms(tags, posts):
         reader = csv.reader(f)
         for row in reader:
             assert row[1] not in tag_name_replacement_map, "Synonym entry %s is ambiguous." % row[1]
-            tag_name_replacement_map[row[1]] = row[0]
+            tag_name_replacement_map[row[1].strip()] = row[0].strip()
 
-    #remaining_tags = filter(lambda tag: tag.name not in tag_replacements, tags)
     tag_name_tag_map = dict(map(lambda t: (t.name, t), tags))
     remaining_tags = filter(lambda t: t.name not in tag_name_replacement_map, tags)
-    #print tags
     counter_assigned_synonym_tags = 0
     for post in posts:
         assert isinstance(post, Post)
@@ -44,15 +42,6 @@ def replace_tag_synonyms(tags, posts):
     _logger.info("Found and replaced %s synonym tags", len(tags) - len(remaining_tags))
     _logger.info("Replaced %s assignments of synonym tags in all posts", counter_assigned_synonym_tags)
     Tag.update_tag_counts_according_to_posts(remaining_tags, posts)
-
-#     sort_tags = sorted(remaining_tags, key=lambda x: x.count, reverse=True)
-#     print "-"*80
-#     for t in sort_tags:
-#         if t.count < 6:
-#             break
-#         print t
-#     print "-"*80
-#     import sys;sys.exit()
     return remaining_tags, posts
 
 
