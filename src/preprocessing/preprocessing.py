@@ -32,10 +32,6 @@ def filter_tags_and_sort_by_frequency(tags, frequency_threshold):
     return list(itertools.takewhile(lambda t: t.count >= frequency_threshold, iter(reverse_sorted_tags)))
 
 
-def stem_tags(tags):
-    stemmer.porter_stemmer_tags(tags)
-
-
 def replace_adjacent_token_synonyms_and_remove_adjacent_stopwords(posts):
     '''
         Looks for adjacent tokens in each post as defined in the synonym list
@@ -154,6 +150,16 @@ def important_words_for_tokenization(tag_names):
 
     tag_names = map(lambda n: n.lower(), tag_names)
     return list(set(tag_names + map(lambda w: w.lower(), custom_important_words)))
+
+
+def preprocess_tags(tag_list, enable_stemming=True):
+    if enable_stemming:
+        stemmer.porter_stemmer_tags(tag_list)
+    else:
+        for tag in tag_list:
+            tag.preprocessed_tag_name = tag.name
+
+    return tag_list
 
 
 def preprocess_posts(posts, tag_list, filter_posts=True, enable_stemming=True,

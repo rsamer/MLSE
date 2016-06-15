@@ -42,8 +42,8 @@ def preprocess_tags_and_posts(all_tags, all_posts, tag_frequency_threshold, enab
                               replace_token_synonyms_and_remove_adjacent_stopwords=True):
     filtered_tags, all_posts = tags.replace_tag_synonyms(all_tags, all_posts)
     filtered_tags = prepr.filter_tags_and_sort_by_frequency(filtered_tags, tag_frequency_threshold)
-    if enable_stemming is True:
-        prepr.stem_tags(filtered_tags)
+
+    prepr.preprocess_tags(filtered_tags, enable_stemming)
     posts = prepr.preprocess_posts(all_posts, filtered_tags, True, enable_stemming,
                                    replace_adjacent_tag_occurences,
                                    replace_token_synonyms_and_remove_adjacent_stopwords)
@@ -97,8 +97,8 @@ def main(data_set_path, enable_caching, use_numeric_features, n_suggested_tags,
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=42)
 
-    from transformation import tfidf#, features
-    X_train, X_test = tfidf.tfidf(X_train, X_test, max_features=1000, min_df=4)
+    #from transformation import tfidf#, features
+    #X_train, X_test = tfidf.tfidf(X_train, X_test, max_features=1000, min_df=4)
     #X_train, X_test = features.numeric_features(train_posts, test_posts, tags)
 
     #===============================================================================================
