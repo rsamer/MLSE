@@ -33,7 +33,6 @@ def strip_code_segments(posts):
     _logger.info("Stripping code snippet from posts")
     for post in posts:
         assert isinstance(post, Post)
-#        post.body = re.sub(r'\s*<code>.*?</code>\s*', ' ', post.body) # fails for some cases...
         post.body = re.sub('<code>(.|\n)*?</code>', ' ', post.body)
 
 

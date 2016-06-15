@@ -131,7 +131,6 @@ def suggest_random_tags(n_suggested_tags, test_posts, tags):
             total_sum += t.count
             if idx >= total_sum:
                 continue
-            #print "{}: {}".format(t.name, t.count)
             return t
 
     n_posts_assignments = reduce(lambda x,y: x + y, map(lambda t: t.count, tags))
@@ -312,6 +311,5 @@ def add_coloring_to_emit_ansi(fn):
         else:
             color = '\x1b[0m' # normal
         args[1].msg = color + args[1].msg +  '\x1b[0m'  # normal
-        #print "after"
         return fn(*args)
     return new

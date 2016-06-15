@@ -79,7 +79,11 @@ def main(data_set_path, enable_caching, use_numeric_features, enable_supervised,
         X, _ = features.numeric_features(posts, [], tags, True)
         assert X.shape[0] == len(y)
 
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=42)
+    #-----------------------------------------------------------------------------------------------
+    # NOTE: Please change random_state when desired to get same split-result (e.g. for debugging).
+    #       Otherwise the data will be differently/randomly shuffled every time.
+    #-----------------------------------------------------------------------------------------------
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=None)
 
     #===============================================================================================
     # 4) prepare, vectorize and transform
@@ -101,16 +105,11 @@ def main(data_set_path, enable_caching, use_numeric_features, enable_supervised,
     #===============================================================================================
     # 5) Supervised - Classification
     #-----------------------------------------------------------------------------------------------
-    _logger.info("-"*80)
-    _logger.info("Supervised - Classification...")
-    classification.classification(X_train, y_train_mlb, X_test, y_test_mlb, mlb, tags, n_suggested_tags,
-                                  use_numeric_features, do_grid_search=False)
-
     if enable_supervised:
         _logger.info("-"*80)
         _logger.info("Supervised - Classification...")
         classification.classification(X_train, y_train_mlb, X_test, y_test_mlb, mlb, tags,
-                                      n_suggested_tags, use_numeric_features)
+                                      n_suggested_tags, use_numeric_features, do_grid_search=True)
 
     #===============================================================================================
     # 6) Unsupervised - Clustering

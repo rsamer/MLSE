@@ -10,7 +10,6 @@ import filters
 import tags
 import stopwords
 import stemmer
-import selection
 import pos
 import lemmatizer
 import itertools
@@ -38,7 +37,7 @@ def replace_adjacent_token_synonyms_and_remove_adjacent_stopwords(posts):
         and replaces the synonyms according to the synonym list.
 
         Note: Synonyms that are assigned to no/empty target word in the list are considered
-              as 2/3-gram stopwords and removed.
+              as 2- or 3-gram stopwords and removed.
 
         The synonym list mainly covers the most frequent 1-gram, 2-gram and 3-grams
         of the whole 'programmers.stackexchange.com' dataset (after our tokenization,
@@ -177,6 +176,16 @@ def preprocess_tags(tag_list, enable_stemming=True):
     return tag_list
 
 
+def append_accepted_answer_text_to_body(posts):
+    assert isinstance(posts, list)
+    for post in posts:
+        accepted_answer = post.accepted_answer()
+        if accepted_answer is None:
+            continue
+        if accepted_answer.score >= 0: # do not include negatively rated answers!
+            post.body += " " + accepted_answer.body
+
+
 def preprocess_posts(posts, tag_list, filter_posts=True, enable_stemming=True,
                      replace_adjacent_tag_occurences=True,
                      replace_token_synonyms_and_remove_adjacent_stopwords=True):
@@ -189,8 +198,7 @@ def preprocess_posts(posts, tag_list, filter_posts=True, enable_stemming=True,
 
     assert len(posts) > 0, "No posts given. All posts have been filtered out. Please check your parameters!"
 
-    # TODO: @Michael: why is this module named selection??!
-    selection.append_accepted_answer_text_to_body(posts)
+    append_accepted_answer_text_to_body(posts)
 
     filters.to_lower_case(posts)
     filters.strip_code_segments(posts)
@@ -211,13 +219,19 @@ def preprocess_posts(posts, tag_list, filter_posts=True, enable_stemming=True,
     if replace_token_synonyms_and_remove_adjacent_stopwords is True:
         replace_adjacent_token_synonyms_and_remove_adjacent_stopwords(posts)
 
+    #-----------------------------------------------------------------------------------------------
+    # NOTE: Both NLTK and Stanford POS-tagging is not working as good as expected, because we are
+    #       getting a lot of wrong tags (e.g. NN instead of VB).
+    #       -> Outlook: use supervised POS-tagging (very time consuming to
+    #                   manually label enough training data...)
+    #-----------------------------------------------------------------------------------------------
     #pos.pos_tagging(posts)
 
     #-----------------------------------------------------------------------------------------------
     # NOTE: it does not makes sense to use both lemmatization and stemming
     #       lemmatizer also requires pos_tagging beforehand!
-    # lemmatizer.word_net_lemmatizer(posts)
     #-----------------------------------------------------------------------------------------------
+    #lemmatizer.word_net_lemmatizer(posts)
 
     if enable_stemming is True:
         stemmer.porter_stemmer(posts)

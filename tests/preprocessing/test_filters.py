@@ -6,7 +6,7 @@ import csv
 from entities.post import Post
 from entities.tag import Tag
 from entities.post import Answer
-from preprocessing import filters, parser, tags, selection, stopwords, preprocessing as prepr
+from preprocessing import filters, parser, tags, stopwords, preprocessing as prepr
 from util.helper import APP_PATH
 
 
@@ -37,7 +37,7 @@ class TestFilters(unittest.TestCase):
         _, all_posts, _ = parser.parse_tags_and_posts(os.path.join(APP_PATH, "resources", "test"))
 
         self.assertEqual(len(all_posts), 3)
-        selection.append_accepted_answer_text_to_body(all_posts)
+        prepr.append_accepted_answer_text_to_body(all_posts)
         filters.strip_code_segments(all_posts)
 
         expected_body_text_after_stripping_code_segments = [
@@ -102,7 +102,7 @@ class TestFilters(unittest.TestCase):
         _, all_posts, _ = parser.parse_tags_and_posts(os.path.join(APP_PATH, "resources", "test"))
 
         self.assertEqual(len(all_posts), 3)
-        selection.append_accepted_answer_text_to_body(all_posts)
+        prepr.append_accepted_answer_text_to_body(all_posts)
         filters.strip_code_segments(all_posts)
         filters.strip_html_tags(all_posts)
 
