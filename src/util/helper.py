@@ -32,6 +32,12 @@ def int_or_float_from_string(str_value):
     return value
 
 
+def merge_two_dicts(x, y):
+    z = x.copy()
+    z.update(y)
+    return z
+
+
 class ExitCode(object):
     SUCCESS = 0
     FAILED = 1

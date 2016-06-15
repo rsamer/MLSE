@@ -21,7 +21,10 @@ class TestTransformation(unittest.TestCase):
         train_posts = [post1, post2]
         test_posts = [post3]
 
-        X_train, X_test = tfidf.tfidf(train_posts, test_posts, max_features=None, min_df=1, norm=None)
+        X_train = map(lambda p: ' '.join(p.tokens(title_weight=3)), train_posts)
+        X_test = map(lambda p: ' '.join(p.tokens(title_weight=3)), test_posts)
+
+        X_train, X_test = tfidf.tfidf(X_train, X_test, max_features=None, min_df=1, norm=None)
         n_docs = float(len(train_posts))
 
         # train data
@@ -74,7 +77,10 @@ class TestTransformation(unittest.TestCase):
         train_posts = [post1, post2]
         test_posts = [post3]
 
-        X_train, X_test = tfidf.tfidf(train_posts, test_posts, max_features=None, min_df=1, norm=None)
+        X_train = map(lambda p: ' '.join(p.tokens(title_weight=3)), train_posts)
+        X_test = map(lambda p: ' '.join(p.tokens(title_weight=3)), test_posts)
+
+        X_train, X_test = tfidf.tfidf(X_train, X_test, max_features=None, min_df=1, norm=None)
         n_docs = float(len(train_posts))
 
         # train data
@@ -121,7 +127,10 @@ class TestTransformation(unittest.TestCase):
         train_posts = [post1, post2]
         test_posts = [post3]
 
-        X_train, X_test = tfidf.tfidf(train_posts, test_posts, max_features=None, min_df=2, norm=None)
+        X_train = map(lambda p: ' '.join(p.tokens(title_weight=3)), train_posts)
+        X_test = map(lambda p: ' '.join(p.tokens(title_weight=3)), test_posts)
+
+        X_train, X_test = tfidf.tfidf(X_train, X_test, max_features=None, min_df=2, norm=None)
         n_docs = float(len(train_posts))
 
         # train data
@@ -162,7 +171,10 @@ class TestTransformation(unittest.TestCase):
         train_posts = [post1, post2]
         test_posts = [post3]
 
-        X_train, X_test = tfidf.tfidf(train_posts, test_posts, max_features=1, min_df=1, norm=None)
+        X_train = map(lambda p: ' '.join(p.tokens(title_weight=3)), train_posts)
+        X_test = map(lambda p: ' '.join(p.tokens(title_weight=3)), test_posts)
+
+        X_train, X_test = tfidf.tfidf(X_train, X_test, max_features=1, min_df=1, norm=None)
         n_docs = float(len(train_posts))
 
         # train data

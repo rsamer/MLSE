@@ -97,8 +97,8 @@ def main(data_set_path, enable_caching, use_numeric_features, n_suggested_tags,
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=42)
 
-    from transformation import tfidf#, features
-    X_train, X_test = tfidf.tfidf(X_train, X_test, max_features=1000, min_df=4)
+    #from transformation import tfidf#, features
+    #X_train, X_test = tfidf.tfidf(X_train, X_test, max_features=None, min_df=4)
     #X_train, X_test = features.numeric_features(train_posts, test_posts, tags)
 
     #===============================================================================================
@@ -123,8 +123,8 @@ def main(data_set_path, enable_caching, use_numeric_features, n_suggested_tags,
     #-----------------------------------------------------------------------------------------------
     _logger.info("-"*80)
     _logger.info("Supervised - Classification...")
-    classification.classification(X_train, y_train_mlb, X_test, y_test_mlb, mlb, tags,
-                                  n_suggested_tags, use_numeric_features)
+    classification.classification(X_train, y_train_mlb, X_test, y_test_mlb, mlb, tags, n_suggested_tags,
+                                  use_numeric_features, do_grid_search=False)
 
     ####
     ####

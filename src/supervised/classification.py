@@ -15,45 +15,244 @@ from sklearn.grid_search import GridSearchCV
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.metrics import precision_recall_fscore_support
 from evaluation.classification import custom_classification_report
+from util import helper
 
 _logger = logging.getLogger(__name__)
 
 
-def extract_tokens(text):
-    return text.split()
+#################
+
+# libraries
+import numpy as np
+
+# scikit-learn base libraries
+from sklearn.base import BaseEstimator, ClassifierMixin, RegressorMixin
+
+# scikit-learn modules
+from sklearn.cross_validation import cross_val_predict
+from sklearn.ensemble import VotingClassifier
+from sklearn.grid_search import GridSearchCV
+from sklearn.metrics import log_loss,accuracy_score,mean_squared_error
 
 
-def _grid_search_classification(model, parameters, X_train, y_train, X_test, y_test, mlb, tags,
-                                n_suggested_tags, use_numeric_features):
+class StackingClassifier(BaseEstimator,ClassifierMixin):
+    '''
+    stacking ensemble classifier based on scikit-learn
+    '''
+    def __init__(self,stage_one_clfs,stage_two_clfs,weights=None, n_runs=10, use_append=True, do_gridsearch=False, params=None, cv=5, scoring="accuracy", print_scores=False):
+        '''
+        
+        weights: weights of the stage_two_clfs
+        n_runs: train stage_two_clfs n_runs times and average them (only for probabilistic output)
+        '''
+        self.stage_one_clfs = stage_one_clfs
+        self.stage_two_clfs = stage_two_clfs
+        self.n_runs = n_runs
+        self.use_append = use_append
+        if weights == None:
+            self.weights = [1] * len(stage_two_clfs)
+        else:
+            self.weights = weights
+        self.do_gridsearch = do_gridsearch
+        self.params = params
+        self.cv = cv
+        self.scoring = scoring
+        self.print_scores = print_scores
+    
+    def fit(self,X,y):
+        '''
+        fit the model
+        '''
+        if self.use_append == True:
+            self.__X = X
+            self.__y = y
+        elif self.use_append == False:
+            self.__y = y
+            temp = []
+            
+        # fit the first stage models
+        for clf in self.stage_one_clfs:
+            y_pred = cross_val_predict(clf[1], X, y, cv=5, n_jobs=1)
+            clf[1].fit(X,y)
+            y_pred  = np.reshape(y_pred,(len(y_pred),1))
+            if self.use_append == True:
+                self.__X = np.hstack((self.__X,y_pred))
+            elif self.use_append == False:
+                temp.append(y_pred)
+            
+            if self.print_scores == True:
+                score = accuracy_score(self.__y,y_pred)
+                print("Score of %s: %0.3f" %(clf[0],score))
+                
+        if self.use_append == False:
+            self.__X = np.array(temp).T[0]
+            
+        # fit the second stage models
+        if self.do_gridsearch == False:
+            for clf in self.stage_two_clfs:
+                clf[1].fit(self.__X,self.__y)      
+                
+        ### FOR GRIDSEARCH ###  
+        else:
+            print("GridSearch")
+            parameters = {}
+            i = 0
+            for pair in self.stage_two_clfs:
+                est_name = pair[0]
+                for key, value in self.params[i].items():
+                    key_name = est_name+"__"+key
+                    parameters[key_name] = value
+                i += 1
+                
+            majority_voting = VotingClassifier(estimators=self.stage_two_clfs, voting="soft", weights=self.weights)
+            grid = GridSearchCV(estimator=majority_voting, param_grid=parameters, cv=self.cv, scoring=self.scoring)
+            grid.fit(self.__X, self.__y)
+            print()
+            print("Best parameters set found on development set:")
+            print(grid.best_params_)
+            print()
+            print("Best score on development set:")
+            print(grid.best_score_)
+            print()
+            print("done")
+            
+    def predict(self,X_test):
+        '''
+        predict the class for each sample
+        '''
+        if self.use_append == True:
+            self.__X_test = X_test
+        elif self.use_append == False:
+            temp = []
+        
+        # first stage
+        for clf in self.stage_one_clfs:
+            y_pred = clf[1].predict(X_test)
+            y_pred  = np.reshape(y_pred,(len(y_pred),1))
+            if self.use_append == True:
+                self.__X_test = np.hstack((self.__X_test,y_pred)) 
+            elif self.use_append == False:
+                temp.append(y_pred)
+        
+        if self.use_append == False:
+            self.__X_test = np.array(temp).T[0]
+        
+        # second stage
+        majority_voting = VotingClassifier(estimators=self.stage_two_clfs, voting="hard", weights=self.weights)
+        y_out = majority_voting.predict(self.__X_test)
+        return y_out
+    
+    def predict_proba(self,X_test):
+        '''
+        predict the probability for each class for each sample
+        '''
+        if self.use_append == True:
+            self.__X_test = X_test
+        elif self.use_append == False:
+            temp = []
+        
+        # first stage
+        for clf in self.stage_one_clfs:
+            y_pred = clf[1].predict(X_test)
+            y_pred  = np.reshape(y_pred,(len(y_pred),1))
+            if self.use_append == True:
+                self.__X_test = np.hstack((self.__X_test,y_pred)) 
+            elif self.use_append == False:
+                temp.append(y_pred)
+            
+        if self.use_append == False:
+            self.__X_test = np.array(temp).T[0]
+        
+        # second stage
+        preds = []
+        for i in range(self.n_runs):
+            j = 0
+            for clf in self.stage_two_clfs:
+                y_pred = clf[1].predict_proba(self.__X_test)  
+                preds.append(self.weights[j] * y_pred)
+                j += 1
+        # average predictions
+        y_final = preds.pop(0)
+        for pred in preds:
+            y_final += pred
+        y_out = y_final/(np.array(self.weights).sum() * self.n_runs)
+        return y_out      
+
+#################
+
+
+
+
+
+#===================================================================================================
+# CONFIGURATION
+#===================================================================================================
+
+def extract_tokens(text): return text.split()
+
+PARAMS_COUNT_VECTORIZER_COMMON = {
+        'input': 'content',
+        'tokenizer': extract_tokens,
+        'preprocessor': None,
+        'analyzer': 'word',
+        'encoding': 'utf-8',
+        'decode_error': 'strict',
+        'strip_accents': None,
+        'lowercase': True,
+        'stop_words': None,
+        'vocabulary': None,
+        'binary': False
+}
+
+
+PARAMS_COUNT_VECTORIZER_NO_GRID_SEARCH = {
+        #------------------------------------------------------------------------------------------
+        # NOTE: parameters of best estimator determined by grid search go here:
+        #------------------------------------------------------------------------------------------
+        'max_features': 2000,
+        'max_df': 0.85,
+        'min_df': 2,
+        'ngram_range': (1, 3),
+}
+
+
+DEFAULT_PARAMS_TFIDF_TRANSFORMER = {
+        'norm': 'l2',
+        'sublinear_tf': False,
+        'smooth_idf': True,
+        'use_idf': True
+}
+
+PARAMS_GRID_SEARCH_COMMON = {
+#         'clf__alpha': [0.2, 0.1, 0.06, 0.03, 0.01, 0.001, 0.0001],
+}
+
+PARAMS_GRID_SEARCH_TFIDF_FEATURES = {
+        'vectorizer__max_features': (2000, 3000, 10000, 20000),
+        'vectorizer__max_df': (0.85, ),                            # 1.0)
+        'vectorizer__min_df': (2, ),                               #4)
+        'vectorizer__ngram_range': ((1, 3), ) #((1, 2), (1, 3))    # unigrams, bigrams or trigrams
+}
+#===================================================================================================
+
+
+def _classification(model, X_train, y_train, X_test, y_test, mlb, tags, n_suggested_tags,
+                    use_numeric_features, do_grid_search=False):
     #-----------------------------------------------------------------------------------------------
     # SETUP PARAMETERS & CLASSIFIERS
     #-----------------------------------------------------------------------------------------------
+    grid_search_params = PARAMS_GRID_SEARCH_COMMON
     if not use_numeric_features:
-        parameters['vectorizer__max_features'] = (2000, 3000, 10000, 20000)
-        parameters['vectorizer__max_df'] = (0.85, )# 1.0)
-        parameters['vectorizer__min_df'] = (2, )#4)
-        parameters['vectorizer__ngram_range'] = ((1, 3), ) #((1, 2), (1, 3))  # unigrams, bigrams or trigrams
+        parameters_count_vectorizer = PARAMS_COUNT_VECTORIZER_COMMON
+        if do_grid_search:
+            grid_search_params = helper.merge_two_dicts(PARAMS_GRID_SEARCH_COMMON, PARAMS_GRID_SEARCH_TFIDF_FEATURES)
+        else:
+            parameters_count_vectorizer = helper.merge_two_dicts(parameters_count_vectorizer,
+                                                                 PARAMS_COUNT_VECTORIZER_NO_GRID_SEARCH)
 
         classifier = Pipeline([
-            ('vectorizer', CountVectorizer(
-                input='content',
-                tokenizer=extract_tokens,
-                preprocessor=None,
-                analyzer='word',
-                encoding='utf-8',
-                decode_error='strict',
-                strip_accents=None,
-                lowercase=True,
-                stop_words=None,
-                vocabulary=None,
-                binary=False
-            )),
-            ('tfidf', TfidfTransformer(
-                norm='l2',
-                sublinear_tf=False,
-                smooth_idf=True,
-                use_idf=True
-            )),
+            ('vectorizer', CountVectorizer(**parameters_count_vectorizer)),
+            ('tfidf', TfidfTransformer(**DEFAULT_PARAMS_TFIDF_TRANSFORMER)),
             model
         ])
     else:
@@ -62,17 +261,24 @@ def _grid_search_classification(model, parameters, X_train, y_train, X_test, y_t
     #-----------------------------------------------------------------------------------------------
     # LEARNING / FIT CLASSIFIER / GRIDSEARCH VIA CROSS VALIDATION (OF TRAINING DATA)
     #-----------------------------------------------------------------------------------------------
-    classifier = GridSearchCV(classifier, parameters, n_jobs=-1, cv=3, verbose=1, scoring='f1_micro')
+    if do_grid_search:
+        _logger.info("-"*80)
+        _logger.info("Grid search")
+        _logger.info("-"*80)
+        classifier = GridSearchCV(classifier, grid_search_params, n_jobs=-1, cv=3, verbose=1, scoring='f1_micro')
+        _logger.info("Parameters: %s", grid_search_params)
+    elif not use_numeric_features:
+        _logger.info("Count vectorizer parameters: %s", PARAMS_COUNT_VECTORIZER_NO_GRID_SEARCH)
 
-    _logger.info("Parameters: %s", parameters)
     t0 = time()
     classifier.fit(np.array(X_train) if not use_numeric_features else X_train, y_train)
     _logger.info("Done in %0.3fs" % (time() - t0))
 
-    _logger.info("Best parameters set:")
-    best_parameters = classifier.best_estimator_.get_params()
-    for param_name in sorted(parameters.keys()):
-        _logger.info("\t%s: %r" % (param_name, best_parameters[param_name]))
+    if do_grid_search:
+        _logger.info("Best parameters set:")
+        best_parameters = classifier.best_estimator_.get_params()
+        for param_name in sorted(grid_search_params.keys()):
+            _logger.info("\t%s: %r" % (param_name, best_parameters[param_name]))
 
     #-----------------------------------------------------------------------------------------------
     # PREDICTION
@@ -136,33 +342,99 @@ def _grid_search_classification(model, parameters, X_train, y_train, X_test, y_t
     print "F1 macro: %.3f" % f1_macro
 
 
-def classification(X_train, y_train, X_test, y_test, mlb, tags, n_suggested_tags, use_numeric_features):
+def classification(X_train, y_train, X_test, y_test, mlb, tags, n_suggested_tags,
+                   use_numeric_features, do_grid_search=False):
 
-    parameters = {
-#         'clf__alpha': [0.2, 0.1, 0.06, 0.03, 0.01, 0.001, 0.0001],
-    }
+    #-----------------------------------------------------------------------------------------------
+    # NOTE: in order to use a classifier:
+    #
+    #       1) uncomment which classifier to choose
+    #       2) when NOT using numeric features and NOT doing grid search:
+    #          Please also modify PARAMS_COUNT_VECTORIZER_NO_GRID_SEARCH according to your needs.
+    #
+    #-----------------------------------------------------------------------------------------------
 
-    models = [
-        # baseline
-#        ('clf', OneVsRestClassifier(DummyClassifier("most_frequent"))), # very primitive/simple baseline!
-#        ('clf', OneVsRestClassifier(MultinomialNB(alpha=.03))), # <-- lidstone smoothing (1.0 would be laplace smoothing!)
+#     # baseline
+#     model = ('clf', OneVsRestClassifier(DummyClassifier("most_frequent"))) # very primitive/simple baseline!
+#     model = ('clf', OneVsRestClassifier(MultinomialNB(alpha=.03))) # <-- lidstone smoothing (1.0 would be laplace smoothing!)
+# 
+#     # "single" classifiers
+#     model = ('clf', OneVsRestClassifier(KNeighborsClassifier(n_neighbors=10)))
+    model = ('clf', OneVsRestClassifier(SVC(kernel="linear", C=0.025, probability=True)))
+#     model = ('clf', OneVsRestClassifier(SVC(kernel="linear", C=2.0, probability=True)))
+#     model = ('clf', OneVsRestClassifier(SVC(kernel="rbf", C=0.025, probability=True)))
+#     model = ('clf', OneVsRestClassifier(LinearSVC()))
+# 
+#     # ensemble
+#     model = ('clf', OneVsRestClassifier(RandomForestClassifier(n_estimators=200, max_depth=None)))
+#     model = ('clf', OneVsRestClassifier(AdaBoostClassifier(DecisionTreeClassifier(max_depth=2), n_estimators=200, learning_rate=1.5, algorithm="SAMME"))
 
-#         # "single" classifiers
-#         ('clf', OneVsRestClassifier(KNeighborsClassifier(n_neighbors=10))),
-         ('clf', OneVsRestClassifier(SVC(kernel="linear", C=0.025, probability=True))),
-#         ('clf', OneVsRestClassifier(SVC(kernel="linear", C=2.0, probability=True))),
-#         ('clf', OneVsRestClassifier(SVC(kernel="rbf", C=0.025, probability=True))),
-#         #('clf', OneVsRestClassifier(LinearSVC())),
+    from sklearn.ensemble import RandomForestClassifier, VotingClassifier
+#    clf1 = OneVsRestClassifier(SVC(kernel="linear", C=0.025, probability=True))
+    clf1 = OneVsRestClassifier(MultinomialNB(alpha=.01))
+    clf2 = OneVsRestClassifier(MultinomialNB(alpha=.03))
+    clf3 = OneVsRestClassifier(MultinomialNB(alpha=.01))
+#     model = ('clf', OneVsRestClassifier(MultinomialNB(alpha=.03))) # <-- lidstone smoothing (1.0 would be laplace smoothing!)
+#    clf2 = OneVsRestClassifier(RandomForestClassifier(n_estimators=10, max_depth=None))
+#    clf3 = OneVsRestClassifier(KNeighborsClassifier(n_estimators=7))
+#    model = ('clf', VotingClassifier(estimators=[('svc', clf1), ('rf', clf2), ('knn', clf3)], voting='hard')) #voting='soft', weights=[2,1,1])
 
-        # ensemble
-#        ('clf', OneVsRestClassifier(RandomForestClassifier(n_estimators=200, max_depth=None))),
-#        ('clf', OneVsRestClassifier(AdaBoostClassifier(DecisionTreeClassifier(max_depth=2), n_estimators=200, learning_rate=1.5, algorithm="SAMME")))
-    ]
+    clf6 = RandomForestClassifier(n_estimators=1000,max_depth=14,n_jobs=1) # feats = 10
+    clf7 = RandomForestClassifier(n_estimators=100,max_depth=14,n_jobs=1) # feats = 10
+    #clf7 = GradientBoostingClassifier(n_estimators=100,max_depth=9, max_features=7)  # feats = 7
 
-    for model in models:
-        _logger.info(str(model[1]))
-        _grid_search_classification(model, parameters, X_train, y_train, X_test, y_test, mlb, tags,
-                                    n_suggested_tags, use_numeric_features)
+    first_stage = [('svc', clf1), ('rf', clf2), ('knn', clf3)]
+    second_stage = [
+                    ("gbm",clf7),
+                    ("rf",clf6)
+                     ]
+
+    _logger.info(str(model[1]))
+    weights = [3,1]
+    model = ('clf', OneVsRestClassifier(StackingClassifier(stage_one_clfs=first_stage,stage_two_clfs=second_stage, do_gridsearch=False, weights=weights, n_runs=1, use_append=False, print_scores=True)))
+    _classification(model, X_train, y_train, X_test, y_test, mlb, tags, n_suggested_tags,
+                    use_numeric_features, do_grid_search)
+
+    #clf1 = RandomForestClassifier(n_estimators=100,random_state=571,max_features=8,max_depth=13,n_jobs=1)
+    #clf2 = KNeighborsClassifier(n_neighbors=250, p=1, weights="distance")
+    #clf3 = ExtraTreesClassifier(n_estimators=200,max_depth=14, max_features=12,random_state=571,n_jobs=1)
+    #clf4 = GaussianNB()
+    #clf5 = GradientBoostingClassifier(n_estimators=100,random_state=571,max_depth=6, max_features=7)
+    
+
+#############
+    
+    
+#     print("Training")
+#     stack.fit(X,y)
+#     print("Predict")
+#     y_pred = stack.predict_proba(X_test)
+#     create_sub(y_pred)
+    
+#     print("CV")
+#     scores = cross_val_score(stack,X,y,scoring="log_loss",cv=skf)
+#     print(scores)
+#     print("CV-Score: %.3f" % -scores.mean())
+    # with append:        Score: 0.783
+    # without append:     CV-Score: 0.843
+    
+#     # gridsearch
+#     params1 = {
+#                "max_depth": [4],
+#                "max_features": [3]
+#                }
+#     params2 = {
+#                "max_depth": [7],
+#                "max_features": [4]
+#                }
+#     paramsset = [params1, params2]
+#     stack = StackingClassifier(stage_one_clfs=first_stage,stage_two_clfs=second_stage,weights=weights, n_runs=10, use_append=False,
+#                                do_gridsearch=True, params=paramsset, cv=skf, scoring="log_loss", print_scores=False)
+#     stack.fit(X,y)
+
+
+
+
 
 
 #---------------------------------------------------------------------------------------------------

@@ -247,9 +247,9 @@ class TestFilters(unittest.TestCase):
                 u'coworker', u'mine', u'code', u'comments', u'javadoc', u'style', u'method',
                 u'class', u'comments', u'code', u'smell', u'ideally', u'code', u'coded', u'auto',
                 u'explicative', u'quality', u'code', u'comment', u'code', u'redundancy',
-                u'comments', u'code', u'good', u'maintained', u'aligned', u'code', u'design',
-                u'documentation', u'less', u'comments', u'good', u'code', u'readability',
-                u'maintain', u'sync', u'comments', u'comments', u'rule', u'symptom', u'bad',
+                u'comments', u'code', u'maintained', u'aligned', u'code', u'design',
+                u'documentation', u'less', u'comments', u'code', u'readability',
+                u'maintain', u'sync', u'comments', u'comments', u'rule', u'symptom',
                 u'programming'
             ],
             [

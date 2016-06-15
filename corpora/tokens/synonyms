@@ -40,6 +40,8 @@ osx,os x
 osx,macos x
 osx,mac os x
 .net,.net framework
+.net,.net platform
+.net,.net 4.0
 c# .net,c# net
 open-source software,open-source project
 open-source software,open-source projects
@@ -131,7 +133,7 @@ fix bug,fixed bugs
 fix bug,fixed bug
 fix bug,bug fix
 fix bug,bug fixes
-good programmer,good programmers
+programmer,programmers
 code test,code tests
 change code,code change
 change code,code changes
@@ -159,6 +161,7 @@ syntax-highlight,syntax-highlight ing
 ,4 j
 ,6 months
 ,100 %
+,99 %
 ,90 %
 ,80 %
 ,75 %
@@ -188,7 +191,6 @@ syntax-highlight,syntax-highlight ing
 ,along lines
 ,b c
 ,b l
-,bad thing
 ,bottom line
 ,c #
 ,c c
@@ -241,3 +243,6 @@ syntax-highlight,syntax-highlight ing
 ,fairly easy
 ,go ahead
 ,invest time
+,latest version
+,near future
+,quick dirty

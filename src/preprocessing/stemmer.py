@@ -16,6 +16,7 @@ def porter_stemmer_tags(tags):
     progress_bar = helper.ProgressBar(len(tags))
     for tag in tags:
         tag.preprocessed_tag_name = porter.stem(tag.name.lower())
+        assert len(tag.preprocessed_tag_name) > 0
         progress_bar.update()
     progress_bar.finish()
 
