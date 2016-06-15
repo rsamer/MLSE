@@ -40,5 +40,18 @@ pip install beautifulsoup4
 Usage:
 ```sh
 cd src/
-python -m main ../data/example
+python -m main <data-set-path> [--use-caching] [--use-numeric-features] [--supervised] [--unsupervised]
+                  [--test-with-training-data] [--num-suggested-tags=<nt>] [--tag-frequ-thr=<tf>] [--test-size=<ts>]
+
+Options:
+          -h --help                         Shows this screen
+          -v --version                      Shows version of this application
+          -c --use-caching                  Enables caching in order to avoid redundant preprocessing
+          -n --use-numeric-features         Enables numeric features (PMI) instead of TFxIDF
+          --supervised                      Enables supervised learning (classification) only and skips unsupervised learning
+          --unsupervised                    Enables unsupervised learning (clustering) only and skips supervised learning
+          -d --test-with-training-data      Test with training data instead of test data
+          -s=<nt> --num-suggested-tags=<nt> Number of suggested tags (default=%d)
+          -f=<tf> --tag-frequ-thr=<tf>      Sets tag frequency threshold -> appropriate value depends on which data set is used! (default=%d)
+          -t=<ts> --test-size=<ts>          Sets test size (range: 0.01-0.5) (default=%f)
 ```
