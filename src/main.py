@@ -36,8 +36,8 @@ _logger = logging.getLogger(__name__)
 DEFAULT_TAG_FREQUENCY_THRESHOLD, DEFAULT_N_SUGGESTED_TAGS, DEFAULT_TEST_SIZE = (3, 2, 0.1)
 
 
-def main(data_set_path, enable_caching, use_numeric_features, n_suggested_tags,
-         tag_frequency_threshold, test_size, test_with_training_data):
+def main(data_set_path, enable_caching, use_numeric_features, enable_supervised, enable_unsupervised,
+         n_suggested_tags, tag_frequency_threshold, test_size, test_with_training_data):
 
     helper.setup_logging(logging.INFO)
     helper.make_dir_if_not_exists(helper.CACHE_PATH)
@@ -106,26 +106,21 @@ def main(data_set_path, enable_caching, use_numeric_features, n_suggested_tags,
     #===============================================================================================
     # 5) Supervised - Classification
     #-----------------------------------------------------------------------------------------------
-    _logger.info("-"*80)
-    _logger.info("Supervised - Classification...")
-    classification.classification(X_train, y_train_mlb, X_test, y_test_mlb, mlb, tags,
-                                  n_suggested_tags, use_numeric_features)
-
-    ####
-    ####
-    ####
-    sys.exit()
-    ####
-    ####
-    ####
+    if enable_supervised:
+        _logger.info("-"*80)
+        _logger.info("Supervised - Classification...")
+        classification.classification(X_train, y_train_mlb, X_test, y_test_mlb, mlb, tags,
+                                      n_suggested_tags, use_numeric_features)
 
     #===============================================================================================
     # 6) Unsupervised - Clustering
     #-----------------------------------------------------------------------------------------------
-    _logger.info("-"*80)
-    _logger.info("Unsupervised - Clustering...")
-    clustering.clustering(X_train, y_train_mlb, X_test, y_test_mlb, tags, n_suggested_tags,
-                          use_numeric_features)
+    if enable_unsupervised:
+        _logger.info("-"*80)
+        _logger.info("Unsupervised - Clustering...")
+        clustering.clustering(X_train, y_train_mlb, X_test, y_test_mlb, tags, n_suggested_tags,
+                              use_numeric_features)
+
     return ExitCode.SUCCESS
 
 
@@ -135,6 +130,7 @@ def usage():
     
         Usage:
           'main.py' <data-set-path> [--use-caching] [--use-numeric-features] ''' + \
+                 '''[--supervised] [--unsupervised] ''' + \
                  '''[--test-with-training-data] [--num-suggested-tags=<nt>] ''' + \
                  '''[--tag-frequ-thr=<tf>] [--test-size=<ts>]
           'main.py' --version
@@ -144,6 +140,8 @@ def usage():
           -v --version                      Shows version of this application
           -c --use-caching                  Enables caching in order to avoid redundant preprocessing
           -n --use-numeric-features         Enables numeric features (PMI) instead of TFxIDF
+          --supervised                      Enables supervised learning (classification) only and skips unsupervised learning
+          --unsupervised                    Enables unsupervised learning (clustering) only and skips supervised learning
           -d --test-with-training-data      Test with training data instead of test data
           -s=<nt> --num-suggested-tags=<nt> Number of suggested tags (default=%d)
           -f=<tf> --tag-frequ-thr=<tf>      Sets tag frequency threshold -> appropriate value depends on which data set is used! (default=%d)
@@ -153,6 +151,8 @@ def usage():
     kwargs = {}
     kwargs['enable_caching'] = bool(arguments["--use-caching"])
     kwargs['use_numeric_features'] = bool(arguments["--use-numeric-features"])
+    kwargs['enable_supervised'] = not(bool(arguments["--unsupervised"]))
+    kwargs['enable_unsupervised'] = not(bool(arguments["--supervised"]))
     kwargs['test_with_training_data'] = bool(arguments["--test-with-training-data"])
     kwargs['n_suggested_tags'] = int(arguments["--num-suggested-tags"][0]) if arguments["--num-suggested-tags"] else DEFAULT_N_SUGGESTED_TAGS
     kwargs['tag_frequency_threshold'] = int(arguments["--tag-frequ-thr"][0]) if arguments["--tag-frequ-thr"] else DEFAULT_TAG_FREQUENCY_THRESHOLD
