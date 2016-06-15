@@ -144,19 +144,25 @@ def classification(X_train, y_train, X_test, y_test, mlb, tags, n_suggested_tags
 
     models = [
         # baseline
-#        ('clf', OneVsRestClassifier(DummyClassifier("most_frequent"))), # very primitive/simple baseline!
-#        ('clf', OneVsRestClassifier(MultinomialNB(alpha=.03))), # <-- lidstone smoothing (1.0 would be laplace smoothing!)
+#       ('clf', OneVsRestClassifier(DummyClassifier("most_frequent"))), # very primitive/simple baseline!
+#       ('clf', OneVsRestClassifier(MultinomialNB(alpha=.03))), # <-- lidstone smoothing (1.0 would be laplace smoothing!)
 
-#         # "single" classifiers
-#         ('clf', OneVsRestClassifier(KNeighborsClassifier(n_neighbors=10))),
-         ('clf', OneVsRestClassifier(SVC(kernel="linear", C=0.025, probability=True))),
-#         ('clf', OneVsRestClassifier(SVC(kernel="linear", C=2.0, probability=True))),
-#         ('clf', OneVsRestClassifier(SVC(kernel="rbf", C=0.025, probability=True))),
-#         #('clf', OneVsRestClassifier(LinearSVC())),
+        # "single" classifiers
+
+        # larger penalty parameter works better for numeric features
+        ('clf', OneVsRestClassifier(SVC(kernel="linear", C=2.0, tol=0.001, probability=True))),
+        # smaller tolerance (1e-4) works slightly better for numeric features
+        ('clf', OneVsRestClassifier(SVC(kernel="linear", C=2.0, tol=0.0001, probability=True))),
+        # smaller penalty parameter works better for TFIDF
+        ('clf', OneVsRestClassifier(SVC(kernel="linear", C=0.025, probability=True))),
+
+#       ('clf', OneVsRestClassifier(KNeighborsClassifier(n_neighbors=10))),
+#       ('clf', OneVsRestClassifier(SVC(kernel="rbf", C=0.025, probability=True))),
+#       ('clf', OneVsRestClassifier(LinearSVC())),
 
         # ensemble
-#        ('clf', OneVsRestClassifier(RandomForestClassifier(n_estimators=200, max_depth=None))),
-#        ('clf', OneVsRestClassifier(AdaBoostClassifier(DecisionTreeClassifier(max_depth=2), n_estimators=200, learning_rate=1.5, algorithm="SAMME")))
+#       ('clf', OneVsRestClassifier(RandomForestClassifier(n_estimators=200, max_depth=None))),
+#       ('clf', OneVsRestClassifier(AdaBoostClassifier(DecisionTreeClassifier(max_depth=2), n_estimators=200, learning_rate=1.5, algorithm="SAMME")))
     ]
 
     for model in models:

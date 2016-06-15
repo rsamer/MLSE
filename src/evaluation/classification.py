@@ -8,6 +8,7 @@ from sklearn.utils.multiclass import unique_labels
 def custom_classification_report(y_true, y_pred, labels=None, target_names=None,
                           sample_weight=None, digits=2):
     """Build a text report showing the main classification metrics
+    and do not warn for neither 'precision', 'recall' or 'f-score'.
 
     Read more in the :ref:`User Guide <classification_report>`.
 
