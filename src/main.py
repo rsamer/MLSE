@@ -151,8 +151,8 @@ def usage():
     kwargs = {}
     kwargs['enable_caching'] = bool(arguments["--use-caching"])
     kwargs['use_numeric_features'] = bool(arguments["--use-numeric-features"])
-    kwargs['enable_supervised'] = not(bool(arguments["--unsupervised"]))
-    kwargs['enable_unsupervised'] = not(bool(arguments["--supervised"]))
+    kwargs['enable_supervised'] = bool(arguments["--supervised"]) or not(bool(arguments["--unsupervised"]))
+    kwargs['enable_unsupervised'] = bool(arguments["--unsupervised"]) or not(bool(arguments["--supervised"]))
     kwargs['test_with_training_data'] = bool(arguments["--test-with-training-data"])
     kwargs['n_suggested_tags'] = int(arguments["--num-suggested-tags"][0]) if arguments["--num-suggested-tags"] else DEFAULT_N_SUGGESTED_TAGS
     kwargs['tag_frequency_threshold'] = int(arguments["--tag-frequ-thr"][0]) if arguments["--tag-frequ-thr"] else DEFAULT_TAG_FREQUENCY_THRESHOLD

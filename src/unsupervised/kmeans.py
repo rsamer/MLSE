@@ -2,7 +2,6 @@
 
 import heapq
 import numpy as np
-from scipy.sparse import vstack
 from sklearn.cluster import KMeans
 
 
@@ -19,38 +18,37 @@ class CustomKMeans(KMeans):
 
         self.n_suggested_tags = n_suggested_tags
 
-
     def predict(self, X=None):
-        X_complete = vstack([self.x_train, X])
-        super(CustomKMeans, self).fit(X_complete.toarray())
-
-        assert len(self.labels_) == X_complete.shape[0]
-
-        y_predicted_clusters = self.labels_[self.x_train.shape[0]:]
+        assert len(self.labels_) == self.x_train.shape[0]
         y_predicted_classes = []
-
+        y_predicted_clusters = super(CustomKMeans, self).predict(X.toarray())
         assert len(y_predicted_clusters) == X.shape[0]
 
+        # predict top X most frequent intra-cluster tags for each test post
         for y_predicted_cluster in y_predicted_clusters:
-            y = np.array([0] * self.y_train.shape[1])
-            for idx, y_train_data in enumerate(self.y_train):
-                if self.labels_[idx] == y_predicted_cluster:
+            y = np.array([0] * self.y_train.shape[1])  # store inter-cluster occurrence for each tag
+
+            for post_idx, y_train_data in enumerate(self.y_train):
+                if self.labels_[post_idx] == y_predicted_cluster:  # train and test data are in same cluster
                     y += y_train_data
+
+            # predict most frequent tags (= tags with highest tag occurrences)
             largest_values = heapq.nlargest(self.n_suggested_tags, y)
             n_tag_assignments = 0
 
-            for idx, tag_data in enumerate(y):
+            for tag_idx, tag_data in enumerate(y):
                 if tag_data in largest_values and n_tag_assignments < self.n_suggested_tags:
-                    y[idx] = 1
+                    y[tag_idx] = 1  # this post belongs to this tag
                     n_tag_assignments += 1
                 else:
-                    y[idx] = 0
+                    y[tag_idx] = 0  # this post does not belong to this tag
 
             assert sum(y) == self.n_suggested_tags
             y_predicted_classes.append(y)
+
         return np.array(y_predicted_classes)
 
     def fit(self, X, y=None):
         self.x_train = X
         self.y_train = y
-        return self
+        return super(CustomKMeans, self).fit(X, y)
