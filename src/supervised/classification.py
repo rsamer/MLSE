@@ -6,7 +6,7 @@ import numpy as np
 from sklearn.pipeline import Pipeline
 from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 from sklearn.naive_bayes import MultinomialNB
-from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier
+from sklearn.ensemble import RandomForestClassifier, BaggingClassifier, AdaBoostClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.svm import SVC
@@ -198,7 +198,7 @@ def classification(X_train, y_train, X_test, y_test, mlb, tags, n_suggested_tags
 #       ('clf', OneVsRestClassifier(DummyClassifier("most_frequent"))), # very primitive baseline!
         ('clf', OneVsRestClassifier(MultinomialNB(alpha=.1))), # <-- lidstone smoothing (1.0 == laplace smoothing!)
         #-------------------------------------------------------------------------------------------
-  
+
         #-------------------------------------------------------------------------------------------
         # "single" classifiers
         #-------------------------------------------------------------------------------------------
@@ -212,7 +212,7 @@ def classification(X_train, y_train, X_test, y_test, mlb, tags, n_suggested_tags
         ('clf', OneVsRestClassifier(SVC(kernel="rbf", C=0.025, probability=True))),
 #         ('clf', OneVsRestClassifier(LinearSVC())),
         #-------------------------------------------------------------------------------------------
- 
+
         #-------------------------------------------------------------------------------------------
         # ensemble
         #-------------------------------------------------------------------------------------------
@@ -229,6 +229,7 @@ def classification(X_train, y_train, X_test, y_test, mlb, tags, n_suggested_tags
             ],
             weights = [.5, .2, .3]
         )),
+        ('clf', OneVsRestClassifier(BaggingClassifier(base_estimator=DecisionTreeClassifier(max_depth=10), n_estimators=40, random_state=None))),
         ('clf', OneVsRestClassifier(RandomForestClassifier(n_estimators=200, max_depth=None))),
         ('clf', OneVsRestClassifier(AdaBoostClassifier(DecisionTreeClassifier(max_depth=2), n_estimators=200, learning_rate=1.5, algorithm="SAMME")))
         #-------------------------------------------------------------------------------------------
