@@ -19,8 +19,7 @@
 '''
 
 import logging, sys, warnings, numpy as np
-from entities.tag import Tag
-from preprocessing import tags, parser, preprocessing as prepr
+from preprocessing import parser, preprocessing as prepr
 from sklearn.preprocessing import MultiLabelBinarizer
 from sklearn.cross_validation import train_test_split
 from transformation import features
@@ -37,22 +36,8 @@ _logger = logging.getLogger(__name__)
 DEFAULT_TAG_FREQUENCY_THRESHOLD, DEFAULT_N_SUGGESTED_TAGS, DEFAULT_TEST_SIZE = (3, 2, 0.1)
 
 
-def preprocess_tags_and_posts(all_tags, all_posts, tag_frequency_threshold, enable_stemming=True,
-                              replace_adjacent_tag_occurences=True,
-                              replace_token_synonyms_and_remove_adjacent_stopwords=True):
-    filtered_tags, all_posts = tags.replace_tag_synonyms(all_tags, all_posts)
-    filtered_tags = prepr.filter_tags_and_sort_by_frequency(filtered_tags, tag_frequency_threshold)
-    if enable_stemming is True:
-        prepr.stem_tags(filtered_tags)
-    posts = prepr.preprocess_posts(all_posts, filtered_tags, True, enable_stemming,
-                                   replace_adjacent_tag_occurences,
-                                   replace_token_synonyms_and_remove_adjacent_stopwords)
-    Tag.update_tag_counts_according_to_posts(filtered_tags, posts)
-    return filtered_tags, posts
-
-
-def main(data_set_path, enable_caching, use_numeric_features, n_suggested_tags,
-         tag_frequency_threshold, test_size, test_with_training_data):
+def main(data_set_path, enable_caching, use_numeric_features, enable_supervised, enable_unsupervised,
+         n_suggested_tags, tag_frequency_threshold, test_size, test_with_training_data):
 
     helper.setup_logging(logging.INFO)
     helper.make_dir_if_not_exists(helper.CACHE_PATH)
@@ -72,7 +57,7 @@ def main(data_set_path, enable_caching, use_numeric_features, n_suggested_tags,
     #-----------------------------------------------------------------------------------------------
     _logger.info("Preprocessing...")
     if not enable_caching or not helper.cache_exists_for_preprocessed_tags_and_posts(cache_file_name_prefix):
-        tags, posts = preprocess_tags_and_posts(all_tags, all_posts, tag_frequency_threshold,
+        tags, posts = prepr.preprocess_tags_and_posts(all_tags, all_posts, tag_frequency_threshold,
                                                 enable_stemming=True, replace_adjacent_tag_occurences=True,
                                                 replace_token_synonyms_and_remove_adjacent_stopwords=True)
         helper.write_preprocessed_tags_and_posts_to_cache(cache_file_name_prefix, tags, posts)
@@ -86,7 +71,6 @@ def main(data_set_path, enable_caching, use_numeric_features, n_suggested_tags,
     # 3) Split training and test data
     #-----------------------------------------------------------------------------------------------
     _logger.info("Splitting data set -> Training: {}%, Test: {}%".format((1-test_size)*100, test_size*100))
-
     y = map(lambda p: tuple(map(lambda t: t.name, p.tag_set)), posts)
     if not use_numeric_features:
         X = map(lambda p: ' '.join(p.tokens(title_weight=3)), posts)
@@ -96,10 +80,6 @@ def main(data_set_path, enable_caching, use_numeric_features, n_suggested_tags,
         assert X.shape[0] == len(y)
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=42)
-
-    #from transformation import tfidf#, features
-    #X_train, X_test = tfidf.tfidf(X_train, X_test, max_features=None, min_df=4)
-    #X_train, X_test = features.numeric_features(train_posts, test_posts, tags)
 
     #===============================================================================================
     # 4) prepare, vectorize and transform
@@ -126,21 +106,21 @@ def main(data_set_path, enable_caching, use_numeric_features, n_suggested_tags,
     classification.classification(X_train, y_train_mlb, X_test, y_test_mlb, mlb, tags, n_suggested_tags,
                                   use_numeric_features, do_grid_search=False)
 
-    ####
-    ####
-    ####
-    sys.exit()
-    ####
-    ####
-    ####
+    if enable_supervised:
+        _logger.info("-"*80)
+        _logger.info("Supervised - Classification...")
+        classification.classification(X_train, y_train_mlb, X_test, y_test_mlb, mlb, tags,
+                                      n_suggested_tags, use_numeric_features)
 
     #===============================================================================================
     # 6) Unsupervised - Clustering
     #-----------------------------------------------------------------------------------------------
-    _logger.info("-"*80)
-    _logger.info("Unsupervised - Clustering...")
-    clustering.clustering(X_train, y_train_mlb, X_test, y_test_mlb, tags, n_suggested_tags,
-                          use_numeric_features)
+    if enable_unsupervised:
+        _logger.info("-"*80)
+        _logger.info("Unsupervised - Clustering...")
+        clustering.clustering(X_train, y_train_mlb, X_test, y_test_mlb, tags, n_suggested_tags,
+                              use_numeric_features)
+
     return ExitCode.SUCCESS
 
 
@@ -150,6 +130,7 @@ def usage():
     
         Usage:
           'main.py' <data-set-path> [--use-caching] [--use-numeric-features] ''' + \
+                 '''[--supervised] [--unsupervised] ''' + \
                  '''[--test-with-training-data] [--num-suggested-tags=<nt>] ''' + \
                  '''[--tag-frequ-thr=<tf>] [--test-size=<ts>]
           'main.py' --version
@@ -159,6 +140,8 @@ def usage():
           -v --version                      Shows version of this application
           -c --use-caching                  Enables caching in order to avoid redundant preprocessing
           -n --use-numeric-features         Enables numeric features (PMI) instead of TFxIDF
+          --supervised                      Enables supervised learning (classification) only and skips unsupervised learning
+          --unsupervised                    Enables unsupervised learning (clustering) only and skips supervised learning
           -d --test-with-training-data      Test with training data instead of test data
           -s=<nt> --num-suggested-tags=<nt> Number of suggested tags (default=%d)
           -f=<tf> --tag-frequ-thr=<tf>      Sets tag frequency threshold -> appropriate value depends on which data set is used! (default=%d)
@@ -168,6 +151,8 @@ def usage():
     kwargs = {}
     kwargs['enable_caching'] = bool(arguments["--use-caching"])
     kwargs['use_numeric_features'] = bool(arguments["--use-numeric-features"])
+    kwargs['enable_supervised'] = bool(arguments["--supervised"]) or not(bool(arguments["--unsupervised"]))
+    kwargs['enable_unsupervised'] = bool(arguments["--unsupervised"]) or not(bool(arguments["--supervised"]))
     kwargs['test_with_training_data'] = bool(arguments["--test-with-training-data"])
     kwargs['n_suggested_tags'] = int(arguments["--num-suggested-tags"][0]) if arguments["--num-suggested-tags"] else DEFAULT_N_SUGGESTED_TAGS
     kwargs['tag_frequency_threshold'] = int(arguments["--tag-frequ-thr"][0]) if arguments["--tag-frequ-thr"] else DEFAULT_TAG_FREQUENCY_THRESHOLD

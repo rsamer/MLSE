@@ -3,11 +3,10 @@
 import unittest
 import os
 import csv
-import main
 from entities.post import Post
 from entities.tag import Tag
 from entities.post import Answer
-from preprocessing import filters, parser, tags, selection, stopwords, preprocessing as preproc # @UnresolvedImport
+from preprocessing import filters, parser, tags, selection, stopwords, preprocessing as prepr
 from util.helper import APP_PATH
 
 
@@ -202,7 +201,7 @@ class TestFilters(unittest.TestCase):
         text = ' '.join(all_sorted_tag_names)
         self.assertEqual(text.split(), all_sorted_tag_names)
         my_posts = [Post(1, text, text, set(filtered_tags[:2]), 10)]
-        _, posts = main.preprocess_tags_and_posts(all_tags, my_posts, 0, enable_stemming=False,
+        _, posts = prepr.preprocess_tags_and_posts(all_tags, my_posts, 0, enable_stemming=False,
                                                   replace_adjacent_tag_occurences=False,
                                                   replace_token_synonyms_and_remove_adjacent_stopwords=False)
         self.assertEqual(len(posts), 1)
@@ -219,7 +218,7 @@ class TestFilters(unittest.TestCase):
              + u'Web 2.0 is Html5. In Apache 2.2 is more popular than IIS 7.0'
         tag1 = Tag('tag1', 1)
         my_posts = [Post(1, text, text, set([tag1]), 10)]
-        _, posts = main.preprocess_tags_and_posts([tag1], my_posts, 0, enable_stemming=False,
+        _, posts = prepr.preprocess_tags_and_posts([tag1], my_posts, 0, enable_stemming=False,
                                                   replace_adjacent_tag_occurences=False,
                                                   replace_token_synonyms_and_remove_adjacent_stopwords=False)
         self.assertEqual(len(posts), 1)
@@ -231,7 +230,7 @@ class TestFilters(unittest.TestCase):
 
     def test_full_preprocessing(self):
         all_tags, all_posts, _ = parser.parse_tags_and_posts(os.path.join(APP_PATH, "resources", "test"))
-        _, posts = main.preprocess_tags_and_posts(all_tags, all_posts, 0, enable_stemming=False,
+        _, posts = prepr.preprocess_tags_and_posts(all_tags, all_posts, 0, enable_stemming=False,
                                                   replace_adjacent_tag_occurences=False,
                                                   replace_token_synonyms_and_remove_adjacent_stopwords=False)
         self.assertEqual(len(all_posts), 3)
@@ -283,7 +282,7 @@ class TestFilters(unittest.TestCase):
         # test single synonyms
         for idx, source_token in enumerate(all_source_token_parts):
             post = Post(1, source_token, source_token, set(all_tags[:3]), 1)
-            _, [post] = main.preprocess_tags_and_posts(all_tags, [post], 0, enable_stemming=False,
+            _, [post] = prepr.preprocess_tags_and_posts(all_tags, [post], 0, enable_stemming=False,
                                                        replace_adjacent_tag_occurences=False,
                                                        replace_token_synonyms_and_remove_adjacent_stopwords=True)
             self.assertEqual(post.title_tokens, all_target_token_parts[idx].split())
@@ -291,7 +290,7 @@ class TestFilters(unittest.TestCase):
 
         # test all synonyms in one string
         post = Post(1, ' '.join(all_source_token_parts), ' '.join(all_source_token_parts), set(all_tags[:3]), 1)
-        _, [post] = main.preprocess_tags_and_posts(all_tags, [post], 0, enable_stemming=False,
+        _, [post] = prepr.preprocess_tags_and_posts(all_tags, [post], 0, enable_stemming=False,
                                                    replace_adjacent_tag_occurences=False,
                                                    replace_token_synonyms_and_remove_adjacent_stopwords=True)
         self.assertEqual(' '.join(post.title_tokens), ' '.join(all_target_token_parts).strip())
