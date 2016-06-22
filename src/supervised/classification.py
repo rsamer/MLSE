@@ -229,11 +229,10 @@ def classification(X_train, y_train, X_test, y_test, mlb, tags, n_suggested_tags
         )),
         ('clf', ensemble.CustomVotingClassifier(
             [
-                OneVsRestClassifier(SVC(kernel="linear", C=2.0, probability=True)),
-                OneVsRestClassifier(KNeighborsClassifier(n_neighbors=10)),
-                OneVsRestClassifier(SVC(kernel="rbf", C=0.025, probability=True))
+                OneVsRestClassifier(SVC(kernel="linear", C=2.0, tol=0.001, probability=True)),
+                OneVsRestClassifier(KNeighborsClassifier(n_neighbors=10))
             ],
-            weights = [.5, .2, .3]
+            weights = [.5, .5]
         )),
         ('clf', OneVsRestClassifier(BaggingClassifier(base_estimator=DecisionTreeClassifier(max_depth=10), n_estimators=40, random_state=None))),
         ('clf', OneVsRestClassifier(RandomForestClassifier(n_estimators=200, max_depth=None))),
